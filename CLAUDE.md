@@ -1,0 +1,365 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a **CNMP (Conselho Nacional do Ministério Público) Proposition Tracking System** - a standalone web application for tracking judicial review proceedings (correições) and monitoring compliance with remedial propositions across Brazilian Public Ministry offices (27 MP branches).
+
+**Technology Stack:** Pure HTML5, CSS3, and vanilla JavaScript - zero dependencies, zero build tools.
+
+## Architecture
+
+### Single-File Design
+The entire application resides in `index.html` (~1,900 lines, ~75KB):
+- **Lines 1-657:** HTML structure and embedded CSS (includes timeline styles)
+- **Lines 658-1000:** HTML page layouts and components
+- **Lines 1001-1891:** JavaScript application logic
+
+### Data Model Hierarchy
+```
+Correição (Judicial Review)
+├── id, numero, ramoMP, ramoMPNome
+├── dataInicio, dataFim, observacoes
+└── Proposições (many)
+    ├── id, numero, correicaoId
+    ├── descricao, prazo, prioridade
+    ├── status: 'pendente' | 'em_analise' | 'adimplente' | 'parcial' | 'inadimplente' | 'prejudicada'
+    └── historico[] (array of interactions)
+        ├── tipo: 'comprovacao' | 'avaliacao'
+        ├── data (ISO timestamp)
+        ├── usuario (string: MP branch or 'Corregedoria Nacional')
+        ├── descricao (text)
+        ├── observacoes (optional text)
+        ├── arquivos[] (array of filenames - comprovacao only)
+        ├── statusAnterior (status before - avaliacao only)
+        └── statusNovo (status after - avaliacao only)
+```
+
+**Critical Relationships:**
+- Proposições are ALWAYS linked to their parent Correição via `correicaoId`
+- Every interaction (comprovacao/avaliacao) is stored in proposicao.historico array
+- Timeline preserves complete audit trail of all status changes
+
+### Key Architectural Patterns
+
+**State Management:**
+- Global arrays: `correicoes[]` and `proposicoes[]`
+- In-memory only - no persistence (resets on refresh)
+- All state mutations must update both data arrays and UI
+
+**Page Navigation:**
+- Manual SPA routing via `showPage(pageId)` function
+- Pages: dashboard, correicoes, proposicoes, enviar, avaliar (admin-only), cadastroCorreicao (admin-only), cadastro (admin-only)
+- Navigation state managed through `.hidden` CSS class
+
+**Data Flow Pattern:**
+1. User action triggers event (form submit, button click)
+2. Data array updated (correicoes/proposicoes)
+3. Historico entry added to proposicao (for comprovacoes/avaliacoes)
+4. Multiple render functions called to sync UI:
+   - `updateDashboard()` - updates statistics cards and chart
+   - `renderProposicoesTable()` - refreshes propositions table
+   - `renderCorreicoesTable()` - refreshes reviews table
+   - `renderAvaliacaoTable()` - refreshes evaluation queue (admin only)
+   - `populateCorreicaoFilter()` - updates filter dropdowns
+   - `populateCorreicaoIdSelect()` - updates form selects
+   - `populateProposicaoSelect()` - updates proposition dropdowns
+
+**Critical:** When adding/modifying propositions or correições, you MUST call ALL relevant render functions to maintain UI consistency. When adding comprovacoes or avaliacoes, you MUST append to proposicao.historico array.
+
+## Running the Application
+
+```bash
+# Simply open in browser - no build process
+open index.html
+
+# Or start a local server for testing
+python3 -m http.server 8000
+# Then navigate to http://localhost:8000
+```
+
+## Code Organization by Section
+
+### CSS Theme System (lines 14-24)
+Custom properties define the color scheme:
+- `--primary-color: #003366` (CNMP blue)
+- `--secondary-color: #0066cc` (em_analise status, links)
+- `--success-color: #28a745` (adimplente status)
+- `--warning-color: #ffc107` (pendente status)
+- `--danger-color: #dc3545` (inadimplente status)
+- `--text-muted: #6c757d` (prejudicada status)
+
+### Timeline Styles (lines 565-656)
+Custom CSS for historical interaction timeline:
+- Vertical timeline with left border
+- Color-coded markers for comprovacao (blue) and avaliacao (green)
+- Bordered content boxes matching interaction type
+- File attachments and status badges within timeline items
+
+### Authentication (lines 1074-1096)
+- Two user types: "admin" (Corregedoria Nacional) and "user" (Órgão Correicionado)
+- Admin sees all menu items; users have cadastro pages hidden
+- No real authentication - accepts any credentials (prototype)
+
+### Chart Rendering (lines 1209-1273)
+Custom canvas-based bar chart implementation:
+- Renders 6 status bars: adimplente, pendente, em_analise, parcial, inadimplente, prejudicada
+- Dynamically calculates bar width based on 6 categories
+- Auto-scales height based on max value
+- Color-coded bars matching badge system
+
+### Search & Filter (lines 1207-1244)
+Multi-criteria filtering system:
+- Text search across numero, ramoMP, descricao
+- Status dropdown filter
+- Correição dropdown filter (propositions only)
+- All filters work together (AND logic)
+
+### Form Validation Pattern
+All forms use:
+1. HTML5 required attributes
+2. Event listener with `e.preventDefault()`
+3. Manual data construction from form fields
+4. Array push operation
+5. Alert confirmation
+6. Multi-function UI refresh
+7. Form reset
+
+## Important Data Constraints
+
+1. **MP Branches:** Hardcoded list of 27 Brazilian MPs - do not modify without user request
+2. **Status Types:** 6 valid statuses - adding new status requires updates to:
+   - CSS badge styles (`.badge-newstatus`)
+   - Filter dropdown in proposicoes page
+   - `getStatusLabel()` function (line ~1704)
+   - Dashboard counter logic (line ~1189)
+   - Chart rendering data object (line ~1214)
+   - Chart barWidth calculation (adjust divisor from 6 to new count)
+3. **Correição-Proposição Link:** Every proposição MUST have a valid correicaoId
+4. **Date Format:** Uses ISO format (YYYY-MM-DD) in data, displays with `formatDate()` as DD/MM/YYYY
+5. **Historico Array:** Every proposição should have a `historico` array (can be empty `[]`)
+   - Never mutate existing history entries
+   - Always append new entries with `.push()`
+   - Preserve chronological order
+
+## UI Component Patterns
+
+### Modal Detail Views
+- `viewDetails(id)` - shows proposição details with:
+  - Linked correição info
+  - Complete historical timeline of comprovacoes and avaliacoes
+  - Color-coded timeline markers and content boxes
+- `viewCorreicaoDetails(id)` - shows correição with aggregated proposition statistics
+- `abrirAvaliacaoModal(id)` - admin-only modal for evaluating comprovacoes:
+  - Shows last comprovacao details
+  - Form to select decision (adimplente/parcial/inadimplente/prejudicada)
+  - Parecer (justification) textarea
+- Modals populate innerHTML and toggle `.hidden` class
+- Close with `closeModal()` or `closeAvaliacaoModal()`
+
+### Table Rendering Pattern
+```javascript
+// Standard pattern for table updates:
+const filtered = data.filter(/* criteria */);
+tbody.innerHTML = filtered.map(item => `
+  <tr>
+    <td>${item.field}</td>
+    ...
+  </tr>
+`).join('');
+```
+
+### Badge System
+Status badges use class pattern: `badge badge-${status}`
+- Maps to CSS classes: `.badge-pendente`, `.badge-adimplente`, etc.
+- Colors must be distinct and accessible
+
+## Role-Based UI Control
+
+Admin-only elements (hidden for regular users):
+- `#navAvaliar` - Evaluate Comprovacoes page (⚖️)
+- `#navCadastroCorreicao` - New Review page
+- `#navCadastroProposicao` - New Proposition page
+
+User (correicionado) elements:
+- All pages except admin-only ones
+- Can submit comprovacoes via "Enviar Comprovação" page
+- Can view own proposition history
+
+Check `currentUser.type` to determine access rights.
+Hide admin pages in login handler: `document.getElementById('navAvaliar').style.display = 'none'`
+
+## Common Modification Scenarios
+
+### Adding a New Status
+1. Add CSS badge class (`.badge-newstatus`)
+2. Add option to `#statusFilter` dropdown
+3. Update `getStatusLabel()` function
+4. Add to dashboard counter logic
+5. Add to chart data object and colors/labels
+6. Adjust chart barWidth calculation for new count
+
+### Adding a New Page
+1. Add nav item in sidebar with `onclick="showPage('newpage')"`
+2. Create page div with `id="newpagePage"` and class `page hidden`
+3. Add case handling in `showPage()` function if special logic needed
+4. If admin-only, add ID and hide logic in login handler
+
+### Modifying Data Model
+When adding fields to correições or proposições:
+1. Update sample data in `initializeSampleData()`
+2. Update form HTML with new input field
+3. Update form submit handler to capture new field
+4. Update table rendering to display new field
+5. Update detail modal to show new field
+6. Update any filters/search logic if applicable
+
+## NAD Workflow Implementation
+
+The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) iterative workflow:
+
+### Status Lifecycle
+```
+pendente → [comprovacao] → em_analise → [avaliacao] → adimplente/parcial/inadimplente/prejudicada
+                                                             ↓           ↓          ↓
+                                                             END    [new cycle]  [new cycle]
+```
+
+### Workflow Steps
+
+**Step 1: Correicionado Submits Comprovacao** (lines 1543-1586)
+- User selects proposition with status: pendente, inadimplente, or parcial
+- Provides description of compliance actions taken
+- Attaches supporting documents (PDF, DOC, images)
+- System creates comprovacao entry in historico array
+- Status automatically changes to `em_analise`
+- Corregedoria Nacional is notified (via UI queue)
+
+**Step 2: Corregedoria Evaluates** (lines 1843-1881)
+- Admin accesses "Avaliar Comprovações" page
+- Views list of propositions with status `em_analise`
+- Opens evaluation modal showing:
+  - Proposition details
+  - Latest comprovacao with all attachments
+  - Previous history
+- Selects decision:
+  - `adimplente` - fully compliant (cycle ends)
+  - `parcial` - partially compliant (returns to queue)
+  - `inadimplente` - non-compliant (returns to queue)
+  - `prejudicada` - proposition superseded (cycle ends)
+- Provides written justification (parecer)
+- System creates avaliacao entry in historico
+- Status updates to selected decision
+
+**Step 3: Iterative Cycle**
+- If status is `inadimplente` or `parcial`:
+  - Proposition returns to correicionado's queue
+  - Correicionado can submit new comprovacao
+  - Cycle repeats until `adimplente` or `prejudicada`
+- Complete audit trail preserved in historico array
+
+### Key Functions
+
+**Comprovacao Submission:**
+- `populateProposicaoSelect()` - filters propositions needing comprovacao
+- Comprovacao form submit handler adds to historico, sets status to `em_analise`
+
+**Avaliacao Process:**
+- `renderAvaliacaoTable()` - shows queue of propositions awaiting evaluation
+- `abrirAvaliacaoModal(id)` - opens evaluation interface
+- `submitAvaliacao(proposicaoId)` - records decision and updates status
+
+**History Display:**
+- `viewDetails(id)` - renders complete timeline with all comprovacoes and avaliacoes
+- Timeline CSS provides visual differentiation between interaction types
+
+## Testing Approach
+
+No automated tests. Manual testing checklist:
+
+**Authentication & Permissions:**
+1. Test login as both admin and user - verify menu visibility
+2. Verify user cannot see "Avaliar Comprovações" menu item
+3. Verify admin sees all menu items including evaluation page
+
+**Data Management:**
+4. Create new correição - verify it appears in tables and dropdowns
+5. Create new proposição - verify correição link and table display
+6. Test all filters - text search, status (including em_analise), correição
+
+**Comprovacao Workflow:**
+7. As user, submit comprovação for pendente proposition:
+   - Verify status changes to `em_analise`
+   - Verify historico entry created with correct data
+   - Verify proposition appears in admin's evaluation queue
+8. Test file selection and display in comprovacao form
+
+**Avaliacao Workflow:**
+9. As admin, access "Avaliar Comprovações" page
+10. Verify propositions with status `em_analise` appear in table
+11. Open evaluation modal and verify:
+    - Latest comprovacao details displayed
+    - All attached files listed
+    - Decision form present
+12. Submit evaluation as `inadimplente`:
+    - Verify status updates
+    - Verify avaliacao added to historico
+    - Verify proposition returns to user's comprovacao queue
+13. Submit new comprovacao and evaluate as `adimplente`:
+    - Verify full cycle completes
+    - Verify historico shows complete timeline
+
+**History & Timeline:**
+14. View details of proposition with multiple comprovacoes/avaliacoes
+15. Verify timeline displays chronologically
+16. Verify color coding (blue for comprovacao, green for avaliacao)
+17. Verify all data shown: dates, users, descriptions, files, status changes
+
+**Dashboard & Charts:**
+18. Verify dashboard cards include "Em Análise" counter
+19. Verify chart displays 6 bars (including em_analise)
+20. Verify all counters update after comprovacao/avaliacao operations
+
+**UI/UX:**
+21. Test responsive layout at mobile breakpoint (768px)
+22. Verify modals scroll properly with long history
+23. Test responsive timeline on narrow screens
+
+## Browser Compatibility Requirements
+
+- ES6+ JavaScript (arrow functions, template literals, const/let)
+- CSS Grid and Flexbox
+- HTML5 form validation
+- Canvas API (for charts)
+- Modern browsers only (Chrome, Firefox, Safari, Edge - no IE11)
+
+## Sample Data Overview
+
+The system includes realistic sample data demonstrating all workflow states:
+
+**Correições (4 total):**
+- COR-2024-01 (MPBA) - 3 propositions
+- COR-2024-02 (MPRJ) - 2 propositions
+- COR-2024-03 (MPMG) - 2 propositions
+- COR-2024-04 (MPSP) - 2 propositions
+
+**Proposições (9 total) - Status Distribution:**
+- **PROP-2024-0001** (adimplente) - Complete workflow example with full historico
+  - 1 comprovacao + 1 avaliacao showing successful completion
+- **PROP-2024-0002** (pendente) - Fresh proposition awaiting initial comprovacao
+- **PROP-2024-0003** (inadimplente) - Deadline passed, needs urgent action
+- **PROP-2024-0004** (parcial) - Partial compliance example with historico
+  - Shows comprovacao evaluated as partially compliant
+- **PROP-2024-0005** (pendente) - High priority pending
+- **PROP-2024-0006** (pendente) - Normal priority pending
+- **PROP-2024-0007** (adimplente) - Completed without historico (legacy data)
+- **PROP-2024-0008** (prejudicada) - Superseded by new legislation
+  - Shows avaliacao marking proposition as prejudicada with justification
+- **PROP-2024-0009** (em_analise) - **IDEAL FOR TESTING EVALUATION WORKFLOW**
+  - Has comprovacao awaiting Corregedoria evaluation
+  - Appears in "Avaliar Comprovações" queue
+  - Use this to test the complete admin evaluation process
+
+**Testing Recommendation:**
+Start with PROP-2024-0009 to test the evaluation workflow, then test creating new comprovacoes for PROP-2024-0002 or PROP-2024-0003 to experience the complete cycle from both user and admin perspectives.

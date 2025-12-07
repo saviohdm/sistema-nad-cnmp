@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNMP - Sistema de Acompanhamento de Proposições</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #0066cc;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-dark: #212529;
+            --text-muted: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-logout {
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-muted);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+        }
+
+        .nav-item {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .nav-item:hover {
+            background-color: var(--light-bg);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-description {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        #statusChart {
+            max-width: 100%;
+            height: 300px;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background-color: var(--light-bg);
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-pendente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-adimplente {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-parcial {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-inadimplente {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-prejudicada {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .badge-em_analise {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .btn-action {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Form */
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border-color);
+            border-radius: 4px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: var(--secondary-color);
+            background-color: var(--light-bg);
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--light-bg);
+            border-radius: 4px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .btn-remove {
+            color: var(--danger-color);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .btn-close:hover {
+            color: var(--text-dark);
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            width: 200px;
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            flex: 1;
+            color: var(--text-dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                overflow-x: scroll;
+            }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin-top: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -2.5rem;
+            top: 0;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+        }
+
+        .timeline-marker.comprovacao {
+            border-color: var(--secondary-color);
+            background-color: var(--secondary-color);
+        }
+
+        .timeline-marker.avaliacao {
+            border-color: var(--success-color);
+            background-color: var(--success-color);
+        }
+
+        .timeline-content {
+            background-color: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--border-color);
+        }
+
+        .timeline-content.comprovacao {
+            border-left-color: var(--secondary-color);
+        }
+
+        .timeline-content.avaliacao {
+            border-left-color: var(--success-color);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .timeline-date {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: normal;
+        }
+
+        .timeline-body {
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        .timeline-files {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .timeline-file {
+            display: inline-block;
+            margin-right: 0.5rem;
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h2>CNMP - Sistema de Proposições</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="userType">Perfil</label>
+                    <select id="userType" required>
+                        <option value="">Selecione...</option>
+                        <option value="admin">Corregedoria Nacional</option>
+                        <option value="user">Órgão Correicionado</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="header">
+            <h1>CNMP - Sistema de Acompanhamento de Proposições</h1>
+            <div class="header-user">
+                <span id="userName">Usuário</span>
+                <button class="btn-logout" onclick="logout()">Sair</button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <div class="nav-item active" onclick="showPage('dashboard')">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </div>
+                    <div class="nav-item" onclick="showPage('correicoes')">
+                        <span class="nav-icon">🏛️</span>
+                        <span>Correições</span>
+                    </div>
+                    <div class="nav-item" onclick="showPage('proposicoes')">
+                        <span class="nav-icon">📋</span>
+                        <span>Proposições</span>
+                    </div>
+                    <div class="nav-item" onclick="showPage('enviar')">
+                        <span class="nav-icon">📤</span>
+                        <span>Enviar Comprovação</span>
+                    </div>
+                    <div class="nav-item" id="navAvaliar" onclick="showPage('avaliar')">
+                        <span class="nav-icon">⚖️</span>
+                        <span>Avaliar Comprovações</span>
+                    </div>
+                    <div class="nav-item" id="navCadastroCorreicao" onclick="showPage('cadastroCorreicao')">
+                        <span class="nav-icon">🆕</span>
+                        <span>Nova Correição</span>
+                    </div>
+                    <div class="nav-item" id="navCadastroProposicao" onclick="showPage('cadastro')">
+                        <span class="nav-icon">➕</span>
+                        <span>Nova Proposição</span>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page">
+                    <h2 class="page-title">Dashboard</h2>
+
+                    <div class="dashboard-cards">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Correições Realizadas</span>
+                                <span class="card-icon">🏛️</span>
+                            </div>
+                            <div class="card-value" id="totalCorreicoes">0</div>
+                            <div class="card-description">Total de correições cadastradas</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Total de Proposições</span>
+                                <span class="card-icon">📄</span>
+                            </div>
+                            <div class="card-value" id="totalProposicoes">0</div>
+                            <div class="card-description">Todas as proposições registradas</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Adimplentes</span>
+                                <span class="card-icon">✅</span>
+                            </div>
+                            <div class="card-value" id="adimplentes" style="color: var(--success-color)">0</div>
+                            <div class="card-description">Proposições cumpridas</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Pendentes</span>
+                                <span class="card-icon">⏳</span>
+                            </div>
+                            <div class="card-value" id="pendentes" style="color: var(--warning-color)">0</div>
+                            <div class="card-description">Aguardando cumprimento</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Inadimplentes</span>
+                                <span class="card-icon">❌</span>
+                            </div>
+                            <div class="card-value" id="inadimplentes" style="color: var(--danger-color)">0</div>
+                            <div class="card-description">Fora do prazo</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Em Análise</span>
+                                <span class="card-icon">🔍</span>
+                            </div>
+                            <div class="card-value" id="emAnalise" style="color: var(--secondary-color)">0</div>
+                            <div class="card-description">Aguardando avaliação</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Prejudicadas</span>
+                                <span class="card-icon">⊘</span>
+                            </div>
+                            <div class="card-value" id="prejudicadas" style="color: var(--text-muted)">0</div>
+                            <div class="card-description">Proposições prejudicadas</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3 class="chart-title">Status das Proposições</h3>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Proposições Page -->
+                <div id="proposicoesPage" class="page hidden">
+                    <h2 class="page-title">Proposições</h2>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="search-box">
+                                <input type="text" id="searchInput" placeholder="Buscar por número, comarca ou órgão...">
+                                <select id="correicaoFilter">
+                                    <option value="">Todas as correições</option>
+                                </select>
+                                <select id="statusFilter">
+                                    <option value="">Todos os status</option>
+                                    <option value="pendente">Pendente</option>
+                                    <option value="em_analise">Em Análise</option>
+                                    <option value="adimplente">Adimplente</option>
+                                    <option value="parcial">Parcialmente Adimplente</option>
+                                    <option value="inadimplente">Inadimplente</option>
+                                    <option value="prejudicada">Prejudicada</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Correição</th>
+                                    <th>Órgão Correicionado</th>
+                                    <th>Descrição</th>
+                                    <th>Prazo</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proposicoesTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Correições Page -->
+                <div id="correicoesPage" class="page hidden">
+                    <h2 class="page-title">Correições</h2>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="search-box">
+                                <input type="text" id="searchCorreicao" placeholder="Buscar por ramo do MP, ano ou número...">
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Ramo do MP</th>
+                                    <th>Período</th>
+                                    <th>Total de Proposições</th>
+                                    <th>Status Geral</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="correicoesTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Enviar Comprovação Page -->
+                <div id="enviarPage" class="page hidden">
+                    <h2 class="page-title">Enviar Comprovação de Adimplemento</h2>
+
+                    <div class="form-container">
+                        <form id="comprovacaoForm">
+                            <div class="form-group">
+                                <label for="proposicaoSelect">Selecione a Proposição *</label>
+                                <select id="proposicaoSelect" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="descricaoAdimplemento">Descrição do Adimplemento *</label>
+                                <textarea id="descricaoAdimplemento" rows="5" required placeholder="Descreva como a proposição foi cumprida..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Documentos Comprobatórios *</label>
+                                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                                    <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                    <p>Clique para selecionar arquivos</p>
+                                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                        PDF, DOC, DOCX, JPG, PNG (máx. 10MB por arquivo)
+                                    </p>
+                                </div>
+                                <div id="fileList" class="file-list hidden"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="observacoes">Observações</label>
+                                <textarea id="observacoes" rows="3" placeholder="Observações adicionais (opcional)"></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar</button>
+                                <button type="submit" class="btn btn-success">Enviar Comprovação</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Avaliar Comprovações Page -->
+                <div id="avaliarPage" class="page hidden">
+                    <h2 class="page-title">Avaliar Comprovações</h2>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Proposições em Análise</h3>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Correição</th>
+                                    <th>Órgão</th>
+                                    <th>Descrição</th>
+                                    <th>Comprovações</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="avaliacaoTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cadastro Correição Page -->
+                <div id="cadastroCorreicaoPage" class="page hidden">
+                    <h2 class="page-title">Cadastrar Nova Correição</h2>
+
+                    <div class="form-container">
+                        <form id="cadastroCorreicaoForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="numeroCorreicao">Número da Correição *</label>
+                                    <input type="text" id="numeroCorreicao" required placeholder="Ex: COR-2024-01">
+                                </div>
+                                <div class="form-group">
+                                    <label for="ramoMP">Ramo do Ministério Público *</label>
+                                    <select id="ramoMP" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="MPBA">MPBA - Ministério Público da Bahia</option>
+                                        <option value="MPGO">MPGO - Ministério Público de Goiás</option>
+                                        <option value="MPPI">MPPI - Ministério Público do Piauí</option>
+                                        <option value="MPSP">MPSP - Ministério Público de São Paulo</option>
+                                        <option value="MPRJ">MPRJ - Ministério Público do Rio de Janeiro</option>
+                                        <option value="MPMG">MPMG - Ministério Público de Minas Gerais</option>
+                                        <option value="MPCE">MPCE - Ministério Público do Ceará</option>
+                                        <option value="MPPE">MPPE - Ministério Público de Pernambuco</option>
+                                        <option value="MPRS">MPRS - Ministério Público do Rio Grande do Sul</option>
+                                        <option value="MPPR">MPPR - Ministério Público do Paraná</option>
+                                        <option value="MPSC">MPSC - Ministério Público de Santa Catarina</option>
+                                        <option value="MPMT">MPMT - Ministério Público do Mato Grosso</option>
+                                        <option value="MPMS">MPMS - Ministério Público do Mato Grosso do Sul</option>
+                                        <option value="MPAM">MPAM - Ministério Público do Amazonas</option>
+                                        <option value="MPPA">MPPA - Ministério Público do Pará</option>
+                                        <option value="MPDF">MPDF - Ministério Público do Distrito Federal</option>
+                                        <option value="MPES">MPES - Ministério Público do Espírito Santo</option>
+                                        <option value="MPRN">MPRN - Ministério Público do Rio Grande do Norte</option>
+                                        <option value="MPPB">MPPB - Ministério Público da Paraíba</option>
+                                        <option value="MPAL">MPAL - Ministério Público de Alagoas</option>
+                                        <option value="MPSE">MPSE - Ministério Público de Sergipe</option>
+                                        <option value="MPTO">MPTO - Ministério Público do Tocantins</option>
+                                        <option value="MPAC">MPAC - Ministério Público do Acre</option>
+                                        <option value="MPRO">MPRO - Ministério Público de Rondônia</option>
+                                        <option value="MPRR">MPRR - Ministério Público de Roraima</option>
+                                        <option value="MPAP">MPAP - Ministério Público do Amapá</option>
+                                        <option value="MPMA">MPMA - Ministério Público do Maranhão</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="dataInicioCorreicao">Data de Início *</label>
+                                    <input type="date" id="dataInicioCorreicao" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="dataFimCorreicao">Data de Término *</label>
+                                    <input type="date" id="dataFimCorreicao" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="observacoesCorreicao">Observações</label>
+                                <textarea id="observacoesCorreicao" rows="4" placeholder="Observações gerais sobre a correição (opcional)"></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="clearCorreicaoForm()">Limpar</button>
+                                <button type="submit" class="btn btn-primary">Cadastrar Correição</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Cadastro Page -->
+                <div id="cadastroPage" class="page hidden">
+                    <h2 class="page-title">Cadastrar Nova Proposição</h2>
+
+                    <div class="form-container">
+                        <form id="cadastroForm">
+                            <div class="form-group">
+                                <label for="correicaoId">Correição de Origem *</label>
+                                <select id="correicaoId" required>
+                                    <option value="">Selecione a correição...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="numeroProposicao">Número da Proposição *</label>
+                                    <input type="text" id="numeroProposicao" required placeholder="Ex: PROP-2024-0001">
+                                </div>
+                                <div class="form-group">
+                                    <label for="prazo">Prazo de Cumprimento *</label>
+                                    <input type="date" id="prazo" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="descricaoProposicao">Descrição da Proposição *</label>
+                                <textarea id="descricaoProposicao" rows="5" required placeholder="Descreva detalhadamente a proposição..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="prioridade">Prioridade</label>
+                                <select id="prioridade">
+                                    <option value="normal">Normal</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="clearCadastroForm()">Limpar</button>
+                                <button type="submit" class="btn btn-primary">Cadastrar Proposição</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for Details -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalhes da Proposição</h3>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Avaliação -->
+    <div id="avaliacaoModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Avaliar Comprovação</h3>
+                <button class="btn-close" onclick="closeAvaliacaoModal()">&times;</button>
+            </div>
+            <div id="avaliacaoModalBody">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage
+        let correicoes = [];
+        let proposicoes = [];
+        let currentUser = null;
+        let selectedFiles = [];
+
+        // Initialize sample data
+        function initializeSampleData() {
+            correicoes = [
+                {
+                    id: 1,
+                    numero: 'COR-2024-01',
+                    ramoMP: 'MPBA',
+                    ramoMPNome: 'MPBA - Ministério Público da Bahia',
+                    dataInicio: '2024-01-15',
+                    dataFim: '2024-01-30',
+                    observacoes: 'Correição ordinária 2024'
+                },
+                {
+                    id: 2,
+                    numero: 'COR-2024-02',
+                    ramoMP: 'MPRJ',
+                    ramoMPNome: 'MPRJ - Ministério Público do Rio de Janeiro',
+                    dataInicio: '2024-02-10',
+                    dataFim: '2024-02-28',
+                    observacoes: 'Correição ordinária 2024'
+                },
+                {
+                    id: 3,
+                    numero: 'COR-2024-03',
+                    ramoMP: 'MPMG',
+                    ramoMPNome: 'MPMG - Ministério Público de Minas Gerais',
+                    dataInicio: '2024-03-05',
+                    dataFim: '2024-03-20',
+                    observacoes: 'Correição ordinária 2024'
+                },
+                {
+                    id: 4,
+                    numero: 'COR-2024-04',
+                    ramoMP: 'MPSP',
+                    ramoMPNome: 'MPSP - Ministério Público de São Paulo',
+                    dataInicio: '2024-04-01',
+                    dataFim: '2024-04-15',
+                    observacoes: 'Correição extraordinária'
+                }
+            ];
+
+            proposicoes = [
+                {
+                    id: 1,
+                    numero: 'PROP-2024-0001',
+                    correicaoId: 1,
+                    descricao: 'Implementar sistema digital de protocolo de documentos',
+                    prazo: '2024-12-31',
+                    status: 'adimplente',
+                    prioridade: 'alta',
+                    historico: [
+                        {
+                            tipo: 'comprovacao',
+                            data: '2024-11-15T10:30:00',
+                            usuario: 'MPBA',
+                            descricao: 'Sistema implementado e em funcionamento desde 01/11/2024',
+                            arquivos: ['sistema_protocolo_manual.pdf', 'prints_sistema.pdf']
+                        },
+                        {
+                            tipo: 'avaliacao',
+                            data: '2024-11-20T14:00:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'Comprovação aceita. Sistema implementado conforme especificado.',
+                            statusAnterior: 'em_analise',
+                            statusNovo: 'adimplente'
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    numero: 'PROP-2024-0002',
+                    correicaoId: 1,
+                    descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
+                    prazo: '2024-11-30',
+                    status: 'pendente',
+                    prioridade: 'normal',
+                    historico: []
+                },
+                {
+                    id: 3,
+                    numero: 'PROP-2024-0003',
+                    correicaoId: 2,
+                    descricao: 'Regularizar processos de gestão de pessoas',
+                    prazo: '2024-10-15',
+                    status: 'inadimplente',
+                    prioridade: 'urgente',
+                    historico: []
+                },
+                {
+                    id: 4,
+                    numero: 'PROP-2024-0004',
+                    correicaoId: 3,
+                    descricao: 'Atualizar inventário patrimonial',
+                    prazo: '2025-01-30',
+                    status: 'parcial',
+                    prioridade: 'normal',
+                    historico: [
+                        {
+                            tipo: 'comprovacao',
+                            data: '2024-11-10T09:00:00',
+                            usuario: 'MPMG',
+                            descricao: 'Inventário parcialmente atualizado - 60% concluído',
+                            arquivos: ['inventario_parcial.xlsx']
+                        },
+                        {
+                            tipo: 'avaliacao',
+                            data: '2024-11-12T15:30:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'Adimplemento parcial aceito. Necessário completar os 40% restantes.',
+                            statusAnterior: 'em_analise',
+                            statusNovo: 'parcial'
+                        }
+                    ]
+                },
+                {
+                    id: 5,
+                    numero: 'PROP-2024-0005',
+                    correicaoId: 3,
+                    descricao: 'Implementar controles internos de correição',
+                    prazo: '2024-12-20',
+                    status: 'pendente',
+                    prioridade: 'alta',
+                    historico: []
+                },
+                {
+                    id: 6,
+                    numero: 'PROP-2024-0006',
+                    correicaoId: 4,
+                    descricao: 'Criar programa de capacitação continuada',
+                    prazo: '2025-02-15',
+                    status: 'pendente',
+                    prioridade: 'normal',
+                    historico: []
+                },
+                {
+                    id: 7,
+                    numero: 'PROP-2024-0007',
+                    correicaoId: 4,
+                    descricao: 'Modernizar infraestrutura de TI',
+                    prazo: '2024-12-10',
+                    status: 'adimplente',
+                    prioridade: 'alta',
+                    historico: []
+                },
+                {
+                    id: 8,
+                    numero: 'PROP-2024-0008',
+                    correicaoId: 2,
+                    descricao: 'Reorganizar estrutura administrativa - proposição superada por nova legislação',
+                    prazo: '2024-09-30',
+                    status: 'prejudicada',
+                    prioridade: 'normal',
+                    historico: [
+                        {
+                            tipo: 'avaliacao',
+                            data: '2024-10-05T11:00:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'Proposição prejudicada em razão da Lei nº 14.133/2021 que torna desnecessária a reorganização proposta.',
+                            statusAnterior: 'pendente',
+                            statusNovo: 'prejudicada'
+                        }
+                    ]
+                },
+                {
+                    id: 9,
+                    numero: 'PROP-2024-0009',
+                    correicaoId: 1,
+                    descricao: 'Implementar política de gestão documental e arquivística',
+                    prazo: '2024-12-31',
+                    status: 'em_analise',
+                    prioridade: 'alta',
+                    historico: [
+                        {
+                            tipo: 'comprovacao',
+                            data: '2024-11-25T16:45:00',
+                            usuario: 'MPBA',
+                            descricao: 'Política de gestão documental implementada através da Portaria nº 456/2024. Sistema de arquivamento digital em funcionamento desde novembro/2024.',
+                            observacoes: 'Aguardando validação da Corregedoria Nacional',
+                            arquivos: ['portaria_456_2024.pdf', 'manual_gestao_documental.pdf', 'prints_sistema_arquivo.pdf']
+                        }
+                    ]
+                }
+            ];
+            updateDashboard();
+            renderProposicoesTable();
+            renderCorreicoesTable();
+            renderAvaliacaoTable();
+            populateProposicaoSelect();
+            populateCorreicaoFilter();
+            populateCorreicaoIdSelect();
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const userType = document.getElementById('userType').value;
+
+            currentUser = {
+                username: username,
+                type: userType
+            };
+
+            document.getElementById('userName').textContent = username;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            // Hide admin pages for regular users
+            if (userType === 'user') {
+                document.getElementById('navAvaliar').style.display = 'none';
+                document.getElementById('navCadastroCorreicao').style.display = 'none';
+                document.getElementById('navCadastroProposicao').style.display = 'none';
+            }
+
+            initializeSampleData();
+        });
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+        }
+
+        // Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(pageId + 'Page').classList.remove('hidden');
+
+            // Add active class to selected nav item
+            event.currentTarget.classList.add('active');
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            const totalCorreicoes = correicoes.length;
+            const total = proposicoes.length;
+            const adimplentes = proposicoes.filter(p => p.status === 'adimplente').length;
+            const pendentes = proposicoes.filter(p => p.status === 'pendente').length;
+            const inadimplentes = proposicoes.filter(p => p.status === 'inadimplente').length;
+            const emAnalise = proposicoes.filter(p => p.status === 'em_analise').length;
+            const prejudicadas = proposicoes.filter(p => p.status === 'prejudicada').length;
+
+            document.getElementById('totalCorreicoes').textContent = totalCorreicoes;
+            document.getElementById('totalProposicoes').textContent = total;
+            document.getElementById('adimplentes').textContent = adimplentes;
+            document.getElementById('pendentes').textContent = pendentes;
+            document.getElementById('inadimplentes').textContent = inadimplentes;
+            document.getElementById('emAnalise').textContent = emAnalise;
+            document.getElementById('prejudicadas').textContent = prejudicadas;
+
+            drawChart();
+        }
+
+        // Draw Chart
+        function drawChart() {
+            const canvas = document.getElementById('statusChart');
+            const ctx = canvas.getContext('2d');
+
+            const data = {
+                adimplente: proposicoes.filter(p => p.status === 'adimplente').length,
+                pendente: proposicoes.filter(p => p.status === 'pendente').length,
+                em_analise: proposicoes.filter(p => p.status === 'em_analise').length,
+                parcial: proposicoes.filter(p => p.status === 'parcial').length,
+                inadimplente: proposicoes.filter(p => p.status === 'inadimplente').length,
+                prejudicada: proposicoes.filter(p => p.status === 'prejudicada').length
+            };
+
+            const total = Object.values(data).reduce((a, b) => a + b, 0);
+            const colors = {
+                adimplente: '#28a745',
+                pendente: '#ffc107',
+                em_analise: '#0066cc',
+                parcial: '#17a2b8',
+                inadimplente: '#dc3545',
+                prejudicada: '#6c757d'
+            };
+
+            const labels = {
+                adimplente: 'Adimplente',
+                pendente: 'Pendente',
+                em_analise: 'Em Análise',
+                parcial: 'Parcial',
+                inadimplente: 'Inadimplente',
+                prejudicada: 'Prejudicada'
+            };
+
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 300;
+
+            // Calculate bar width and spacing
+            const barWidth = (canvas.width - 100) / 6;
+            const maxValue = Math.max(...Object.values(data));
+            const heightRatio = (canvas.height - 80) / (maxValue || 1);
+
+            let x = 50;
+            Object.keys(data).forEach(key => {
+                const value = data[key];
+                const barHeight = value * heightRatio;
+                const y = canvas.height - barHeight - 50;
+
+                // Draw bar
+                ctx.fillStyle = colors[key];
+                ctx.fillRect(x, y, barWidth - 20, barHeight);
+
+                // Draw value
+                ctx.fillStyle = '#000';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(value, x + (barWidth - 20) / 2, y - 10);
+
+                // Draw label
+                ctx.font = '10px Arial';
+                ctx.fillText(labels[key], x + (barWidth - 20) / 2, canvas.height - 30);
+
+                x += barWidth;
+            });
+        }
+
+        // Render Proposições Table
+        function renderProposicoesTable() {
+            const tbody = document.getElementById('proposicoesTableBody');
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const statusFilter = document.getElementById('statusFilter')?.value || '';
+            const correicaoFilter = document.getElementById('correicaoFilter')?.value || '';
+
+            let filtered = proposicoes.filter(p => {
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                const ramoMP = correicao ? correicao.ramoMP : '';
+
+                const matchesSearch = p.numero.toLowerCase().includes(searchTerm) ||
+                                    ramoMP.toLowerCase().includes(searchTerm) ||
+                                    p.descricao.toLowerCase().includes(searchTerm);
+                const matchesStatus = !statusFilter || p.status === statusFilter;
+                const matchesCorreicao = !correicaoFilter || p.correicaoId === parseInt(correicaoFilter);
+                return matchesSearch && matchesStatus && matchesCorreicao;
+            });
+
+            tbody.innerHTML = filtered.map(p => {
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                const correicaoInfo = correicao ? `${correicao.numero}` : 'N/A';
+                const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+
+                return `
+                    <tr>
+                        <td>${p.numero}</td>
+                        <td>${correicaoInfo}</td>
+                        <td>${ramoMP}</td>
+                        <td>${p.descricao.substring(0, 40)}...</td>
+                        <td>${formatDate(p.prazo)}</td>
+                        <td><span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-action" onclick="viewDetails(${p.id})">Ver</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Search and filter
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const searchInput = document.getElementById('searchInput');
+                const statusFilter = document.getElementById('statusFilter');
+                const correicaoFilter = document.getElementById('correicaoFilter');
+                const searchCorreicao = document.getElementById('searchCorreicao');
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', renderProposicoesTable);
+                }
+                if (statusFilter) {
+                    statusFilter.addEventListener('change', renderProposicoesTable);
+                }
+                if (correicaoFilter) {
+                    correicaoFilter.addEventListener('change', renderProposicoesTable);
+                }
+                if (searchCorreicao) {
+                    searchCorreicao.addEventListener('input', renderCorreicoesTable);
+                }
+            }, 100);
+        });
+
+        // View Details
+        function viewDetails(id) {
+            const proposicao = proposicoes.find(p => p.id === id);
+            if (!proposicao) return;
+
+            const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+            const correicaoInfo = correicao ? `${correicao.numero} - ${correicao.ramoMPNome}` : 'N/A';
+            const periodoCorreicao = correicao ? `${formatDate(correicao.dataInicio)} a ${formatDate(correicao.dataFim)}` : 'N/A';
+
+            // Gerar histórico
+            let historicoHTML = '';
+            if (proposicao.historico && proposicao.historico.length > 0) {
+                historicoHTML = `
+                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
+                        <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Histórico de Comprovações e Avaliações</h4>
+                        <div class="timeline">
+                            ${proposicao.historico.map(h => {
+                                const tipoLabel = h.tipo === 'comprovacao' ? 'Comprovação Enviada' : 'Avaliação da Corregedoria';
+                                const statusInfo = h.tipo === 'avaliacao' ?
+                                    `<div style="margin-top: 0.5rem;">
+                                        <strong>Decisão:</strong>
+                                        <span class="badge badge-${h.statusNovo}">${getStatusLabel(h.statusNovo)}</span>
+                                    </div>` : '';
+
+                                const arquivosHTML = h.arquivos && h.arquivos.length > 0 ?
+                                    `<div class="timeline-files">
+                                        <strong>Arquivos:</strong><br>
+                                        ${h.arquivos.map(a => `<span class="timeline-file">📎 ${a}</span>`).join('')}
+                                    </div>` : '';
+
+                                const observacoesHTML = h.observacoes ?
+                                    `<div style="margin-top: 0.5rem;">
+                                        <strong>Observações:</strong> ${h.observacoes}
+                                    </div>` : '';
+
+                                return `
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker ${h.tipo}"></div>
+                                        <div class="timeline-content ${h.tipo}">
+                                            <div class="timeline-header">
+                                                <span>${tipoLabel}</span>
+                                                <span class="timeline-date">${formatDateTime(h.data)}</span>
+                                            </div>
+                                            <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                                Por: ${h.usuario}
+                                            </div>
+                                            <div class="timeline-body">
+                                                ${h.descricao}
+                                            </div>
+                                            ${statusInfo}
+                                            ${observacoesHTML}
+                                            ${arquivosHTML}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Número:</span>
+                    <span class="detail-value">${proposicao.numero}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Correição:</span>
+                    <span class="detail-value">${correicaoInfo}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Período da Correição:</span>
+                    <span class="detail-value">${periodoCorreicao}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Prazo:</span>
+                    <span class="detail-value">${formatDate(proposicao.prazo)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Prioridade:</span>
+                    <span class="detail-value">${proposicao.prioridade.toUpperCase()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value"><span class="badge badge-${proposicao.status}">${getStatusLabel(proposicao.status)}</span></span>
+                </div>
+                <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="detail-label" style="margin-bottom: 0.5rem;">Descrição:</span>
+                    <span class="detail-value">${proposicao.descricao}</span>
+                </div>
+                ${historicoHTML}
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        // View Correição Details
+        function viewCorreicaoDetails(id) {
+            const correicao = correicoes.find(c => c.id === id);
+            if (!correicao) return;
+
+            const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === id);
+            const totalProposicoes = proposicoesCorreicao.length;
+            const adimplentes = proposicoesCorreicao.filter(p => p.status === 'adimplente').length;
+            const pendentes = proposicoesCorreicao.filter(p => p.status === 'pendente').length;
+            const inadimplentes = proposicoesCorreicao.filter(p => p.status === 'inadimplente').length;
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Número:</span>
+                    <span class="detail-value">${correicao.numero}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Ramo do MP:</span>
+                    <span class="detail-value">${correicao.ramoMPNome}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Período:</span>
+                    <span class="detail-value">${formatDate(correicao.dataInicio)} a ${formatDate(correicao.dataFim)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total de Proposições:</span>
+                    <span class="detail-value">${totalProposicoes}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Adimplentes:</span>
+                    <span class="detail-value" style="color: var(--success-color); font-weight: 600;">${adimplentes}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pendentes:</span>
+                    <span class="detail-value" style="color: var(--warning-color); font-weight: 600;">${pendentes}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Inadimplentes:</span>
+                    <span class="detail-value" style="color: var(--danger-color); font-weight: 600;">${inadimplentes}</span>
+                </div>
+                ${correicao.observacoes ? `
+                <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="detail-label" style="margin-bottom: 0.5rem;">Observações:</span>
+                    <span class="detail-value">${correicao.observacoes}</span>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        // File handling
+        document.getElementById('fileInput')?.addEventListener('change', function(e) {
+            selectedFiles = Array.from(e.target.files);
+            displayFiles();
+        });
+
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
+                return;
+            }
+
+            fileList.classList.remove('hidden');
+            fileList.innerHTML = '<strong>Arquivos selecionados:</strong>' +
+                selectedFiles.map((file, index) => `
+                    <div class="file-item">
+                        <span>${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
+                        <span class="btn-remove" onclick="removeFile(${index})">Remover</span>
+                    </div>
+                `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+        }
+
+        // Render Correições Table
+        function renderCorreicoesTable() {
+            const tbody = document.getElementById('correicoesTableBody');
+            const searchTerm = document.getElementById('searchCorreicao')?.value.toLowerCase() || '';
+
+            let filtered = correicoes.filter(c => {
+                const matchesSearch = c.numero.toLowerCase().includes(searchTerm) ||
+                                    c.ramoMP.toLowerCase().includes(searchTerm) ||
+                                    c.ramoMPNome.toLowerCase().includes(searchTerm);
+                return matchesSearch;
+            });
+
+            tbody.innerHTML = filtered.map(c => {
+                const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
+                const totalProposicoes = proposicoesCorreicao.length;
+                const adimplentes = proposicoesCorreicao.filter(p => p.status === 'adimplente').length;
+                const pendentes = proposicoesCorreicao.filter(p => p.status === 'pendente').length;
+
+                let statusGeral = 'Concluída';
+                let badgeClass = 'badge-adimplente';
+
+                if (pendentes > 0) {
+                    statusGeral = 'Em andamento';
+                    badgeClass = 'badge-pendente';
+                }
+                if (adimplentes === totalProposicoes && totalProposicoes > 0) {
+                    statusGeral = 'Concluída';
+                    badgeClass = 'badge-adimplente';
+                }
+
+                return `
+                    <tr>
+                        <td>${c.numero}</td>
+                        <td>${c.ramoMP}</td>
+                        <td>${formatDate(c.dataInicio)} a ${formatDate(c.dataFim)}</td>
+                        <td>${totalProposicoes}</td>
+                        <td><span class="badge ${badgeClass}">${statusGeral}</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-action" onclick="viewCorreicaoDetails(${c.id})">Ver</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Populate correicao filter
+        function populateCorreicaoFilter() {
+            const select = document.getElementById('correicaoFilter');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Todas as correições</option>' +
+                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP}</option>`).join('');
+        }
+
+        // Populate correicao select in proposicao form
+        function populateCorreicaoIdSelect() {
+            const select = document.getElementById('correicaoId');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Selecione a correição...</option>' +
+                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMPNome}</option>`).join('');
+        }
+
+        // Populate proposição select
+        function populateProposicaoSelect() {
+            const select = document.getElementById('proposicaoSelect');
+            if (!select) return;
+
+            const pendentes = proposicoes.filter(p => p.status === 'pendente' || p.status === 'inadimplente' || p.status === 'parcial');
+            select.innerHTML = '<option value="">Selecione...</option>' +
+                pendentes.map(p => {
+                    const correicao = correicoes.find(c => c.id === p.correicaoId);
+                    const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+                    return `<option value="${p.id}">${p.numero} - ${ramoMP} (${getStatusLabel(p.status)})</option>`;
+                }).join('');
+        }
+
+        // Submit comprovação
+        document.getElementById('comprovacaoForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (selectedFiles.length === 0) {
+                alert('Por favor, selecione pelo menos um arquivo comprobatório.');
+                return;
+            }
+
+            const proposicaoId = parseInt(document.getElementById('proposicaoSelect').value);
+            const proposicao = proposicoes.find(p => p.id === proposicaoId);
+            const descricao = document.getElementById('descricaoAdimplemento').value;
+            const observacoes = document.getElementById('observacoes').value;
+
+            if (proposicao) {
+                // Adicionar comprovação ao histórico
+                const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+                const ramoMP = correicao ? correicao.ramoMP : 'Correicionado';
+
+                const novaComprovacao = {
+                    tipo: 'comprovacao',
+                    data: new Date().toISOString(),
+                    usuario: ramoMP,
+                    descricao: descricao,
+                    observacoes: observacoes,
+                    arquivos: selectedFiles.map(f => f.name)
+                };
+
+                if (!proposicao.historico) {
+                    proposicao.historico = [];
+                }
+                proposicao.historico.push(novaComprovacao);
+
+                // Alterar status para "em_analise"
+                proposicao.status = 'em_analise';
+
+                updateDashboard();
+                renderProposicoesTable();
+                populateProposicaoSelect();
+            }
+
+            alert('Comprovação enviada com sucesso! Aguarde análise da Corregedoria Nacional.');
+            clearForm();
+        });
+
+        function clearForm() {
+            document.getElementById('comprovacaoForm')?.reset();
+            selectedFiles = [];
+            displayFiles();
+        }
+
+        // Submit cadastro correição
+        document.getElementById('cadastroCorreicaoForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const ramoMPSelect = document.getElementById('ramoMP');
+            const selectedOption = ramoMPSelect.options[ramoMPSelect.selectedIndex];
+
+            const newCorreicao = {
+                id: correicoes.length + 1,
+                numero: document.getElementById('numeroCorreicao').value,
+                ramoMP: document.getElementById('ramoMP').value,
+                ramoMPNome: selectedOption.text,
+                dataInicio: document.getElementById('dataInicioCorreicao').value,
+                dataFim: document.getElementById('dataFimCorreicao').value,
+                observacoes: document.getElementById('observacoesCorreicao').value
+            };
+
+            correicoes.push(newCorreicao);
+            updateDashboard();
+            renderCorreicoesTable();
+            populateCorreicaoFilter();
+            populateCorreicaoIdSelect();
+
+            alert('Correição cadastrada com sucesso!');
+            clearCorreicaoForm();
+        });
+
+        function clearCorreicaoForm() {
+            document.getElementById('cadastroCorreicaoForm')?.reset();
+        }
+
+        // Submit cadastro proposição
+        document.getElementById('cadastroForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newProposicao = {
+                id: proposicoes.length + 1,
+                numero: document.getElementById('numeroProposicao').value,
+                correicaoId: parseInt(document.getElementById('correicaoId').value),
+                descricao: document.getElementById('descricaoProposicao').value,
+                prazo: document.getElementById('prazo').value,
+                prioridade: document.getElementById('prioridade').value,
+                status: 'pendente'
+            };
+
+            proposicoes.push(newProposicao);
+            updateDashboard();
+            renderProposicoesTable();
+            populateProposicaoSelect();
+            renderCorreicoesTable();
+
+            alert('Proposição cadastrada com sucesso!');
+            clearCadastroForm();
+        });
+
+        function clearCadastroForm() {
+            document.getElementById('cadastroForm')?.reset();
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'pendente': 'Pendente',
+                'em_analise': 'Em Análise',
+                'adimplente': 'Adimplente',
+                'parcial': 'Parcial',
+                'inadimplente': 'Inadimplente',
+                'prejudicada': 'Prejudicada'
+            };
+            return labels[status] || status;
+        }
+
+        // Render Avaliação Table
+        function renderAvaliacaoTable() {
+            const tbody = document.getElementById('avaliacaoTableBody');
+            if (!tbody) return;
+
+            const emAnalise = proposicoes.filter(p => p.status === 'em_analise');
+
+            tbody.innerHTML = emAnalise.map(p => {
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                const correicaoInfo = correicao ? `${correicao.numero}` : 'N/A';
+                const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+                const numComprovacoes = p.historico ? p.historico.filter(h => h.tipo === 'comprovacao').length : 0;
+
+                return `
+                    <tr>
+                        <td>${p.numero}</td>
+                        <td>${correicaoInfo}</td>
+                        <td>${ramoMP}</td>
+                        <td>${p.descricao.substring(0, 40)}...</td>
+                        <td>${numComprovacoes}</td>
+                        <td>
+                            <button class="btn btn-primary btn-action" onclick="abrirAvaliacaoModal(${p.id})">Avaliar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (emAnalise.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição aguardando avaliação</td></tr>';
+            }
+        }
+
+        // Abrir modal de avaliação
+        function abrirAvaliacaoModal(id) {
+            const proposicao = proposicoes.find(p => p.id === id);
+            if (!proposicao) return;
+
+            const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+            const correicaoInfo = correicao ? `${correicao.numero} - ${correicao.ramoMPNome}` : 'N/A';
+
+            // Pegar última comprovação
+            const comprovacoes = proposicao.historico ? proposicao.historico.filter(h => h.tipo === 'comprovacao') : [];
+            const ultimaComprovacao = comprovacoes.length > 0 ? comprovacoes[comprovacoes.length - 1] : null;
+
+            const modalBody = document.getElementById('avaliacaoModalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Número:</span>
+                    <span class="detail-value">${proposicao.numero}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Correição:</span>
+                    <span class="detail-value">${correicaoInfo}</span>
+                </div>
+                <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="detail-label" style="margin-bottom: 0.5rem;">Descrição da Proposição:</span>
+                    <span class="detail-value">${proposicao.descricao}</span>
+                </div>
+
+                ${ultimaComprovacao ? `
+                <div style="background-color: var(--light-bg); padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                    <h4 style="margin-bottom: 1rem; color: var(--primary-color);">Última Comprovação</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Data:</span>
+                        <span class="detail-value">${formatDateTime(ultimaComprovacao.data)}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Enviado por:</span>
+                        <span class="detail-value">${ultimaComprovacao.usuario}</span>
+                    </div>
+                    <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="detail-label" style="margin-bottom: 0.5rem;">Descrição:</span>
+                        <span class="detail-value">${ultimaComprovacao.descricao}</span>
+                    </div>
+                    ${ultimaComprovacao.observacoes ? `
+                    <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="detail-label" style="margin-bottom: 0.5rem;">Observações:</span>
+                        <span class="detail-value">${ultimaComprovacao.observacoes}</span>
+                    </div>
+                    ` : ''}
+                    ${ultimaComprovacao.arquivos && ultimaComprovacao.arquivos.length > 0 ? `
+                    <div class="detail-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="detail-label" style="margin-bottom: 0.5rem;">Arquivos:</span>
+                        <span class="detail-value">${ultimaComprovacao.arquivos.map(a => `<div>📎 ${a}</div>`).join('')}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : '<p style="color: var(--text-muted);">Nenhuma comprovação registrada.</p>'}
+
+                <form id="avaliacaoForm" style="margin-top: 2rem;">
+                    <div class="form-group">
+                        <label for="statusAvaliacao">Decisão *</label>
+                        <select id="statusAvaliacao" required>
+                            <option value="">Selecione...</option>
+                            <option value="adimplente">Adimplente - Comprovação aceita</option>
+                            <option value="parcial">Parcialmente Adimplente - Comprovação parcial</option>
+                            <option value="inadimplente">Inadimplente - Comprovação insuficiente</option>
+                            <option value="prejudicada">Prejudicada - Proposição superada</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parecerAvaliacao">Parecer da Corregedoria Nacional *</label>
+                        <textarea id="parecerAvaliacao" rows="5" required placeholder="Descreva a justificativa da decisão..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeAvaliacaoModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Avaliação</button>
+                    </div>
+                </form>
+            `;
+
+            // Add event listener to form
+            document.getElementById('avaliacaoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitAvaliacao(id);
+            });
+
+            document.getElementById('avaliacaoModal').classList.remove('hidden');
+        }
+
+        function closeAvaliacaoModal() {
+            document.getElementById('avaliacaoModal').classList.add('hidden');
+        }
+
+        // Submit avaliação
+        function submitAvaliacao(proposicaoId) {
+            const proposicao = proposicoes.find(p => p.id === proposicaoId);
+            if (!proposicao) return;
+
+            const novoStatus = document.getElementById('statusAvaliacao').value;
+            const parecer = document.getElementById('parecerAvaliacao').value;
+
+            if (!novoStatus || !parecer) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            // Adicionar avaliação ao histórico
+            const novaAvaliacao = {
+                tipo: 'avaliacao',
+                data: new Date().toISOString(),
+                usuario: 'Corregedoria Nacional',
+                descricao: parecer,
+                statusAnterior: proposicao.status,
+                statusNovo: novoStatus
+            };
+
+            if (!proposicao.historico) {
+                proposicao.historico = [];
+            }
+            proposicao.historico.push(novaAvaliacao);
+
+            // Atualizar status
+            proposicao.status = novoStatus;
+
+            // Atualizar todas as views
+            updateDashboard();
+            renderProposicoesTable();
+            renderAvaliacaoTable();
+            populateProposicaoSelect();
+
+            alert('Avaliação registrada com sucesso!');
+            closeAvaliacaoModal();
+        }
+
+        // Utility function to format date and time
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('pt-BR');
+        }
+    </script>
+</body>
+</html>
