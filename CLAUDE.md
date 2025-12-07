@@ -25,6 +25,7 @@ Correição (Judicial Review)
     ├── id, numero, correicaoId
     ├── descricao, prazo, prioridade
     ├── status: 'pendente' | 'em_analise' | 'adimplente' | 'parcial' | 'inadimplente' | 'prejudicada'
+    ├── tags[] (array of tag IDs for categorization)
     └── historico[] (array of interactions)
         ├── tipo: 'comprovacao' | 'avaliacao'
         ├── data (ISO timestamp)
@@ -114,7 +115,16 @@ Multi-criteria filtering system:
 - Text search across numero, ramoMP, descricao
 - Status dropdown filter
 - Correição dropdown filter (propositions only)
+- Tag dropdown filter (propositions only)
 - All filters work together (AND logic)
+
+### Tag System (lines 383-507, 1233-1490)
+Complete categorization system with 11 predefined tags:
+- Color-coded badges with distinct visual styles
+- Multi-select checkbox interface in cadastro form
+- Tag filtering in propositions table
+- Tags displayed in table column and detail modal
+- Available tags: administrativo, recursos-humanos, infraestrutura, tecnologia, processual, financeiro, capacitacao, gestao-documental, compliance, transparencia, outros
 
 ### Form Validation Pattern
 All forms use:
@@ -142,6 +152,10 @@ All forms use:
    - Never mutate existing history entries
    - Always append new entries with `.push()`
    - Preserve chronological order
+6. **Tags Array:** Every proposição should have a `tags` array (can be empty `[]`)
+   - Tags are stored as array of tag IDs (strings)
+   - Valid tag IDs match the `availableTags` constant
+   - Tags are optional - propositions without tags display "-" in UI
 
 ## UI Component Patterns
 
@@ -171,9 +185,14 @@ tbody.innerHTML = filtered.map(item => `
 ```
 
 ### Badge System
-Status badges use class pattern: `badge badge-${status}`
+**Status Badges:** Use class pattern `badge badge-${status}`
 - Maps to CSS classes: `.badge-pendente`, `.badge-adimplente`, etc.
 - Colors must be distinct and accessible
+
+**Tag Badges:** Use class pattern `tag-badge tag-${tagId}`
+- 11 predefined color schemes for different categories
+- Smaller, pill-shaped design with borders
+- Rendered via `renderTagBadges(tags)` helper function
 
 ## Role-Based UI Control
 
@@ -214,6 +233,14 @@ When adding fields to correições or proposições:
 4. Update table rendering to display new field
 5. Update detail modal to show new field
 6. Update any filters/search logic if applicable
+
+### Adding a New Tag
+1. Add tag definition to `availableTags` array with `id` and `label`
+2. Add CSS class `.tag-{id}` with background-color, color, and border-color
+3. Tag will automatically appear in:
+   - Cadastro form checkboxes (via `populateTagSelect()`)
+   - Filter dropdown (via `populateTagFilter()`)
+   - Table and modals (via `renderTagBadges()`)
 
 ## NAD Workflow Implementation
 
@@ -286,7 +313,17 @@ No automated tests. Manual testing checklist:
 **Data Management:**
 4. Create new correição - verify it appears in tables and dropdowns
 5. Create new proposição - verify correição link and table display
-6. Test all filters - text search, status (including em_analise), correição
+6. Test all filters - text search, status (including em_analise), correição, tags
+
+**Tag System:**
+24. Create new proposição with tags selected:
+    - Verify checkboxes work in cadastro form
+    - Verify tags appear in table and detail modal
+    - Verify tag badges render with correct colors
+25. Test tag filter:
+    - Filter by different tags
+    - Verify only propositions with selected tag appear
+26. Verify tags persist when editing/viewing propositions
 
 **Comprovacao Workflow:**
 7. As user, submit comprovação for pendente proposition:
@@ -346,17 +383,26 @@ The system includes realistic sample data demonstrating all workflow states:
 
 **Proposições (9 total) - Status Distribution:**
 - **PROP-2024-0001** (adimplente) - Complete workflow example with full historico
+  - Tags: tecnologia, gestao-documental
   - 1 comprovacao + 1 avaliacao showing successful completion
 - **PROP-2024-0002** (pendente) - Fresh proposition awaiting initial comprovacao
+  - Tags: infraestrutura, compliance
 - **PROP-2024-0003** (inadimplente) - Deadline passed, needs urgent action
+  - Tags: recursos-humanos, administrativo
 - **PROP-2024-0004** (parcial) - Partial compliance example with historico
+  - Tags: financeiro, administrativo
   - Shows comprovacao evaluated as partially compliant
 - **PROP-2024-0005** (pendente) - High priority pending
+  - Tags: compliance, administrativo
 - **PROP-2024-0006** (pendente) - Normal priority pending
+  - Tags: capacitacao, recursos-humanos
 - **PROP-2024-0007** (adimplente) - Completed without historico (legacy data)
+  - Tags: tecnologia, infraestrutura
 - **PROP-2024-0008** (prejudicada) - Superseded by new legislation
+  - Tags: administrativo, processual
   - Shows avaliacao marking proposition as prejudicada with justification
 - **PROP-2024-0009** (em_analise) - **IDEAL FOR TESTING EVALUATION WORKFLOW**
+  - Tags: gestao-documental, tecnologia, compliance
   - Has comprovacao awaiting Corregedoria evaluation
   - Appears in "Avaliar Comprovações" queue
   - Use this to test the complete admin evaluation process
