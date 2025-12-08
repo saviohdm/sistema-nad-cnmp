@@ -20,6 +20,7 @@ The entire application resides in `index.html` (~1,900 lines, ~75KB):
 ```
 Correição (Judicial Review)
 ├── id, numero, ramoMP, ramoMPNome
+├── tematica, numeroElo, tipo, mp, uf[], status
 ├── dataInicio, dataFim, observacoes
 └── Proposições (many)
     ├── id, numero, correicaoId
@@ -41,6 +42,16 @@ Correição (Judicial Review)
 - Proposições are ALWAYS linked to their parent Correição via `correicaoId`
 - Every interaction (comprovacao/avaliacao) is stored in proposicao.historico array
 - Timeline preserves complete audit trail of all status changes
+
+**Correição Extended Fields:**
+- `tematica` (string): Textual description of the review's theme (e.g., "Correição de direitos fundamentais e meio ambiente")
+- `numeroElo` (string): ELO system identifier in format NNNNNNN-DD.AAAA.J.TT.OOOO (e.g., "1234567-89.2024.1.01.0001")
+- `tipo` (string): Review type - one of: 'Ordinária', 'Extraordinária', 'OCD', 'Inspeção'
+- `mp` (string): MP level - 'MPE' (state-level) or 'MPU' (federal-level)
+- `uf` (array): Brazilian state codes (e.g., ['BA'] for MPE, ['DF', 'SP', 'RJ'] for MPU)
+  - Single selection for MPE (one state)
+  - Multiple selection for MPU (multiple states)
+- `status` (string): Auto-calculated - 'ativo' (has pending propositions) or 'inativo' (all propositions completed)
 
 ### Key Architectural Patterns
 
@@ -68,6 +79,16 @@ Correição (Judicial Review)
    - `populateProposicaoSelect()` - updates proposition dropdowns
 
 **Critical:** When adding/modifying propositions or correições, you MUST call ALL relevant render functions to maintain UI consistency. When adding comprovacoes or avaliacoes, you MUST append to proposicao.historico array.
+
+**Correição Status Automation:**
+- `calcularStatusCorreicao(correicaoId)` - calculates status based on linked propositions
+  - Returns 'ativo' if any proposition is not 'adimplente' or 'prejudicada'
+  - Returns 'inativo' if all propositions are 'adimplente' or 'prejudicada'
+- `atualizarStatusCorreicoes()` - recalculates status for all correições
+  - Called during initialization to ensure data consistency
+- `toggleUFMultiple()` - manages UF selection behavior in cadastro form
+  - When MP='MPU': enables multiple selection (size=5, multiple attribute)
+  - When MP='MPE': disables multiple selection (size=1, no multiple attribute)
 
 ## Running the Application
 
@@ -234,6 +255,12 @@ When adding fields to correições or proposições:
 5. Update detail modal to show new field
 6. Update any filters/search logic if applicable
 
+**Special Considerations for Correições:**
+- `uf` field is an array - use `getSelectedUFs()` helper to extract values from select
+- `status` field is auto-calculated - call `atualizarStatusCorreicoes()` after data changes
+- When rendering UF array in tables/modals, use `.join(', ')` to display as comma-separated list
+- MP field change triggers `toggleUFMultiple()` to adjust UF selection mode
+
 ### Adding a New Tag
 1. Add tag definition to `availableTags` array with `id` and `label`
 2. Add CSS class `.tag-{id}` with background-color, color, and border-color
@@ -312,56 +339,65 @@ No automated tests. Manual testing checklist:
 
 **Data Management:**
 4. Create new correição - verify it appears in tables and dropdowns
+   - Test all required fields: temática, numeroElo, tipo, mp, uf
+   - Verify numeroElo accepts format NNNNNNN-DD.AAAA.J.TT.OOOO
+   - Test MP=MPE with single UF selection
+   - Test MP=MPU with multiple UF selection (Ctrl+Click)
+   - Verify status is calculated automatically based on propositions
 5. Create new proposição - verify correição link and table display
-6. Test all filters - text search, status (including em_analise), correição, tags
+6. Test all filters - text search (including tematica, numeroElo, tipo), status, correição, tags
+7. View correição details modal - verify all new fields displayed correctly
 
 **Tag System:**
-24. Create new proposição with tags selected:
-    - Verify checkboxes work in cadastro form
-    - Verify tags appear in table and detail modal
-    - Verify tag badges render with correct colors
-25. Test tag filter:
-    - Filter by different tags
-    - Verify only propositions with selected tag appear
-26. Verify tags persist when editing/viewing propositions
+8. Create new proposição with tags selected:
+   - Verify checkboxes work in cadastro form
+   - Verify tags appear in table and detail modal
+   - Verify tag badges render with correct colors
+9. Test tag filter:
+   - Filter by different tags
+   - Verify only propositions with selected tag appear
+10. Verify tags persist when editing/viewing propositions
 
 **Comprovacao Workflow:**
-7. As user, submit comprovação for pendente proposition:
+11. As user, submit comprovação for pendente proposition:
    - Verify status changes to `em_analise`
    - Verify historico entry created with correct data
    - Verify proposition appears in admin's evaluation queue
-8. Test file selection and display in comprovacao form
+12. Test file selection and display in comprovacao form
 
 **Avaliacao Workflow:**
-9. As admin, access "Avaliar Comprovações" page
-10. Verify propositions with status `em_analise` appear in table
-11. Open evaluation modal and verify:
+13. As admin, access "Avaliar Comprovações" page
+14. Verify propositions with status `em_analise` appear in table
+15. Open evaluation modal and verify:
     - Latest comprovacao details displayed
     - All attached files listed
     - Decision form present
-12. Submit evaluation as `inadimplente`:
+16. Submit evaluation as `inadimplente`:
     - Verify status updates
     - Verify avaliacao added to historico
     - Verify proposition returns to user's comprovacao queue
-13. Submit new comprovacao and evaluate as `adimplente`:
+    - Verify correição status remains 'ativo' (has incomplete propositions)
+17. Submit new comprovacao and evaluate as `adimplente`:
     - Verify full cycle completes
     - Verify historico shows complete timeline
+    - Verify correição status changes to 'inativo' if all propositions complete
 
 **History & Timeline:**
-14. View details of proposition with multiple comprovacoes/avaliacoes
-15. Verify timeline displays chronologically
-16. Verify color coding (blue for comprovacao, green for avaliacao)
-17. Verify all data shown: dates, users, descriptions, files, status changes
+18. View details of proposition with multiple comprovacoes/avaliacoes
+19. Verify timeline displays chronologically
+20. Verify color coding (blue for comprovacao, green for avaliacao)
+21. Verify all data shown: dates, users, descriptions, files, status changes
 
 **Dashboard & Charts:**
-18. Verify dashboard cards include "Em Análise" counter
-19. Verify chart displays 6 bars (including em_analise)
-20. Verify all counters update after comprovacao/avaliacao operations
+22. Verify dashboard cards include "Em Análise" counter
+23. Verify chart displays 6 bars (including em_analise)
+24. Verify all counters update after comprovacao/avaliacao operations
 
 **UI/UX:**
-21. Test responsive layout at mobile breakpoint (768px)
-22. Verify modals scroll properly with long history
-23. Test responsive timeline on narrow screens
+25. Test responsive layout at mobile breakpoint (768px)
+26. Verify modals scroll properly with long history
+27. Test responsive timeline on narrow screens
+28. Test correições table with many columns - verify horizontal scroll if needed
 
 ## Browser Compatibility Requirements
 
@@ -375,11 +411,18 @@ No automated tests. Manual testing checklist:
 
 The system includes realistic sample data demonstrating all workflow states:
 
-**Correições (4 total):**
-- COR-2024-01 (MPBA) - 3 propositions
-- COR-2024-02 (MPRJ) - 2 propositions
-- COR-2024-03 (MPMG) - 2 propositions
-- COR-2024-04 (MPSP) - 2 propositions
+**Correições (5 total):**
+- COR-2024-01 (MPBA) - 3 propositions - MPE/BA - Ordinária
+  - Theme: Direitos fundamentais e meio ambiente
+- COR-2024-02 (MPRJ) - 2 propositions - MPE/RJ - Extraordinária
+  - Theme: Combate à corrupção e transparência pública
+- COR-2024-03 (MPMG) - 2 propositions - MPE/MG - OCD
+  - Theme: Gestão administrativa e recursos humanos
+- COR-2024-04 (MPSP) - 2 propositions - MPE/SP - Inspeção
+  - Theme: Inspeção de unidades regionais
+- COR-2024-05 (MPU) - 0 propositions - MPU/DF,SP,RJ,MG,BA - Ordinária
+  - Theme: Correição nacional sobre compliance e integridade
+  - **Demonstrates multiple UF selection for MPU**
 
 **Proposições (9 total) - Status Distribution:**
 - **PROP-2024-0001** (adimplente) - Complete workflow example with full historico
