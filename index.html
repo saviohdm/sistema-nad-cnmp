@@ -1041,7 +1041,6 @@
                                     <th>Membro</th>
                                     <th>Descrição</th>
                                     <th>Tags</th>
-                                    <th>Prazo</th>
                                     <th>Status</th>
                                     <th>Ações</th>
                                 </tr>
@@ -1367,15 +1366,9 @@
                                 </select>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="numeroProposicao">Número da Proposição *</label>
-                                    <input type="text" id="numeroProposicao" required placeholder="Ex: PROP-2024-0001">
-                                </div>
-                                <div class="form-group">
-                                    <label for="prazo">Prazo de Cumprimento *</label>
-                                    <input type="date" id="prazo" required>
-                                </div>
+                            <div class="form-group">
+                                <label for="numeroProposicao">Número da Proposição *</label>
+                                <input type="text" id="numeroProposicao" required placeholder="Ex: PROP-2024-0001">
                             </div>
 
                             <div class="form-row">
@@ -1623,7 +1616,6 @@
                     unidade: 'Procuradoria-Geral de Justiça',
                     membro: 'Dr. João Silva Santos',
                     descricao: 'Implementar sistema digital de protocolo de documentos',
-                    prazo: '2024-12-31',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'adimplente',
@@ -1656,7 +1648,6 @@
                     unidade: 'Promotoria de Justiça de Cachoeira',
                     membro: 'Dra. Maria Oliveira Costa',
                     descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
-                    prazo: '2024-11-30',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
                     status: 'aguardando_comprovacao',
@@ -1673,7 +1664,6 @@
                     unidade: 'Corregedoria-Geral de Justiça',
                     membro: 'Dr. Carlos Eduardo Mendes',
                     descricao: 'Regularizar processos de gestão de pessoas',
-                    prazo: '2024-10-15',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'inadimplente',
@@ -1690,7 +1680,6 @@
                     unidade: 'Promotoria de Justiça de Caculé',
                     membro: 'Dra. Ana Paula Ferreira',
                     descricao: 'Atualizar inventário patrimonial',
-                    prazo: '2025-01-30',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'parcial',
@@ -1723,7 +1712,6 @@
                     unidade: 'Procuradoria-Geral de Justiça',
                     membro: 'Dr. Roberto Almeida Lima',
                     descricao: 'Implementar controles internos de correição',
-                    prazo: '2024-12-20',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'pendente',
@@ -1740,7 +1728,6 @@
                     unidade: 'Promotoria de Justiça de Santo André',
                     membro: 'Dr. Fernando Souza Prado',
                     descricao: 'Criar programa de capacitação continuada',
-                    prazo: '2025-02-15',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'pendente',
@@ -1757,7 +1744,6 @@
                     unidade: 'Promotoria de Justiça de Osasco',
                     membro: 'Dra. Juliana Barbosa Reis',
                     descricao: 'Modernizar infraestrutura de TI',
-                    prazo: '2024-12-10',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'adimplente',
@@ -1774,7 +1760,6 @@
                     unidade: 'Promotoria de Justiça de Niterói',
                     membro: 'Dr. Marcelo Tavares Cruz',
                     descricao: 'Reorganizar estrutura administrativa - proposição superada por nova legislação',
-                    prazo: '2024-09-30',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'prejudicada',
@@ -1800,7 +1785,6 @@
                     unidade: 'Procuradoria-Geral de Justiça',
                     membro: 'Dra. Patricia Moreira Santos',
                     descricao: 'Implementar política de gestão documental e arquivística',
-                    prazo: '2024-12-31',
                     prazoComprovacao: null,
                     dataPublicacao: null,
                     status: 'em_analise',
@@ -1826,7 +1810,6 @@
                     unidade: 'Promotoria de Justiça de Itabuna',
                     membro: 'Dr. André Luiz Cardoso',
                     descricao: 'Implementar ouvidoria digital com canal de denúncias online',
-                    prazo: '2025-03-31',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
                     status: 'aguardando_comprovacao',
@@ -1843,7 +1826,6 @@
                     unidade: 'Corregedoria-Geral de Justiça',
                     membro: 'Dr. Ricardo Henrique Alves',
                     descricao: 'Criar programa de compliance e integridade institucional',
-                    prazo: '2025-04-30',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
                     status: 'aguardando_comprovacao',
@@ -1860,7 +1842,6 @@
                     unidade: 'Promotoria de Justiça de Feira de Santana',
                     membro: 'Dra. Luciana Martins Dias',
                     descricao: 'Padronizar fluxos de trabalho e procedimentos administrativos',
-                    prazo: '2025-02-28',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
                     status: 'aguardando_comprovacao',
@@ -1877,7 +1858,6 @@
                     unidade: 'Procuradoria-Geral de Justiça',
                     membro: 'Dr. Eduardo Pereira Gomes',
                     descricao: 'Estabelecer política de segurança da informação e proteção de dados',
-                    prazo: '2025-05-31',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
                     status: 'aguardando_comprovacao',
@@ -2188,7 +2168,6 @@
                         <td>${p.membro || '-'}</td>
                         <td>${p.descricao.substring(0, 40)}...</td>
                         <td>${renderTagBadges(p.tags)}</td>
-                        <td>${formatDate(p.prazo)}</td>
                         <td>
                             <span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span>
                             ${prazoVencidoBadge}
@@ -2320,10 +2299,6 @@
                 <div class="detail-row">
                     <span class="detail-label">Período da Correição:</span>
                     <span class="detail-value">${periodoCorreicao}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Prazo:</span>
-                    <span class="detail-value">${formatDate(proposicao.prazo)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Prioridade:</span>
@@ -2959,7 +2934,6 @@
                 unidade: document.getElementById('unidadeProposicao').value,
                 membro: document.getElementById('membroProposicao').value,
                 descricao: document.getElementById('descricaoProposicao').value,
-                prazo: document.getElementById('prazo').value,
                 prazoComprovacao: null,
                 dataPublicacao: null,
                 prioridade: document.getElementById('prioridade').value,
