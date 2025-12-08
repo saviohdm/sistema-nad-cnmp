@@ -1065,10 +1065,15 @@
                             <thead>
                                 <tr>
                                     <th>Número</th>
+                                    <th>Temática</th>
+                                    <th>Número ELO</th>
+                                    <th>Tipo</th>
+                                    <th>MP</th>
+                                    <th>UF</th>
                                     <th>Ramo do MP</th>
                                     <th>Período</th>
                                     <th>Total de Proposições</th>
-                                    <th>Status Geral</th>
+                                    <th>Status</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -1207,11 +1212,78 @@
 
                     <div class="form-container">
                         <form id="cadastroCorreicaoForm">
+                            <div class="form-group">
+                                <label for="numeroCorreicao">Número da Correição *</label>
+                                <input type="text" id="numeroCorreicao" required placeholder="Ex: COR-2024-01">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tematicaCorreicao">Temática *</label>
+                                <input type="text" id="tematicaCorreicao" required placeholder="Ex: Correição de direitos fundamentais e meio ambiente">
+                            </div>
+
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="numeroCorreicao">Número da Correição *</label>
-                                    <input type="text" id="numeroCorreicao" required placeholder="Ex: COR-2024-01">
+                                    <label for="numeroEloCorreicao">Número ELO *</label>
+                                    <input type="text" id="numeroEloCorreicao" required placeholder="NNNNNNN-DD.AAAA.J.TT.OOOO" maxlength="27">
                                 </div>
+                                <div class="form-group">
+                                    <label for="tipoCorreicao">Tipo *</label>
+                                    <select id="tipoCorreicao" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="Ordinária">Ordinária</option>
+                                        <option value="Extraordinária">Extraordinária</option>
+                                        <option value="OCD">OCD</option>
+                                        <option value="Inspeção">Inspeção</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mpCorreicao">MP *</label>
+                                    <select id="mpCorreicao" required onchange="toggleUFMultiple()">
+                                        <option value="">Selecione...</option>
+                                        <option value="MPE">MPE</option>
+                                        <option value="MPU">MPU</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ufCorreicao">UF * <span id="ufMultipleNote" class="hidden" style="color: var(--text-muted); font-size: 0.875rem;">(Múltipla seleção: Ctrl+Click)</span></label>
+                                    <select id="ufCorreicao" required size="1">
+                                        <option value="">Selecione...</option>
+                                        <option value="AC">AC - Acre</option>
+                                        <option value="AL">AL - Alagoas</option>
+                                        <option value="AP">AP - Amapá</option>
+                                        <option value="AM">AM - Amazonas</option>
+                                        <option value="BA">BA - Bahia</option>
+                                        <option value="CE">CE - Ceará</option>
+                                        <option value="DF">DF - Distrito Federal</option>
+                                        <option value="ES">ES - Espírito Santo</option>
+                                        <option value="GO">GO - Goiás</option>
+                                        <option value="MA">MA - Maranhão</option>
+                                        <option value="MT">MT - Mato Grosso</option>
+                                        <option value="MS">MS - Mato Grosso do Sul</option>
+                                        <option value="MG">MG - Minas Gerais</option>
+                                        <option value="PA">PA - Pará</option>
+                                        <option value="PB">PB - Paraíba</option>
+                                        <option value="PR">PR - Paraná</option>
+                                        <option value="PE">PE - Pernambuco</option>
+                                        <option value="PI">PI - Piauí</option>
+                                        <option value="RJ">RJ - Rio de Janeiro</option>
+                                        <option value="RN">RN - Rio Grande do Norte</option>
+                                        <option value="RS">RS - Rio Grande do Sul</option>
+                                        <option value="RO">RO - Rondônia</option>
+                                        <option value="RR">RR - Roraima</option>
+                                        <option value="SC">SC - Santa Catarina</option>
+                                        <option value="SP">SP - São Paulo</option>
+                                        <option value="SE">SE - Sergipe</option>
+                                        <option value="TO">TO - Tocantins</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label for="ramoMP">Ramo do Ministério Público *</label>
                                     <select id="ramoMP" required>
@@ -1243,6 +1315,14 @@
                                         <option value="MPRR">MPRR - Ministério Público de Roraima</option>
                                         <option value="MPAP">MPAP - Ministério Público do Amapá</option>
                                         <option value="MPMA">MPMA - Ministério Público do Maranhão</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="statusCorreicao">Status *</label>
+                                    <select id="statusCorreicao" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="ativo">Ativo</option>
+                                        <option value="inativo">Inativo</option>
                                     </select>
                                 </div>
                             </div>
@@ -1438,6 +1518,12 @@
                     numero: 'COR-2024-01',
                     ramoMP: 'MPBA',
                     ramoMPNome: 'MPBA - Ministério Público da Bahia',
+                    tematica: 'Correição de direitos fundamentais e meio ambiente',
+                    numeroElo: '1234567-89.2024.1.01.0001',
+                    tipo: 'Ordinária',
+                    mp: 'MPE',
+                    uf: ['BA'],
+                    status: 'ativo',
                     dataInicio: '2024-01-15',
                     dataFim: '2024-01-30',
                     observacoes: 'Correição ordinária 2024'
@@ -1447,27 +1533,60 @@
                     numero: 'COR-2024-02',
                     ramoMP: 'MPRJ',
                     ramoMPNome: 'MPRJ - Ministério Público do Rio de Janeiro',
+                    tematica: 'Combate à corrupção e transparência pública',
+                    numeroElo: '2345678-90.2024.2.02.0002',
+                    tipo: 'Extraordinária',
+                    mp: 'MPE',
+                    uf: ['RJ'],
+                    status: 'ativo',
                     dataInicio: '2024-02-10',
                     dataFim: '2024-02-28',
-                    observacoes: 'Correição ordinária 2024'
+                    observacoes: 'Correição extraordinária 2024'
                 },
                 {
                     id: 3,
                     numero: 'COR-2024-03',
                     ramoMP: 'MPMG',
                     ramoMPNome: 'MPMG - Ministério Público de Minas Gerais',
+                    tematica: 'Gestão administrativa e recursos humanos',
+                    numeroElo: '3456789-01.2024.3.03.0003',
+                    tipo: 'OCD',
+                    mp: 'MPE',
+                    uf: ['MG'],
+                    status: 'ativo',
                     dataInicio: '2024-03-05',
                     dataFim: '2024-03-20',
-                    observacoes: 'Correição ordinária 2024'
+                    observacoes: 'Organização e Controle Documental'
                 },
                 {
                     id: 4,
                     numero: 'COR-2024-04',
                     ramoMP: 'MPSP',
                     ramoMPNome: 'MPSP - Ministério Público de São Paulo',
+                    tematica: 'Inspeção de unidades regionais',
+                    numeroElo: '4567890-12.2024.4.04.0004',
+                    tipo: 'Inspeção',
+                    mp: 'MPE',
+                    uf: ['SP'],
+                    status: 'ativo',
                     dataInicio: '2024-04-01',
                     dataFim: '2024-04-15',
-                    observacoes: 'Correição extraordinária'
+                    observacoes: 'Inspeção geral das unidades'
+                },
+                {
+                    id: 5,
+                    numero: 'COR-2024-05',
+                    ramoMP: 'MPU',
+                    ramoMPNome: 'MPU - Ministério Público da União',
+                    tematica: 'Correição nacional sobre compliance e integridade',
+                    numeroElo: '5678901-23.2024.5.05.0005',
+                    tipo: 'Ordinária',
+                    mp: 'MPU',
+                    uf: ['DF', 'SP', 'RJ', 'MG', 'BA'],
+                    status: 'ativo',
+                    dataInicio: '2024-05-01',
+                    dataFim: '2024-05-30',
+                    observacoes: 'Correição nacional com abrangência em múltiplos estados'
                 }
             ];
 
@@ -1705,6 +1824,9 @@
                     historico: []
                 }
             ];
+            // Atualizar status das correições baseado nas proposições
+            atualizarStatusCorreicoes();
+
             updateDashboard();
             renderProposicoesTable();
             renderCorreicoesTable();
@@ -2149,11 +2271,51 @@
             const pendentes = proposicoesCorreicao.filter(p => p.status === 'pendente').length;
             const inadimplentes = proposicoesCorreicao.filter(p => p.status === 'inadimplente').length;
 
+            // Format UF array
+            const ufDisplay = correicao.uf && correicao.uf.length > 0 ? correicao.uf.join(', ') : 'Não informado';
+
+            // Status badge
+            const statusBadge = correicao.status === 'ativo'
+                ? '<span class="badge badge-pendente">Ativo</span>'
+                : '<span class="badge badge-adimplente">Inativo</span>';
+
             const modalBody = document.getElementById('modalBody');
             modalBody.innerHTML = `
                 <div class="detail-row">
                     <span class="detail-label">Número:</span>
                     <span class="detail-value">${correicao.numero}</span>
+                </div>
+                ${correicao.tematica ? `
+                <div class="detail-row">
+                    <span class="detail-label">Temática:</span>
+                    <span class="detail-value">${correicao.tematica}</span>
+                </div>
+                ` : ''}
+                ${correicao.numeroElo ? `
+                <div class="detail-row">
+                    <span class="detail-label">Número ELO:</span>
+                    <span class="detail-value">${correicao.numeroElo}</span>
+                </div>
+                ` : ''}
+                ${correicao.tipo ? `
+                <div class="detail-row">
+                    <span class="detail-label">Tipo:</span>
+                    <span class="detail-value">${correicao.tipo}</span>
+                </div>
+                ` : ''}
+                ${correicao.mp ? `
+                <div class="detail-row">
+                    <span class="detail-label">MP:</span>
+                    <span class="detail-value">${correicao.mp}</span>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <span class="detail-label">UF:</span>
+                    <span class="detail-value">${ufDisplay}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">${statusBadge}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Ramo do MP:</span>
@@ -2233,35 +2395,37 @@
             let filtered = baseFiltered.filter(c => {
                 const matchesSearch = c.numero.toLowerCase().includes(searchTerm) ||
                                     c.ramoMP.toLowerCase().includes(searchTerm) ||
-                                    c.ramoMPNome.toLowerCase().includes(searchTerm);
+                                    c.ramoMPNome.toLowerCase().includes(searchTerm) ||
+                                    (c.tematica && c.tematica.toLowerCase().includes(searchTerm)) ||
+                                    (c.numeroElo && c.numeroElo.toLowerCase().includes(searchTerm)) ||
+                                    (c.tipo && c.tipo.toLowerCase().includes(searchTerm));
                 return matchesSearch;
             });
 
             tbody.innerHTML = filtered.map(c => {
                 const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
                 const totalProposicoes = proposicoesCorreicao.length;
-                const adimplentes = proposicoesCorreicao.filter(p => p.status === 'adimplente').length;
-                const pendentes = proposicoesCorreicao.filter(p => p.status === 'pendente').length;
 
-                let statusGeral = 'Concluída';
-                let badgeClass = 'badge-adimplente';
+                // Format UF array
+                const ufDisplay = c.uf && c.uf.length > 0 ? c.uf.join(', ') : '-';
 
-                if (pendentes > 0) {
-                    statusGeral = 'Em andamento';
-                    badgeClass = 'badge-pendente';
-                }
-                if (adimplentes === totalProposicoes && totalProposicoes > 0) {
-                    statusGeral = 'Concluída';
-                    badgeClass = 'badge-adimplente';
-                }
+                // Status badge
+                const statusBadge = c.status === 'ativo'
+                    ? '<span class="badge badge-pendente">Ativo</span>'
+                    : '<span class="badge badge-adimplente">Inativo</span>';
 
                 return `
                     <tr>
                         <td>${c.numero}</td>
+                        <td>${c.tematica || '-'}</td>
+                        <td>${c.numeroElo || '-'}</td>
+                        <td>${c.tipo || '-'}</td>
+                        <td>${c.mp || '-'}</td>
+                        <td>${ufDisplay}</td>
                         <td>${c.ramoMP}</td>
                         <td>${formatDate(c.dataInicio)} a ${formatDate(c.dataFim)}</td>
                         <td>${totalProposicoes}</td>
-                        <td><span class="badge ${badgeClass}">${statusGeral}</span></td>
+                        <td>${statusBadge}</td>
                         <td>
                             <button class="btn btn-primary btn-action" onclick="viewCorreicaoDetails(${c.id})">Ver</button>
                         </td>
@@ -2598,17 +2762,58 @@
         }
 
         // Submit cadastro correição
+        // Toggle UF multiple selection based on MP type
+        function toggleUFMultiple() {
+            const mpCorreicao = document.getElementById('mpCorreicao').value;
+            const ufSelect = document.getElementById('ufCorreicao');
+            const ufNote = document.getElementById('ufMultipleNote');
+
+            if (mpCorreicao === 'MPU') {
+                ufSelect.setAttribute('multiple', 'multiple');
+                ufSelect.size = 5;
+                ufNote.classList.remove('hidden');
+            } else {
+                ufSelect.removeAttribute('multiple');
+                ufSelect.size = 1;
+                ufNote.classList.add('hidden');
+                // Clear multiple selections
+                for (let option of ufSelect.options) {
+                    option.selected = false;
+                }
+            }
+        }
+
+        // Get selected UF values (single or multiple)
+        function getSelectedUFs() {
+            const ufSelect = document.getElementById('ufCorreicao');
+            const selectedOptions = Array.from(ufSelect.selectedOptions);
+            return selectedOptions.map(option => option.value);
+        }
+
+        // Submit cadastro correição
         document.getElementById('cadastroCorreicaoForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
 
             const ramoMPSelect = document.getElementById('ramoMP');
             const selectedOption = ramoMPSelect.options[ramoMPSelect.selectedIndex];
+            const selectedUFs = getSelectedUFs();
+
+            if (selectedUFs.length === 0) {
+                alert('Por favor, selecione pelo menos uma UF.');
+                return;
+            }
 
             const newCorreicao = {
                 id: correicoes.length + 1,
                 numero: document.getElementById('numeroCorreicao').value,
+                tematica: document.getElementById('tematicaCorreicao').value,
+                numeroElo: document.getElementById('numeroEloCorreicao').value,
+                tipo: document.getElementById('tipoCorreicao').value,
+                mp: document.getElementById('mpCorreicao').value,
+                uf: selectedUFs,
                 ramoMP: document.getElementById('ramoMP').value,
                 ramoMPNome: selectedOption.text,
+                status: document.getElementById('statusCorreicao').value,
                 dataInicio: document.getElementById('dataInicioCorreicao').value,
                 dataFim: document.getElementById('dataFimCorreicao').value,
                 observacoes: document.getElementById('observacoesCorreicao').value
@@ -2619,6 +2824,7 @@
             renderCorreicoesTable();
             populateCorreicaoFilter();
             populateCorreicaoIdSelect();
+            populateCorreicaoPublicar();
 
             alert('Correição cadastrada com sucesso!');
             clearCorreicaoForm();
@@ -2626,6 +2832,30 @@
 
         function clearCorreicaoForm() {
             document.getElementById('cadastroCorreicaoForm')?.reset();
+            toggleUFMultiple(); // Reset UF field
+        }
+
+        // Calculate correição status automatically based on proposições
+        function calcularStatusCorreicao(correicaoId) {
+            const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === correicaoId);
+
+            if (proposicoesCorreicao.length === 0) {
+                return 'ativo'; // No proposições yet, keep active
+            }
+
+            // Check if ALL proposições are either 'adimplente' or 'prejudicada'
+            const todasFinalizadas = proposicoesCorreicao.every(p =>
+                p.status === 'adimplente' || p.status === 'prejudicada'
+            );
+
+            return todasFinalizadas ? 'inativo' : 'ativo';
+        }
+
+        // Update correição status for all correições
+        function atualizarStatusCorreicoes() {
+            correicoes.forEach(c => {
+                c.status = calcularStatusCorreicao(c.id);
+            });
         }
 
         // Submit cadastro proposição
