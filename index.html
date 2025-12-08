@@ -1675,7 +1675,7 @@
                     descricao: 'Regularizar processos de gestão de pessoas',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'inadimplente',
+                    status: 'pendente',
                     prioridade: 'urgente',
                     tags: ['recursos-humanos', 'administrativo'],
                     rascunhos: [],
@@ -1691,7 +1691,7 @@
                     descricao: 'Atualizar inventário patrimonial',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'parcial',
+                    status: 'pendente',
                     prioridade: 'normal',
                     tags: ['financeiro', 'administrativo'],
                     rascunhos: [],
@@ -3153,7 +3153,13 @@
             proposicao.historico.push(novaAvaliacao);
 
             // Atualizar status
-            proposicao.status = novoStatus;
+            // Se avaliação resulta em parcial/inadimplente, proposição volta para 'pendente'
+            // (aguardando republicação para permitir nova comprovação)
+            if (novoStatus === 'parcial' || novoStatus === 'inadimplente') {
+                proposicao.status = 'pendente';
+            } else {
+                proposicao.status = novoStatus;
+            }
 
             // Atualizar todas as views
             updateDashboard();
