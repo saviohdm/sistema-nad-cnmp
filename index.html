@@ -380,6 +380,28 @@
             color: #084298;
         }
 
+        .badge-aguardando_comprovacao {
+            background-color: #fff3e0;
+            color: #e65100;
+            border: 2px solid #ff9800;
+        }
+
+        /* Prazo vencido highlight */
+        .prazo-vencido {
+            background-color: #ffebee !important;
+            border-left: 4px solid var(--danger-color) !important;
+        }
+
+        .prazo-vencido-badge {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
         /* Tag Badges */
         .tag-badge {
             display: inline-block;
@@ -834,6 +856,10 @@
                         <span class="nav-icon">📤</span>
                         <span>Enviar Comprovação</span>
                     </div>
+                    <div class="nav-item" id="navPublicar" onclick="showPage('publicar')">
+                        <span class="nav-icon">📢</span>
+                        <span>Publicar Proposições</span>
+                    </div>
                     <div class="nav-item" id="navAvaliar" onclick="showPage('avaliar')">
                         <span class="nav-icon">⚖️</span>
                         <span>Avaliar Comprovações</span>
@@ -894,6 +920,15 @@
 
                         <div class="card">
                             <div class="card-header">
+                                <span class="card-title">Aguardando Comprovação</span>
+                                <span class="card-icon">📝</span>
+                            </div>
+                            <div class="card-value" id="aguardandoComprovacao" style="color: #e65100">0</div>
+                            <div class="card-description">Publicadas para comprovação</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
                                 <span class="card-title">Inadimplentes</span>
                                 <span class="card-icon">❌</span>
                             </div>
@@ -918,6 +953,15 @@
                             <div class="card-value" id="prejudicadas" style="color: var(--text-muted)">0</div>
                             <div class="card-description">Proposições prejudicadas</div>
                         </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Prazo Vencido</span>
+                                <span class="card-icon">⚠️</span>
+                            </div>
+                            <div class="card-value" id="prazoVencido" style="color: var(--danger-color)">0</div>
+                            <div class="card-description">Comprovação em atraso</div>
+                        </div>
                     </div>
 
                     <div class="chart-container">
@@ -940,6 +984,7 @@
                                 <select id="statusFilter">
                                     <option value="">Todos os status</option>
                                     <option value="pendente">Pendente</option>
+                                    <option value="aguardando_comprovacao">Aguardando Comprovação</option>
                                     <option value="em_analise">Em Análise</option>
                                     <option value="adimplente">Adimplente</option>
                                     <option value="parcial">Parcialmente Adimplente</option>
@@ -1003,44 +1048,96 @@
 
                 <!-- Enviar Comprovação Page -->
                 <div id="enviarPage" class="page hidden">
-                    <h2 class="page-title">Enviar Comprovação de Adimplemento</h2>
+                    <h2 class="page-title">Minhas Comprovações</h2>
 
-                    <div class="form-container">
-                        <form id="comprovacaoForm">
+                    <div class="alert alert-info" style="background-color: #e7f3ff; color: #004085; border: 1px solid #b8daff; margin-bottom: 2rem; padding: 1rem;">
+                        <strong>Novo Fluxo de Trabalho:</strong> Selecione as proposições abaixo, prepare suas comprovações e salve como rascunho.
+                        Quando estiver pronto, revise todas as comprovações e envie em bloco clicando em "Assinar e Enviar Todas as Comprovações".
+                    </div>
+
+                    <!-- Lista de Proposições Aguardando Comprovação -->
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Proposições Aguardando Comprovação</h3>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Descrição</th>
+                                    <th>Prazo Comprovação</th>
+                                    <th>Status Rascunho</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proposicoesComprovacaoTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Botão Revisar e Enviar em Bloco -->
+                    <div style="margin-top: 2rem; text-align: center;" id="enviarBlocoContainer" class="hidden">
+                        <button class="btn btn-success" style="font-size: 1.1rem; padding: 1rem 2rem;" onclick="abrirRevisaoComprovacoes()">
+                            📋 Revisar e Assinar Todas as Comprovações
+                        </button>
+                        <p style="margin-top: 0.5rem; color: var(--text-muted);">
+                            <span id="totalRascunhos">0</span> comprovação(ões) pronta(s) para envio
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Publicar Proposições Page -->
+                <div id="publicarPage" class="page hidden">
+                    <h2 class="page-title">Publicar Proposições para Comprovação</h2>
+
+                    <div class="form-container" style="max-width: 1200px;">
+                        <div class="alert alert-info" style="background-color: #e7f3ff; color: #004085; border: 1px solid #b8daff;">
+                            <strong>Instruções:</strong> Selecione uma correição para visualizar suas proposições pendentes.
+                            Marque as proposições que deseja publicar para comprovação pelos correicionados e defina o prazo para envio das comprovações.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="correicaoPublicar">Selecione a Correição *</label>
+                            <select id="correicaoPublicar" onchange="carregarProposicoesParaPublicar()">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
+                        <div id="proposicoesPublicarContainer" class="hidden">
                             <div class="form-group">
-                                <label for="proposicaoSelect">Selecione a Proposição *</label>
-                                <select id="proposicaoSelect" required>
-                                    <option value="">Selecione...</option>
-                                </select>
+                                <label for="prazoComprovacaoGlobal">Prazo para Comprovação *</label>
+                                <input type="date" id="prazoComprovacaoGlobal" required>
                             </div>
 
-                            <div class="form-group">
-                                <label for="descricaoAdimplemento">Descrição do Adimplemento *</label>
-                                <textarea id="descricaoAdimplemento" rows="5" required placeholder="Descreva como a proposição foi cumprida..."></textarea>
-                            </div>
+                            <h3 style="margin: 2rem 0 1rem 0; color: var(--primary-color);">Proposições Disponíveis para Publicação</h3>
 
-                            <div class="form-group">
-                                <label>Documentos Comprobatórios *</label>
-                                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
-                                    <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                    <p>Clique para selecionar arquivos</p>
-                                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
-                                        PDF, DOC, DOCX, JPG, PNG (máx. 10MB por arquivo)
-                                    </p>
-                                </div>
-                                <div id="fileList" class="file-list hidden"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="observacoes">Observações</label>
-                                <textarea id="observacoes" rows="3" placeholder="Observações adicionais (opcional)"></textarea>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">
+                                                <input type="checkbox" id="selectAllPublicar" onchange="toggleSelectAllPublicar()">
+                                            </th>
+                                            <th>Número</th>
+                                            <th>Descrição</th>
+                                            <th>Prazo Cumprimento</th>
+                                            <th>Status</th>
+                                            <th>Prioridade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="proposicoesPublicarTableBody">
+                                        <!-- Populated by JavaScript -->
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar</button>
-                                <button type="submit" class="btn btn-success">Enviar Comprovação</button>
+                                <button type="button" class="btn btn-secondary" onclick="limparSelecaoPublicar()">Limpar Seleção</button>
+                                <button type="button" class="btn btn-primary" onclick="publicarProposicoesSelecionadas()">Publicar Proposições Selecionadas</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -1223,6 +1320,61 @@
         </div>
     </div>
 
+    <!-- Modal for Comprovação (Rascunho) -->
+    <div id="comprovacaoModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="comprovacaoModalTitle">Adicionar Comprovação</h3>
+                <button class="btn-close" onclick="closeComprovacaoModal()">&times;</button>
+            </div>
+            <div id="comprovacaoModalBody">
+                <form id="rascunhoComprovacaoForm">
+                    <input type="hidden" id="proposicaoIdRascunho">
+
+                    <div class="form-group">
+                        <label for="descricaoComprovacaoRascunho">Descrição do Adimplemento *</label>
+                        <textarea id="descricaoComprovacaoRascunho" rows="5" required placeholder="Descreva como a proposição foi cumprida..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Documentos Comprobatórios *</label>
+                        <div class="file-upload" onclick="document.getElementById('fileInputRascunho').click()">
+                            <input type="file" id="fileInputRascunho" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <p>Clique para selecionar arquivos</p>
+                            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                PDF, DOC, DOCX, JPG, PNG (máx. 10MB por arquivo)
+                            </p>
+                        </div>
+                        <div id="fileListRascunho" class="file-list hidden"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="observacoesRascunho">Observações</label>
+                        <textarea id="observacoesRascunho" rows="3" placeholder="Observações adicionais (opcional)"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeComprovacaoModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Rascunho</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Revisão e Envio em Bloco -->
+    <div id="revisaoModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Revisão Final - Assinar e Enviar Comprovações</h3>
+                <button class="btn-close" onclick="closeRevisaoModal()">&times;</button>
+            </div>
+            <div id="revisaoModalBody">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Data Storage
         let correicoes = [];
@@ -1293,9 +1445,12 @@
                     correicaoId: 1,
                     descricao: 'Implementar sistema digital de protocolo de documentos',
                     prazo: '2024-12-31',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'adimplente',
                     prioridade: 'alta',
                     tags: ['tecnologia', 'gestao-documental'],
+                    rascunhos: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -1320,9 +1475,12 @@
                     correicaoId: 1,
                     descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
                     prazo: '2024-11-30',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'pendente',
                     prioridade: 'normal',
                     tags: ['infraestrutura', 'compliance'],
+                    rascunhos: [],
                     historico: []
                 },
                 {
@@ -1331,9 +1489,12 @@
                     correicaoId: 2,
                     descricao: 'Regularizar processos de gestão de pessoas',
                     prazo: '2024-10-15',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'inadimplente',
                     prioridade: 'urgente',
                     tags: ['recursos-humanos', 'administrativo'],
+                    rascunhos: [],
                     historico: []
                 },
                 {
@@ -1342,9 +1503,12 @@
                     correicaoId: 3,
                     descricao: 'Atualizar inventário patrimonial',
                     prazo: '2025-01-30',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'parcial',
                     prioridade: 'normal',
                     tags: ['financeiro', 'administrativo'],
+                    rascunhos: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -1369,9 +1533,12 @@
                     correicaoId: 3,
                     descricao: 'Implementar controles internos de correição',
                     prazo: '2024-12-20',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'pendente',
                     prioridade: 'alta',
                     tags: ['compliance', 'administrativo'],
+                    rascunhos: [],
                     historico: []
                 },
                 {
@@ -1380,9 +1547,12 @@
                     correicaoId: 4,
                     descricao: 'Criar programa de capacitação continuada',
                     prazo: '2025-02-15',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'pendente',
                     prioridade: 'normal',
                     tags: ['capacitacao', 'recursos-humanos'],
+                    rascunhos: [],
                     historico: []
                 },
                 {
@@ -1391,9 +1561,12 @@
                     correicaoId: 4,
                     descricao: 'Modernizar infraestrutura de TI',
                     prazo: '2024-12-10',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'adimplente',
                     prioridade: 'alta',
                     tags: ['tecnologia', 'infraestrutura'],
+                    rascunhos: [],
                     historico: []
                 },
                 {
@@ -1402,9 +1575,12 @@
                     correicaoId: 2,
                     descricao: 'Reorganizar estrutura administrativa - proposição superada por nova legislação',
                     prazo: '2024-09-30',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'prejudicada',
                     prioridade: 'normal',
                     tags: ['administrativo', 'processual'],
+                    rascunhos: [],
                     historico: [
                         {
                             tipo: 'avaliacao',
@@ -1422,9 +1598,12 @@
                     correicaoId: 1,
                     descricao: 'Implementar política de gestão documental e arquivística',
                     prazo: '2024-12-31',
+                    prazoComprovacao: null,
+                    dataPublicacao: null,
                     status: 'em_analise',
                     prioridade: 'alta',
                     tags: ['gestao-documental', 'tecnologia', 'compliance'],
+                    rascunhos: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -1441,9 +1620,11 @@
             renderProposicoesTable();
             renderCorreicoesTable();
             renderAvaliacaoTable();
+            renderProposicoesComprovacaoTable();
             populateProposicaoSelect();
             populateCorreicaoFilter();
             populateCorreicaoIdSelect();
+            populateCorreicaoPublicar();
             populateTagSelect();
             populateTagFilter();
         }
@@ -1506,6 +1687,7 @@
 
             // Hide admin pages for regular users
             if (userType === 'user') {
+                document.getElementById('navPublicar').style.display = 'none';
                 document.getElementById('navAvaliar').style.display = 'none';
                 document.getElementById('navCadastroCorreicao').style.display = 'none';
                 document.getElementById('navCadastroProposicao').style.display = 'none';
@@ -1547,17 +1729,21 @@
             const total = proposicoes.length;
             const adimplentes = proposicoes.filter(p => p.status === 'adimplente').length;
             const pendentes = proposicoes.filter(p => p.status === 'pendente').length;
+            const aguardandoComprovacao = proposicoes.filter(p => p.status === 'aguardando_comprovacao').length;
             const inadimplentes = proposicoes.filter(p => p.status === 'inadimplente').length;
             const emAnalise = proposicoes.filter(p => p.status === 'em_analise').length;
             const prejudicadas = proposicoes.filter(p => p.status === 'prejudicada').length;
+            const prazoVencido = proposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
 
             document.getElementById('totalCorreicoes').textContent = totalCorreicoes;
             document.getElementById('totalProposicoes').textContent = total;
             document.getElementById('adimplentes').textContent = adimplentes;
             document.getElementById('pendentes').textContent = pendentes;
+            document.getElementById('aguardandoComprovacao').textContent = aguardandoComprovacao;
             document.getElementById('inadimplentes').textContent = inadimplentes;
             document.getElementById('emAnalise').textContent = emAnalise;
             document.getElementById('prejudicadas').textContent = prejudicadas;
+            document.getElementById('prazoVencido').textContent = prazoVencido;
 
             drawChart();
         }
@@ -1570,6 +1756,7 @@
             const data = {
                 adimplente: proposicoes.filter(p => p.status === 'adimplente').length,
                 pendente: proposicoes.filter(p => p.status === 'pendente').length,
+                aguardando_comprovacao: proposicoes.filter(p => p.status === 'aguardando_comprovacao').length,
                 em_analise: proposicoes.filter(p => p.status === 'em_analise').length,
                 parcial: proposicoes.filter(p => p.status === 'parcial').length,
                 inadimplente: proposicoes.filter(p => p.status === 'inadimplente').length,
@@ -1580,6 +1767,7 @@
             const colors = {
                 adimplente: '#28a745',
                 pendente: '#ffc107',
+                aguardando_comprovacao: '#e65100',
                 em_analise: '#0066cc',
                 parcial: '#17a2b8',
                 inadimplente: '#dc3545',
@@ -1589,6 +1777,7 @@
             const labels = {
                 adimplente: 'Adimplente',
                 pendente: 'Pendente',
+                aguardando_comprovacao: 'Aguard. Comprov.',
                 em_analise: 'Em Análise',
                 parcial: 'Parcial',
                 inadimplente: 'Inadimplente',
@@ -1600,7 +1789,7 @@
             canvas.height = 300;
 
             // Calculate bar width and spacing
-            const barWidth = (canvas.width - 100) / 6;
+            const barWidth = (canvas.width - 100) / 7;
             const maxValue = Math.max(...Object.values(data));
             const heightRatio = (canvas.height - 80) / (maxValue || 1);
 
@@ -1653,16 +1842,22 @@
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
                 const correicaoInfo = correicao ? `${correicao.numero}` : 'N/A';
                 const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+                const prazoVencido = isPrazoComprovacaoVencido(p);
+                const prazoVencidoBadge = prazoVencido ? '<span class="prazo-vencido-badge">⚠️ PRAZO VENCIDO</span>' : '';
+                const rowClass = prazoVencido ? 'prazo-vencido' : '';
 
                 return `
-                    <tr>
+                    <tr class="${rowClass}">
                         <td>${p.numero}</td>
                         <td>${correicaoInfo}</td>
                         <td>${ramoMP}</td>
                         <td>${p.descricao.substring(0, 40)}...</td>
                         <td>${renderTagBadges(p.tags)}</td>
                         <td>${formatDate(p.prazo)}</td>
-                        <td><span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span></td>
+                        <td>
+                            <span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span>
+                            ${prazoVencidoBadge}
+                        </td>
                         <td>
                             <button class="btn btn-primary btn-action" onclick="viewDetails(${p.id})">Ver</button>
                         </td>
@@ -1951,64 +2146,303 @@
             const select = document.getElementById('proposicaoSelect');
             if (!select) return;
 
-            const pendentes = proposicoes.filter(p => p.status === 'pendente' || p.status === 'inadimplente' || p.status === 'parcial');
+            // Only show proposições with status 'aguardando_comprovacao'
+            const aguardando = proposicoes.filter(p => p.status === 'aguardando_comprovacao');
             select.innerHTML = '<option value="">Selecione...</option>' +
-                pendentes.map(p => {
+                aguardando.map(p => {
                     const correicao = correicoes.find(c => c.id === p.correicaoId);
                     const ramoMP = correicao ? correicao.ramoMP : 'N/A';
-                    return `<option value="${p.id}">${p.numero} - ${ramoMP} (${getStatusLabel(p.status)})</option>`;
+                    const prazoInfo = p.prazoComprovacao ? ` - Prazo: ${formatDate(p.prazoComprovacao)}` : '';
+                    return `<option value="${p.id}">${p.numero} - ${ramoMP}${prazoInfo}</option>`;
                 }).join('');
         }
 
-        // Submit comprovação
-        document.getElementById('comprovacaoForm')?.addEventListener('submit', function(e) {
+        // Variables for rascunho
+        let selectedFilesRascunho = [];
+        let editingRascunhoIndex = null;
+
+        // Render proposições for comprovação table
+        function renderProposicoesComprovacaoTable() {
+            const tbody = document.getElementById('proposicoesComprovacaoTableBody');
+            if (!tbody) return;
+
+            const aguardando = proposicoes.filter(p => p.status === 'aguardando_comprovacao');
+
+            if (aguardando.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição aguardando comprovação no momento</td></tr>';
+                document.getElementById('enviarBlocoContainer').classList.add('hidden');
+                return;
+            }
+
+            tbody.innerHTML = aguardando.map(p => {
+                const prazoVencido = isPrazoComprovacaoVencido(p);
+                const prazoInfo = p.prazoComprovacao ? formatDate(p.prazoComprovacao) : 'N/A';
+                const prazoClass = prazoVencido ? 'style="color: var(--danger-color); font-weight: 600;"' : '';
+                const rowClass = prazoVencido ? 'prazo-vencido' : '';
+
+                const temRascunho = p.rascunhos && p.rascunhos.length > 0;
+                const statusRascunho = temRascunho ?
+                    '<span class="badge badge-adimplente">✓ Pronto</span>' :
+                    '<span class="badge badge-pendente">Pendente</span>';
+
+                const acaoBtn = temRascunho ?
+                    `<button class="btn btn-primary btn-action" onclick="editarRascunhoComprovacao(${p.id})">Editar</button>
+                     <button class="btn btn-secondary btn-action" style="background-color: var(--danger-color);" onclick="excluirRascunhoComprovacao(${p.id})">Excluir</button>` :
+                    `<button class="btn btn-success btn-action" onclick="abrirComprovacaoModal(${p.id})">Adicionar</button>`;
+
+                return `
+                    <tr class="${rowClass}">
+                        <td>${p.numero}</td>
+                        <td>${p.descricao.substring(0, 50)}...</td>
+                        <td ${prazoClass}>${prazoInfo}${prazoVencido ? ' <span class="prazo-vencido-badge">⚠️ VENCIDO</span>' : ''}</td>
+                        <td>${statusRascunho}</td>
+                        <td>${acaoBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update total rascunhos counter
+            const totalRascunhos = aguardando.filter(p => p.rascunhos && p.rascunhos.length > 0).length;
+            document.getElementById('totalRascunhos').textContent = totalRascunhos;
+
+            if (totalRascunhos > 0) {
+                document.getElementById('enviarBlocoContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('enviarBlocoContainer').classList.add('hidden');
+            }
+        }
+
+        // Open comprovação modal
+        function abrirComprovacaoModal(proposicaoId) {
+            const proposicao = proposicoes.find(p => p.id === proposicaoId);
+            if (!proposicao) return;
+
+            document.getElementById('comprovacaoModalTitle').textContent = `Adicionar Comprovação - ${proposicao.numero}`;
+            document.getElementById('proposicaoIdRascunho').value = proposicaoId;
+            document.getElementById('descricaoComprovacaoRascunho').value = '';
+            document.getElementById('observacoesRascunho').value = '';
+            selectedFilesRascunho = [];
+            editingRascunhoIndex = null;
+            displayFilesRascunho();
+
+            document.getElementById('comprovacaoModal').classList.remove('hidden');
+        }
+
+        // Edit rascunho
+        function editarRascunhoComprovacao(proposicaoId) {
+            const proposicao = proposicoes.find(p => p.id === proposicaoId);
+            if (!proposicao || !proposicao.rascunhos || proposicao.rascunhos.length === 0) return;
+
+            const rascunho = proposicao.rascunhos[0]; // Get first (and only) rascunho
+
+            document.getElementById('comprovacaoModalTitle').textContent = `Editar Comprovação - ${proposicao.numero}`;
+            document.getElementById('proposicaoIdRascunho').value = proposicaoId;
+            document.getElementById('descricaoComprovacaoRascunho').value = rascunho.descricao;
+            document.getElementById('observacoesRascunho').value = rascunho.observacoes || '';
+
+            // Simulate files (we can't actually load files, but we'll show the names)
+            selectedFilesRascunho = rascunho.arquivos.map(filename => ({ name: filename, size: 0 }));
+            editingRascunhoIndex = 0;
+            displayFilesRascunho();
+
+            document.getElementById('comprovacaoModal').classList.remove('hidden');
+        }
+
+        // Delete rascunho
+        function excluirRascunhoComprovacao(proposicaoId) {
+            if (!confirm('Tem certeza que deseja excluir este rascunho de comprovação?')) return;
+
+            const proposicao = proposicoes.find(p => p.id === proposicaoId);
+            if (!proposicao) return;
+
+            proposicao.rascunhos = [];
+            renderProposicoesComprovacaoTable();
+            alert('Rascunho excluído com sucesso!');
+        }
+
+        function closeComprovacaoModal() {
+            document.getElementById('comprovacaoModal').classList.add('hidden');
+            selectedFilesRascunho = [];
+            editingRascunhoIndex = null;
+        }
+
+        // File handling for rascunho
+        document.getElementById('fileInputRascunho')?.addEventListener('change', function(e) {
+            selectedFilesRascunho = Array.from(e.target.files);
+            displayFilesRascunho();
+        });
+
+        function displayFilesRascunho() {
+            const fileList = document.getElementById('fileListRascunho');
+            if (!selectedFilesRascunho || selectedFilesRascunho.length === 0) {
+                fileList.classList.add('hidden');
+                return;
+            }
+
+            fileList.classList.remove('hidden');
+            fileList.innerHTML = '<strong>Arquivos selecionados:</strong>' +
+                selectedFilesRascunho.map((file, index) => `
+                    <div class="file-item">
+                        <span>${file.name}${file.size > 0 ? ` (${(file.size / 1024).toFixed(2)} KB)` : ''}</span>
+                        <span class="btn-remove" onclick="removeFileRascunho(${index})">Remover</span>
+                    </div>
+                `).join('');
+        }
+
+        function removeFileRascunho(index) {
+            selectedFilesRascunho.splice(index, 1);
+            displayFilesRascunho();
+        }
+
+        // Submit rascunho form
+        document.getElementById('rascunhoComprovacaoForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            if (selectedFiles.length === 0) {
+            if (selectedFilesRascunho.length === 0) {
                 alert('Por favor, selecione pelo menos um arquivo comprobatório.');
                 return;
             }
 
-            const proposicaoId = parseInt(document.getElementById('proposicaoSelect').value);
+            const proposicaoId = parseInt(document.getElementById('proposicaoIdRascunho').value);
             const proposicao = proposicoes.find(p => p.id === proposicaoId);
-            const descricao = document.getElementById('descricaoAdimplemento').value;
-            const observacoes = document.getElementById('observacoes').value;
+            const descricao = document.getElementById('descricaoComprovacaoRascunho').value;
+            const observacoes = document.getElementById('observacoesRascunho').value;
 
             if (proposicao) {
-                // Adicionar comprovação ao histórico
-                const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+                const rascunho = {
+                    descricao: descricao,
+                    observacoes: observacoes,
+                    arquivos: selectedFilesRascunho.map(f => f.name)
+                };
+
+                // Always replace the rascunho (only one per proposição)
+                proposicao.rascunhos = [rascunho];
+
+                renderProposicoesComprovacaoTable();
+                closeComprovacaoModal();
+                alert('Rascunho salvo com sucesso! Quando estiver pronto, revise e envie todas as comprovações.');
+            }
+        });
+
+        // Open revisão modal
+        function abrirRevisaoComprovacoes() {
+            const aguardando = proposicoes.filter(p =>
+                p.status === 'aguardando_comprovacao' &&
+                p.rascunhos && p.rascunhos.length > 0
+            );
+
+            if (aguardando.length === 0) {
+                alert('Não há comprovações prontas para envio.');
+                return;
+            }
+
+            let html = '<div class="alert alert-info" style="background-color: #e7f3ff; color: #004085; border: 1px solid #b8daff; margin-bottom: 1.5rem;">';
+            html += '<strong>Revisão Final:</strong> Confira todas as comprovações abaixo. Ao clicar em "Assinar e Enviar", ';
+            html += 'todas as comprovações serão oficialmente enviadas para análise da Corregedoria Nacional.';
+            html += '</div>';
+
+            html += '<div style="max-height: 60vh; overflow-y: auto;">';
+
+            aguardando.forEach(p => {
+                const rascunho = p.rascunhos[0];
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+
+                html += `
+                    <div style="background-color: var(--light-bg); padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem; border-left: 4px solid var(--secondary-color);">
+                        <h4 style="color: var(--primary-color); margin-bottom: 1rem;">${p.numero} - ${ramoMP}</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Proposição:</span>
+                            <span class="detail-value">${p.descricao}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Comprovação:</span>
+                            <span class="detail-value">${rascunho.descricao}</span>
+                        </div>
+                        ${rascunho.observacoes ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Observações:</span>
+                            <span class="detail-value">${rascunho.observacoes}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <span class="detail-label">Arquivos (${rascunho.arquivos.length}):</span>
+                            <span class="detail-value">${rascunho.arquivos.map(a => `<div>📎 ${a}</div>`).join('')}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            html += `
+                <div class="form-actions" style="margin-top: 2rem; border-top: 2px solid var(--border-color); padding-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeRevisaoModal()">Cancelar</button>
+                    <button type="button" class="btn btn-success" style="font-size: 1.1rem; padding: 0.75rem 2rem;" onclick="assinarEEnviarTodasComprovacoes()">
+                        ✍️ Assinar e Enviar Todas as Comprovações
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('revisaoModalBody').innerHTML = html;
+            document.getElementById('revisaoModal').classList.remove('hidden');
+        }
+
+        function closeRevisaoModal() {
+            document.getElementById('revisaoModal').classList.add('hidden');
+        }
+
+        // Send all comprovações in batch
+        function assinarEEnviarTodasComprovacoes() {
+            if (!confirm('Tem certeza que deseja assinar e enviar todas as comprovações? Esta ação não poderá ser desfeita.')) {
+                return;
+            }
+
+            const aguardando = proposicoes.filter(p =>
+                p.status === 'aguardando_comprovacao' &&
+                p.rascunhos && p.rascunhos.length > 0
+            );
+
+            let enviadas = 0;
+
+            aguardando.forEach(p => {
+                const rascunho = p.rascunhos[0];
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
                 const ramoMP = correicao ? correicao.ramoMP : 'Correicionado';
 
+                // Create comprovação entry in historico
                 const novaComprovacao = {
                     tipo: 'comprovacao',
                     data: new Date().toISOString(),
                     usuario: ramoMP,
-                    descricao: descricao,
-                    observacoes: observacoes,
-                    arquivos: selectedFiles.map(f => f.name)
+                    descricao: rascunho.descricao,
+                    observacoes: rascunho.observacoes || '',
+                    arquivos: rascunho.arquivos
                 };
 
-                if (!proposicao.historico) {
-                    proposicao.historico = [];
+                if (!p.historico) {
+                    p.historico = [];
                 }
-                proposicao.historico.push(novaComprovacao);
+                p.historico.push(novaComprovacao);
 
-                // Alterar status para "em_analise"
-                proposicao.status = 'em_analise';
+                // Change status to em_analise
+                p.status = 'em_analise';
 
-                updateDashboard();
-                renderProposicoesTable();
-                populateProposicaoSelect();
-            }
+                // Clear rascunhos
+                p.rascunhos = [];
 
-            alert('Comprovação enviada com sucesso! Aguarde análise da Corregedoria Nacional.');
-            clearForm();
-        });
+                enviadas++;
+            });
 
-        function clearForm() {
-            document.getElementById('comprovacaoForm')?.reset();
-            selectedFiles = [];
-            displayFiles();
+            // Update all views
+            updateDashboard();
+            renderProposicoesTable();
+            renderProposicoesComprovacaoTable();
+            renderAvaliacaoTable();
+            populateProposicaoSelect();
+
+            closeRevisaoModal();
+            alert(`✅ Sucesso! ${enviadas} comprovação(ões) assinada(s) e enviada(s) para análise da Corregedoria Nacional.`);
         }
 
         // Submit cadastro correição
@@ -2054,9 +2488,12 @@
                 correicaoId: parseInt(document.getElementById('correicaoId').value),
                 descricao: document.getElementById('descricaoProposicao').value,
                 prazo: document.getElementById('prazo').value,
+                prazoComprovacao: null,
+                dataPublicacao: null,
                 prioridade: document.getElementById('prioridade').value,
                 status: 'pendente',
                 tags: selectedTags,
+                rascunhos: [],
                 historico: []
             };
 
@@ -2086,6 +2523,7 @@
         function getStatusLabel(status) {
             const labels = {
                 'pendente': 'Pendente',
+                'aguardando_comprovacao': 'Aguardando Comprovação',
                 'em_analise': 'Em Análise',
                 'adimplente': 'Adimplente',
                 'parcial': 'Parcial',
@@ -2266,6 +2704,117 @@
         function formatDateTime(dateString) {
             const date = new Date(dateString);
             return date.toLocaleString('pt-BR');
+        }
+
+        // Check if prazoComprovacao is expired
+        function isPrazoComprovacaoVencido(proposicao) {
+            if (!proposicao.prazoComprovacao || proposicao.status !== 'aguardando_comprovacao') {
+                return false;
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const prazo = new Date(proposicao.prazoComprovacao);
+            prazo.setHours(0, 0, 0, 0);
+            return prazo < today;
+        }
+
+        // Populate correicao dropdown for publishing
+        function populateCorreicaoPublicar() {
+            const select = document.getElementById('correicaoPublicar');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Selecione...</option>' +
+                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMPNome}</option>`).join('');
+        }
+
+        // Load proposições for publishing
+        function carregarProposicoesParaPublicar() {
+            const correicaoId = parseInt(document.getElementById('correicaoPublicar').value);
+            const container = document.getElementById('proposicoesPublicarContainer');
+            const tbody = document.getElementById('proposicoesPublicarTableBody');
+
+            if (!correicaoId) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            // Filter proposições with status 'pendente' from selected correição
+            const proposicoesPendentes = proposicoes.filter(p =>
+                p.correicaoId === correicaoId && p.status === 'pendente'
+            );
+
+            if (proposicoesPendentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição pendente disponível para publicação nesta correição</td></tr>';
+                container.classList.remove('hidden');
+                return;
+            }
+
+            tbody.innerHTML = proposicoesPendentes.map(p => `
+                <tr>
+                    <td><input type="checkbox" class="checkbox-publicar" value="${p.id}"></td>
+                    <td>${p.numero}</td>
+                    <td>${p.descricao.substring(0, 60)}...</td>
+                    <td>${formatDate(p.prazo)}</td>
+                    <td><span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span></td>
+                    <td>${p.prioridade.toUpperCase()}</td>
+                </tr>
+            `).join('');
+
+            container.classList.remove('hidden');
+        }
+
+        // Toggle select all checkboxes
+        function toggleSelectAllPublicar() {
+            const selectAll = document.getElementById('selectAllPublicar');
+            const checkboxes = document.querySelectorAll('.checkbox-publicar');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+
+        // Clear selection
+        function limparSelecaoPublicar() {
+            document.getElementById('selectAllPublicar').checked = false;
+            const checkboxes = document.querySelectorAll('.checkbox-publicar');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        // Publish selected proposições
+        function publicarProposicoesSelecionadas() {
+            const prazoComprovacao = document.getElementById('prazoComprovacaoGlobal').value;
+
+            if (!prazoComprovacao) {
+                alert('Por favor, defina o prazo para comprovação.');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.checkbox-publicar:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            if (selectedIds.length === 0) {
+                alert('Por favor, selecione pelo menos uma proposição para publicar.');
+                return;
+            }
+
+            // Update selected proposições
+            selectedIds.forEach(id => {
+                const proposicao = proposicoes.find(p => p.id === id);
+                if (proposicao) {
+                    proposicao.status = 'aguardando_comprovacao';
+                    proposicao.prazoComprovacao = prazoComprovacao;
+                    proposicao.dataPublicacao = new Date().toISOString();
+                }
+            });
+
+            // Update all views
+            updateDashboard();
+            renderProposicoesTable();
+            populateProposicaoSelect();
+
+            alert(`${selectedIds.length} proposição(ões) publicada(s) com sucesso! Os correicionados poderão agora enviar suas comprovações.`);
+
+            // Clear form
+            document.getElementById('correicaoPublicar').value = '';
+            document.getElementById('prazoComprovacaoGlobal').value = '';
+            document.getElementById('proposicoesPublicarContainer').classList.add('hidden');
         }
     </script>
 </body>
