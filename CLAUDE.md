@@ -31,20 +31,22 @@ Correição (Judicial Review)
     ├── tags[] (array of tag IDs for categorization)
     ├── rascunhos[] (array of draft comprovacoes)
     └── historico[] (array of interactions)
-        ├── tipo: 'comprovacao' | 'avaliacao'
+        ├── tipo: 'publicacao' | 'comprovacao' | 'avaliacao'
         ├── data (ISO timestamp)
         ├── usuario (string: MP branch or 'Corregedoria Nacional')
         ├── descricao (text)
         ├── observacoes (optional text)
         ├── arquivos[] (array of filenames - comprovacao only)
-        ├── statusAnterior (status before - avaliacao only)
-        └── statusNovo (status after - avaliacao only)
+        ├── prazoComprovacao (date - publicacao only)
+        ├── statusAnterior (status before - avaliacao/publicacao only)
+        └── statusNovo (status after - avaliacao/publicacao only)
 ```
 
 **Critical Relationships:**
 - Proposições are ALWAYS linked to their parent Correição via `correicaoId`
-- Every interaction (comprovacao/avaliacao) is stored in proposicao.historico array
-- Timeline preserves complete audit trail of all status changes
+- Every interaction (publicacao/comprovacao/avaliacao) is stored in proposicao.historico array
+- Publications are permanently recorded in historico with prazoComprovacao and status transitions
+- Timeline preserves complete audit trail of all status changes and (re)publications
 
 **Correição Extended Fields:**
 - `tematica` (string): Textual description of the review's theme (e.g., "Correição de direitos fundamentais e meio ambiente")
@@ -128,9 +130,10 @@ Custom properties define the color scheme:
 ### Timeline Styles (lines 565-656)
 Custom CSS for historical interaction timeline:
 - Vertical timeline with left border
-- Color-coded markers for comprovacao (blue) and avaliacao (green)
+- Color-coded markers: publicacao (orange), comprovacao (blue), avaliacao (green)
 - Bordered content boxes matching interaction type
 - File attachments and status badges within timeline items
+- Publications display prazoComprovacao deadline
 
 ### Authentication (lines 1074-1096)
 - Two user types: "admin" (Corregedoria Nacional) and "user" (Órgão Correicionado)
@@ -284,62 +287,133 @@ When adding fields to correições or proposições:
 
 ## NAD Workflow Implementation
 
-The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) iterative workflow:
+The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) iterative workflow with **publication-gated comprovação submission**.
+
+### Core Principle: Publication Before Comprovação
+
+**Every comprovação MUST be preceded by a publication.** This ensures proper deadline management and workflow control.
 
 ### Status Lifecycle
 ```
-pendente → [comprovacao] → em_analise → [avaliacao] → adimplente/parcial/inadimplente/prejudicada
-                                                             ↓           ↓          ↓
-                                                             END    [new cycle]  [new cycle]
+┌─────────────────────────────────────────────────────────────┐
+│ pendente (nunca publicada OU aguardando republicação)       │
+│ - Proposições novas começam aqui                            │
+│ - Proposições com avaliação parcial/inadimplente voltam aqui│
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                    [PUBLICAÇÃO]
+            (define prazoComprovacao)
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ aguardando_comprovacao                                       │
+│ - Disponível para comprovação pelo correicionado            │
+│ - Tem prazoComprovacao definido                             │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                    [COMPROVAÇÃO]
+          (correicionado envia evidências)
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ em_analise                                                   │
+│ - Aguardando avaliação da Corregedoria                      │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+                     [AVALIAÇÃO]
+                (Corregedoria decide)
+                          ↓
+        ┌─────────────────┴─────────────────┐
+        ↓                                     ↓
+  adimplente/prejudicada            parcial/inadimplente
+        ↓                                     ↓
+    FIM ✓                            volta para: pendente
+                                     (aguarda republicação)
 ```
 
-### Workflow Steps
+### Workflow Steps Detailed
 
-**Step 1: Correicionado Submits Comprovacao** (lines 1543-1586)
-- User selects proposition with status: pendente, inadimplente, or parcial
-- Provides description of compliance actions taken
-- Attaches supporting documents (PDF, DOC, images)
-- System creates comprovacao entry in historico array
-- Status automatically changes to `em_analise`
-- Corregedoria Nacional is notified (via UI queue)
+**Step 0: Corregedoria Publishes Proposição** (lines 3227-3264)
+- Admin accesses "Publicar Proposições" page
+- Selects correição and views propositions with status `pendente`
+  - **Includes:** Never-published propositions
+  - **Includes:** Propositions with previous parcial/inadimplente evaluations
+- Defines `prazoComprovacao` (deadline for proof submission)
+- System creates `publicacao` entry in historico array with:
+  - Date, prazoComprovacao, status transition (pendente → aguardando_comprovacao)
+- Status changes to `aguardando_comprovacao`
+- **Publication is permanently recorded** - creates complete audit trail
 
-**Step 2: Corregedoria Evaluates** (lines 1843-1881)
+**Step 1: Correicionado Submits Comprovacao** (lines 2593-2672)
+- User accesses "Enviar Comprovação" page
+- System shows ONLY propositions with status `aguardando_comprovacao`
+  - **Propositions with status `pendente` are NOT available** (need publication first)
+- User selects proposition, provides description, attaches documents
+- Can save as draft (`rascunhos`) or submit immediately
+- On submission:
+  - System creates `comprovacao` entry in historico
+  - Status changes to `em_analise`
+  - Corregedoria is notified via evaluation queue
+
+**Step 2: Corregedoria Evaluates** (lines 3001-3046, 3128-3167)
 - Admin accesses "Avaliar Comprovações" page
-- Views list of propositions with status `em_analise`
-- Opens evaluation modal showing:
-  - Proposition details
-  - Latest comprovacao with all attachments
-  - Previous history
+- Views propositions with status `em_analise`
+- Opens evaluation modal showing complete history and latest comprovacao
 - Selects decision:
-  - `adimplente` - fully compliant (cycle ends)
-  - `parcial` - partially compliant (returns to queue)
-  - `inadimplente` - non-compliant (returns to queue)
-  - `prejudicada` - proposition superseded (cycle ends)
+  - `adimplente` - fully compliant → **cycle ends** ✓
+  - `prejudicada` - superseded → **cycle ends** ✓
+  - `parcial` - partially compliant → **status changes to `pendente`**
+  - `inadimplente` - non-compliant → **status changes to `pendente`**
 - Provides written justification (parecer)
-- System creates avaliacao entry in historico
-- Status updates to selected decision
+- System creates `avaliacao` entry in historico with actual decision
+- **Key behavior:** If decision is parcial/inadimplente:
+  - `proposicao.status` = `'pendente'` (not parcial/inadimplente)
+  - `historico` records the true evaluation decision (parcial or inadimplente)
+  - Proposition requires **new publication** before accepting new comprovação
 
-**Step 3: Iterative Cycle**
-- If status is `inadimplente` or `parcial`:
-  - Proposition returns to correicionado's queue
-  - Correicionado can submit new comprovacao
-  - Cycle repeats until `adimplente` or `prejudicada`
-- Complete audit trail preserved in historico array
+**Step 3: Iterative Cycle (Republicação)**
+- Propositions evaluated as `parcial` or `inadimplente` return to status `pendente`
+- They appear in "Publicar Proposições" alongside never-published propositions
+- Corregedoria can republish with **new prazoComprovacao**
+- Each republicação is recorded in historico as new `publicacao` entry
+- Cycle repeats: publicação → comprovação → avaliação → ...
+- **Termination:** Cycle ends when evaluation is `adimplente` or `prejudicada`
+
+### Status Meanings
+
+**`pendente`** - Dual meaning:
+1. **Never published:** New propositions awaiting initial publication
+2. **Awaiting republicação:** Propositions with parcial/inadimplente evaluation requiring new publication cycle
+
+**Key insight:** Status `pendente` = "cannot receive comprovação until published/republished"
 
 ### Key Functions
 
+**Publication:**
+- `carregarProposicoesParaPublicar()` - filters all propositions with status `pendente`
+- `publicarProposicoesSelecionadas()` - publishes selected propositions, records in historico, sets prazoComprovacao
+
 **Comprovacao Submission:**
-- `populateProposicaoSelect()` - filters propositions needing comprovacao
+- `populateProposicaoSelect()` - filters ONLY propositions with status `aguardando_comprovacao`
 - Comprovacao form submit handler adds to historico, sets status to `em_analise`
 
 **Avaliacao Process:**
-- `renderAvaliacaoTable()` - shows queue of propositions awaiting evaluation
-- `abrirAvaliacaoModal(id)` - opens evaluation interface
-- `submitAvaliacao(proposicaoId)` - records decision and updates status
+- `renderAvaliacaoTable()` - shows queue of propositions with status `em_analise`
+- `abrirAvaliacaoModal(id)` - opens evaluation interface with complete history
+- `submitAvaliacao(proposicaoId)` - records decision in historico, updates status
+  - **Special logic (line 3158-3162):** If decision is parcial/inadimplente, sets status to `pendente`
 
 **History Display:**
-- `viewDetails(id)` - renders complete timeline with all comprovacoes and avaliacoes
-- Timeline CSS provides visual differentiation between interaction types
+- `viewDetails(id)` - renders complete timeline with publicacoes, comprovacoes, and avaliacoes
+- Timeline CSS provides color differentiation: orange (publicacao), blue (comprovacao), green (avaliacao)
+
+### Benefits of This Workflow
+
+1. **Enforces Deadline Management:** Every comprovação has an associated prazoComprovacao from publication
+2. **Complete Audit Trail:** All publications are permanently recorded in historico
+3. **Clear State Transitions:** Status `pendente` unambiguously means "needs (re)publication"
+4. **Prevents Premature Comprovação:** System blocks comprovação submission for unpublished propositions
+5. **Supports Iterative Remediation:** Failed evaluations return to pendente, requiring explicit republicação
+6. **Transparent Evaluation History:** Historico preserves actual decisions (parcial/inadimplente) even when status changes
+7. **Flexible Republicação:** Admin can republish even if prazo expires without response
 
 ## Testing Approach
 
@@ -377,47 +451,69 @@ No automated tests. Manual testing checklist:
     - Verify only propositions with selected tag appear
 11. Verify tags persist when editing/viewing propositions
 
+**Publication Workflow:**
+12. As admin, access "Publicar Proposições" page
+13. Select correição and verify propositions with status `pendente` appear:
+    - Both never-published propositions
+    - Propositions awaiting republicação (after parcial/inadimplente evaluation)
+14. Publish selected propositions with prazoComprovacao:
+    - Verify status changes to `aguardando_comprovacao`
+    - Verify publicacao entry added to historico with prazoComprovacao
+    - Verify propositions now appear in user's comprovacao dropdown
+
 **Comprovacao Workflow:**
-12. As user, submit comprovação for pendente proposition:
+15. As user, access "Enviar Comprovação" page
+16. Verify ONLY propositions with status `aguardando_comprovacao` appear in dropdown
+    - Propositions with status `pendente` should NOT be available
+17. Submit comprovação for aguardando_comprovacao proposition:
     - Verify status changes to `em_analise`
-    - Verify historico entry created with correct data
+    - Verify comprovacao entry created with correct data in historico
     - Verify proposition appears in admin's evaluation queue
-13. Test file selection and display in comprovacao form
+18. Test file selection and display in comprovacao form
+19. Test draft (rascunho) functionality
 
 **Avaliacao Workflow:**
-14. As admin, access "Avaliar Comprovações" page
-15. Verify propositions with status `em_analise` appear in table
-16. Open evaluation modal and verify:
+20. As admin, access "Avaliar Comprovações" page
+21. Verify propositions with status `em_analise` appear in table
+22. Open evaluation modal and verify:
     - Latest comprovacao details displayed
     - All attached files listed
+    - Complete historico (publicacoes, comprovacoes, avaliacoes) displayed
     - Decision form present
-17. Submit evaluation as `inadimplente`:
-    - Verify status updates
-    - Verify avaliacao added to historico
-    - Verify proposition returns to user's comprovacao queue
+23. Submit evaluation as `parcial` or `inadimplente`:
+    - **Verify status changes to `pendente`** (not parcial/inadimplente)
+    - Verify avaliacao added to historico with actual decision (parcial/inadimplente)
+    - Verify proposition appears in "Publicar Proposições" page (awaiting republicação)
+    - Verify proposition does NOT appear in user's comprovacao dropdown
     - Verify correição status remains 'ativo' (has incomplete propositions)
-18. Submit new comprovacao and evaluate as `adimplente`:
+24. Republish proposition with new prazoComprovacao:
+    - Verify status changes to `aguardando_comprovacao`
+    - Verify new publicacao entry in historico
+    - Verify proposition now available for comprovação
+25. Submit new comprovacao and evaluate as `adimplente`:
     - Verify full cycle completes
-    - Verify historico shows complete timeline
+    - Verify historico shows complete timeline with multiple publicacoes
     - Verify correição status changes to 'inativo' if all propositions complete
 
 **History & Timeline:**
-19. View details of proposition with multiple comprovacoes/avaliacoes
-20. Verify timeline displays chronologically
-21. Verify color coding (blue for comprovacao, green for avaliacao)
-22. Verify all data shown: dates, users, descriptions, files, status changes
+26. View details of proposition with multiple publicacoes/comprovacoes/avaliacoes
+27. Verify timeline displays chronologically
+28. Verify color coding: orange (publicacao), blue (comprovacao), green (avaliacao)
+29. Verify all data shown: dates, users, descriptions, files, status changes, prazoComprovacao
+30. Verify publicacao entries show prazo deadline
 
 **Dashboard & Charts:**
-23. Verify dashboard cards include "Em Análise" counter
-24. Verify chart displays 6 bars (including em_analise)
-25. Verify all counters update after comprovacao/avaliacao operations
+31. Verify dashboard cards include "Em Análise" counter
+32. Verify chart displays 6 bars (adimplente, pendente, em_analise, parcial, inadimplente, prejudicada)
+33. Verify all counters update after publicacao/comprovacao/avaliacao operations
+34. Note: After workflow refinement, 'parcial' and 'inadimplente' bars should show 0 (these become 'pendente')
 
 **UI/UX:**
-26. Test responsive layout at mobile breakpoint (768px)
-27. Verify modals scroll properly with long history
-28. Test responsive timeline on narrow screens
-29. Test correições table with many columns - verify horizontal scroll if needed
-30. Test proposições table with new columns (tipo, unidade, membro) - verify readability
+35. Test responsive layout at mobile breakpoint (768px)
+36. Verify modals scroll properly with long history
+37. Test responsive timeline on narrow screens
+38. Test correições table with many columns - verify horizontal scroll if needed
+39. Test proposições table with new columns (tipo, unidade, membro) - verify readability
 
 ## Browser Compatibility Requirements
 
@@ -458,12 +554,12 @@ All propositions now include:
 - **PROP-2024-0002** (aguardando_comprovacao) - Recomendação | Promotoria de Justiça de Cachoeira | Dra. Maria Oliveira Costa
   - Tags: infraestrutura, compliance
   - Published and awaiting proof submission
-- **PROP-2024-0003** (inadimplente) - Determinação | Corregedoria-Geral de Justiça | Dr. Carlos Eduardo Mendes
+- **PROP-2024-0003** (pendente) - Determinação | Corregedoria-Geral de Justiça | Dr. Carlos Eduardo Mendes
   - Tags: recursos-humanos, administrativo
-  - Urgent priority
-- **PROP-2024-0004** (parcial) - Recomendação | Promotoria de Justiça de Caculé | Dra. Ana Paula Ferreira
+  - Urgent priority - awaiting initial publication or republicação
+- **PROP-2024-0004** (pendente) - Recomendação | Promotoria de Justiça de Caculé | Dra. Ana Paula Ferreira
   - Tags: financeiro, administrativo
-  - Partial compliance with historico
+  - Has historico with comprovacao and parcial evaluation - awaiting republicação
 - **PROP-2024-0005** (pendente) - Determinação | Procuradoria-Geral de Justiça | Dr. Roberto Almeida Lima
   - Tags: compliance, administrativo
 - **PROP-2024-0006** (pendente) - Recomendação | Promotoria de Justiça de Santo André | Dr. Fernando Souza Prado
@@ -486,4 +582,12 @@ All propositions now include:
   - Urgent priority
 
 **Testing Recommendation:**
-Start with PROP-2024-0009 to test the evaluation workflow, then test creating new comprovacoes for PROP-2024-0002 or PROP-2024-0003 to experience the complete cycle from both user and admin perspectives.
+
+**For Complete Workflow Testing:**
+1. **Test Evaluation:** Use PROP-2024-0009 (em_analise) - evaluate as parcial/inadimplente to see it return to 'pendente'
+2. **Test Republicação:** After step 1, republish PROP-2024-0009 from "Publicar Proposições" page with new prazoComprovacao
+3. **Test Fresh Publication:** Publish PROP-2024-0003 or PROP-2024-0005 (both pendente, never published)
+4. **Test Comprovação:** Submit comprovação for PROP-2024-0002 (aguardando_comprovacao)
+5. **Verify Historico:** Check PROP-2024-0004 details to see historico with comprovacao + parcial evaluation before status changed to pendente
+
+This sequence demonstrates the complete publication-gated workflow from both user and admin perspectives.
