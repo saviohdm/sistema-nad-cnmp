@@ -751,6 +751,11 @@
             background-color: var(--success-color);
         }
 
+        .timeline-marker.publicacao {
+            border-color: var(--warning-color);
+            background-color: var(--warning-color);
+        }
+
         .timeline-content {
             background-color: var(--light-bg);
             padding: 1rem;
@@ -764,6 +769,10 @@
 
         .timeline-content.avaliacao {
             border-left-color: var(--success-color);
+        }
+
+        .timeline-content.publicacao {
+            border-left-color: var(--warning-color);
         }
 
         .timeline-header {
@@ -2221,14 +2230,23 @@
             if (proposicao.historico && proposicao.historico.length > 0) {
                 historicoHTML = `
                     <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
-                        <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Histórico de Comprovações e Avaliações</h4>
+                        <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Histórico Completo</h4>
                         <div class="timeline">
                             ${proposicao.historico.map(h => {
-                                const tipoLabel = h.tipo === 'comprovacao' ? 'Comprovação Enviada' : 'Avaliação da Corregedoria';
-                                const statusInfo = h.tipo === 'avaliacao' ?
+                                let tipoLabel = 'Registro';
+                                if (h.tipo === 'publicacao') tipoLabel = 'Proposição Publicada';
+                                else if (h.tipo === 'comprovacao') tipoLabel = 'Comprovação Enviada';
+                                else if (h.tipo === 'avaliacao') tipoLabel = 'Avaliação da Corregedoria';
+
+                                const statusInfo = (h.tipo === 'avaliacao' || h.tipo === 'publicacao') ?
                                     `<div style="margin-top: 0.5rem;">
                                         <strong>Decisão:</strong>
                                         <span class="badge badge-${h.statusNovo}">${getStatusLabel(h.statusNovo)}</span>
+                                    </div>` : '';
+
+                                const prazoInfo = h.tipo === 'publicacao' && h.prazoComprovacao ?
+                                    `<div style="margin-top: 0.5rem;">
+                                        <strong>Prazo para Comprovação:</strong> ${formatDate(h.prazoComprovacao)}
                                     </div>` : '';
 
                                 const arquivosHTML = h.arquivos && h.arquivos.length > 0 ?
@@ -2257,6 +2275,7 @@
                                                 ${h.descricao}
                                             </div>
                                             ${statusInfo}
+                                            ${prazoInfo}
                                             ${observacoesHTML}
                                             ${arquivosHTML}
                                         </div>
@@ -3241,12 +3260,33 @@
             }
 
             // Update selected proposições
+            const dataPublicacao = new Date().toISOString();
             selectedIds.forEach(id => {
                 const proposicao = proposicoes.find(p => p.id === id);
                 if (proposicao) {
+                    const statusAnterior = proposicao.status;
+
+                    // Registrar publicação no histórico
+                    const registroPublicacao = {
+                        tipo: 'publicacao',
+                        data: dataPublicacao,
+                        usuario: 'Corregedoria Nacional',
+                        descricao: `Proposição publicada para comprovação. Prazo definido: ${formatDate(prazoComprovacao)}`,
+                        prazoComprovacao: prazoComprovacao,
+                        statusAnterior: statusAnterior,
+                        statusNovo: 'aguardando_comprovacao'
+                    };
+
+                    // Adicionar ao histórico
+                    if (!proposicao.historico) {
+                        proposicao.historico = [];
+                    }
+                    proposicao.historico.push(registroPublicacao);
+
+                    // Atualizar campos da proposição
                     proposicao.status = 'aguardando_comprovacao';
                     proposicao.prazoComprovacao = prazoComprovacao;
-                    proposicao.dataPublicacao = new Date().toISOString();
+                    proposicao.dataPublicacao = dataPublicacao;
                 }
             });
 
