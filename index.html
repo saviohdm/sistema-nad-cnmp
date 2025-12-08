@@ -814,10 +814,43 @@
                 </div>
                 <div class="form-group">
                     <label for="userType">Perfil</label>
-                    <select id="userType" required>
+                    <select id="userType" required onchange="toggleRamoMPField()">
                         <option value="">Selecione...</option>
                         <option value="admin">Corregedoria Nacional</option>
                         <option value="user">Órgão Correicionado</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="ramoMPGroup">
+                    <label for="ramoMPLogin">Ramo do Ministério Público *</label>
+                    <select id="ramoMPLogin">
+                        <option value="">Selecione seu MP...</option>
+                        <option value="MPBA">MPBA - Ministério Público da Bahia</option>
+                        <option value="MPGO">MPGO - Ministério Público de Goiás</option>
+                        <option value="MPPI">MPPI - Ministério Público do Piauí</option>
+                        <option value="MPSP">MPSP - Ministério Público de São Paulo</option>
+                        <option value="MPRJ">MPRJ - Ministério Público do Rio de Janeiro</option>
+                        <option value="MPMG">MPMG - Ministério Público de Minas Gerais</option>
+                        <option value="MPCE">MPCE - Ministério Público do Ceará</option>
+                        <option value="MPPE">MPPE - Ministério Público de Pernambuco</option>
+                        <option value="MPRS">MPRS - Ministério Público do Rio Grande do Sul</option>
+                        <option value="MPPR">MPPR - Ministério Público do Paraná</option>
+                        <option value="MPSC">MPSC - Ministério Público de Santa Catarina</option>
+                        <option value="MPMT">MPMT - Ministério Público do Mato Grosso</option>
+                        <option value="MPMS">MPMS - Ministério Público do Mato Grosso do Sul</option>
+                        <option value="MPAM">MPAM - Ministério Público do Amazonas</option>
+                        <option value="MPPA">MPPA - Ministério Público do Pará</option>
+                        <option value="MPDF">MPDF - Ministério Público do Distrito Federal</option>
+                        <option value="MPES">MPES - Ministério Público do Espírito Santo</option>
+                        <option value="MPRN">MPRN - Ministério Público do Rio Grande do Norte</option>
+                        <option value="MPPB">MPPB - Ministério Público da Paraíba</option>
+                        <option value="MPAL">MPAL - Ministério Público de Alagoas</option>
+                        <option value="MPSE">MPSE - Ministério Público de Sergipe</option>
+                        <option value="MPTO">MPTO - Ministério Público do Tocantins</option>
+                        <option value="MPAC">MPAC - Ministério Público do Acre</option>
+                        <option value="MPRO">MPRO - Ministério Público de Rondônia</option>
+                        <option value="MPRR">MPRR - Ministério Público de Roraima</option>
+                        <option value="MPAP">MPAP - Ministério Público do Amapá</option>
+                        <option value="MPMA">MPMA - Ministério Público do Maranhão</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Entrar</button>
@@ -852,7 +885,7 @@
                         <span class="nav-icon">📋</span>
                         <span>Proposições</span>
                     </div>
-                    <div class="nav-item" onclick="showPage('enviar')">
+                    <div class="nav-item" id="navMinhasComprovacoes" onclick="showPage('enviar')">
                         <span class="nav-icon">✍️</span>
                         <span>Minhas Comprovações</span>
                     </div>
@@ -1726,27 +1759,55 @@
             }).join('');
         }
 
+        // Toggle ramoMP field visibility
+        function toggleRamoMPField() {
+            const userType = document.getElementById('userType').value;
+            const ramoMPGroup = document.getElementById('ramoMPGroup');
+            const ramoMPSelect = document.getElementById('ramoMPLogin');
+
+            if (userType === 'user') {
+                ramoMPGroup.classList.remove('hidden');
+                ramoMPSelect.setAttribute('required', 'required');
+            } else {
+                ramoMPGroup.classList.add('hidden');
+                ramoMPSelect.removeAttribute('required');
+                ramoMPSelect.value = '';
+            }
+        }
+
         // Login
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const userType = document.getElementById('userType').value;
+            const ramoMP = document.getElementById('ramoMPLogin').value;
+
+            // Validate ramoMP for correicionados
+            if (userType === 'user' && !ramoMP) {
+                alert('Por favor, selecione seu Ramo do Ministério Público.');
+                return;
+            }
 
             currentUser = {
                 username: username,
-                type: userType
+                type: userType,
+                ramoMP: userType === 'user' ? ramoMP : null
             };
 
             document.getElementById('userName').textContent = username;
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
 
-            // Hide admin pages for regular users
+            // Hide/Show menu items based on user type
             if (userType === 'user') {
+                // Hide admin-only pages
                 document.getElementById('navPublicar').style.display = 'none';
                 document.getElementById('navAvaliar').style.display = 'none';
                 document.getElementById('navCadastroCorreicao').style.display = 'none';
                 document.getElementById('navCadastroProposicao').style.display = 'none';
+            } else {
+                // Hide correicionado-only pages
+                document.getElementById('navMinhasComprovacoes').style.display = 'none';
             }
 
             initializeSampleData();
@@ -1779,17 +1840,39 @@
             event.currentTarget.classList.add('active');
         }
 
+        // Filter functions by ramoMP
+        function getFilteredCorreicoes() {
+            if (!currentUser || currentUser.type === 'admin') {
+                return correicoes;
+            }
+            return correicoes.filter(c => c.ramoMP === currentUser.ramoMP);
+        }
+
+        function getFilteredProposicoes() {
+            if (!currentUser || currentUser.type === 'admin') {
+                return proposicoes;
+            }
+            const filtered = proposicoes.filter(p => {
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                return correicao && correicao.ramoMP === currentUser.ramoMP;
+            });
+            return filtered;
+        }
+
         // Update Dashboard
         function updateDashboard() {
-            const totalCorreicoes = correicoes.length;
-            const total = proposicoes.length;
-            const adimplentes = proposicoes.filter(p => p.status === 'adimplente').length;
-            const pendentes = proposicoes.filter(p => p.status === 'pendente').length;
-            const aguardandoComprovacao = proposicoes.filter(p => p.status === 'aguardando_comprovacao').length;
-            const inadimplentes = proposicoes.filter(p => p.status === 'inadimplente').length;
-            const emAnalise = proposicoes.filter(p => p.status === 'em_analise').length;
-            const prejudicadas = proposicoes.filter(p => p.status === 'prejudicada').length;
-            const prazoVencido = proposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
+            const filteredCorreicoes = getFilteredCorreicoes();
+            const filteredProposicoes = getFilteredProposicoes();
+
+            const totalCorreicoes = filteredCorreicoes.length;
+            const total = filteredProposicoes.length;
+            const adimplentes = filteredProposicoes.filter(p => p.status === 'adimplente').length;
+            const pendentes = filteredProposicoes.filter(p => p.status === 'pendente').length;
+            const aguardandoComprovacao = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao').length;
+            const inadimplentes = filteredProposicoes.filter(p => p.status === 'inadimplente').length;
+            const emAnalise = filteredProposicoes.filter(p => p.status === 'em_analise').length;
+            const prejudicadas = filteredProposicoes.filter(p => p.status === 'prejudicada').length;
+            const prazoVencido = filteredProposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
 
             document.getElementById('totalCorreicoes').textContent = totalCorreicoes;
             document.getElementById('totalProposicoes').textContent = total;
@@ -1809,14 +1892,16 @@
             const canvas = document.getElementById('statusChart');
             const ctx = canvas.getContext('2d');
 
+            const filteredProposicoes = getFilteredProposicoes();
+
             const data = {
-                adimplente: proposicoes.filter(p => p.status === 'adimplente').length,
-                pendente: proposicoes.filter(p => p.status === 'pendente').length,
-                aguardando_comprovacao: proposicoes.filter(p => p.status === 'aguardando_comprovacao').length,
-                em_analise: proposicoes.filter(p => p.status === 'em_analise').length,
-                parcial: proposicoes.filter(p => p.status === 'parcial').length,
-                inadimplente: proposicoes.filter(p => p.status === 'inadimplente').length,
-                prejudicada: proposicoes.filter(p => p.status === 'prejudicada').length
+                adimplente: filteredProposicoes.filter(p => p.status === 'adimplente').length,
+                pendente: filteredProposicoes.filter(p => p.status === 'pendente').length,
+                aguardando_comprovacao: filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao').length,
+                em_analise: filteredProposicoes.filter(p => p.status === 'em_analise').length,
+                parcial: filteredProposicoes.filter(p => p.status === 'parcial').length,
+                inadimplente: filteredProposicoes.filter(p => p.status === 'inadimplente').length,
+                prejudicada: filteredProposicoes.filter(p => p.status === 'prejudicada').length
             };
 
             const total = Object.values(data).reduce((a, b) => a + b, 0);
@@ -1881,7 +1966,10 @@
             const correicaoFilter = document.getElementById('correicaoFilter')?.value || '';
             const tagFilter = document.getElementById('tagFilter')?.value || '';
 
-            let filtered = proposicoes.filter(p => {
+            // Get proposições filtered by ramoMP first
+            const baseFiltered = getFilteredProposicoes();
+
+            let filtered = baseFiltered.filter(p => {
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
                 const ramoMP = correicao ? correicao.ramoMP : '';
 
@@ -2139,7 +2227,10 @@
             const tbody = document.getElementById('correicoesTableBody');
             const searchTerm = document.getElementById('searchCorreicao')?.value.toLowerCase() || '';
 
-            let filtered = correicoes.filter(c => {
+            // Get correições filtered by ramoMP first
+            const baseFiltered = getFilteredCorreicoes();
+
+            let filtered = baseFiltered.filter(c => {
                 const matchesSearch = c.numero.toLowerCase().includes(searchTerm) ||
                                     c.ramoMP.toLowerCase().includes(searchTerm) ||
                                     c.ramoMPNome.toLowerCase().includes(searchTerm);
@@ -2184,8 +2275,9 @@
             const select = document.getElementById('correicaoFilter');
             if (!select) return;
 
+            const filteredCorreicoes = getFilteredCorreicoes();
             select.innerHTML = '<option value="">Todas as correições</option>' +
-                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP}</option>`).join('');
+                filteredCorreicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP}</option>`).join('');
         }
 
         // Populate correicao select in proposicao form
@@ -2193,8 +2285,9 @@
             const select = document.getElementById('correicaoId');
             if (!select) return;
 
+            const filteredCorreicoes = getFilteredCorreicoes();
             select.innerHTML = '<option value="">Selecione a correição...</option>' +
-                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMPNome}</option>`).join('');
+                filteredCorreicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMPNome}</option>`).join('');
         }
 
         // Populate proposição select
@@ -2202,8 +2295,9 @@
             const select = document.getElementById('proposicaoSelect');
             if (!select) return;
 
-            // Only show proposições with status 'aguardando_comprovacao'
-            const aguardando = proposicoes.filter(p => p.status === 'aguardando_comprovacao');
+            // Get filtered proposições and filter by status
+            const filteredProposicoes = getFilteredProposicoes();
+            const aguardando = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao');
             select.innerHTML = '<option value="">Selecione...</option>' +
                 aguardando.map(p => {
                     const correicao = correicoes.find(c => c.id === p.correicaoId);
@@ -2222,7 +2316,9 @@
             const tbody = document.getElementById('proposicoesComprovacaoTableBody');
             if (!tbody) return;
 
-            const aguardando = proposicoes.filter(p => p.status === 'aguardando_comprovacao');
+            // Get filtered proposições first
+            const filteredProposicoes = getFilteredProposicoes();
+            const aguardando = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao');
 
             if (aguardando.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição aguardando comprovação no momento</td></tr>';
