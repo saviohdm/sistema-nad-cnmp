@@ -24,9 +24,12 @@ Correição (Judicial Review)
 ├── dataInicio, dataFim, observacoes
 └── Proposições (many)
     ├── id, numero, correicaoId
-    ├── descricao, prazo, prioridade
-    ├── status: 'pendente' | 'em_analise' | 'adimplente' | 'parcial' | 'inadimplente' | 'prejudicada'
+    ├── tipo, unidade, membro
+    ├── descricao, prioridade
+    ├── prazoComprovacao, dataPublicacao
+    ├── status: 'pendente' | 'aguardando_comprovacao' | 'em_analise' | 'adimplente' | 'parcial' | 'inadimplente' | 'prejudicada'
     ├── tags[] (array of tag IDs for categorization)
+    ├── rascunhos[] (array of draft comprovacoes)
     └── historico[] (array of interactions)
         ├── tipo: 'comprovacao' | 'avaliacao'
         ├── data (ISO timestamp)
@@ -52,6 +55,16 @@ Correição (Judicial Review)
   - Single selection for MPE (one state)
   - Multiple selection for MPU (multiple states)
 - `status` (string): Auto-calculated - 'ativo' (has pending propositions) or 'inativo' (all propositions completed)
+
+**Proposição Extended Fields:**
+- `tipo` (string): Nature of the proposition - one of: 'Determinação' (mandatory), 'Recomendação' (advisory)
+- `unidade` (string): MP unit responsible for compliance (e.g., "Promotoria de Justiça de Cachoeira", "Procuradoria-Geral de Justiça")
+- `membro` (string): Name of the member assigned to the unit (e.g., "Dr. João Silva Santos", "Dra. Maria Oliveira Costa")
+- `prazoComprovacao` (date | null): Deadline for submitting proof of compliance (only set when proposition is published)
+- `dataPublicacao` (date | null): Date when proposition was published to correicionado
+- `rascunhos` (array): Draft comprovacoes prepared by correicionado before batch submission
+
+**Important:** Propositions no longer have a generic "prazo" field. The only relevant deadline is `prazoComprovacao`, which is set when the proposition is published and enters the `aguardando_comprovacao` status.
 
 ### Key Architectural Patterns
 
@@ -345,59 +358,66 @@ No automated tests. Manual testing checklist:
    - Test MP=MPU with multiple UF selection (Ctrl+Click)
    - Verify status is calculated automatically based on propositions
 5. Create new proposição - verify correição link and table display
-6. Test all filters - text search (including tematica, numeroElo, tipo), status, correição, tags
+   - Test all required fields: tipo (Determinação/Recomendação), unidade, membro
+   - Verify tipo combo has exactly 2 options
+   - Verify unidade and membro accept text input
+   - Verify proposição appears in table with all new columns
+   - Note: No generic "prazo" field - only prazoComprovacao when published
+6. Test all filters - text search (including tematica, numeroElo, tipo for correições; tipo, unidade, membro for proposições), status, correição, tags
 7. View correição details modal - verify all new fields displayed correctly
+8. View proposição details modal - verify tipo, unidade, membro displayed
 
 **Tag System:**
-8. Create new proposição with tags selected:
+9. Create new proposição with tags selected:
    - Verify checkboxes work in cadastro form
    - Verify tags appear in table and detail modal
    - Verify tag badges render with correct colors
-9. Test tag filter:
-   - Filter by different tags
-   - Verify only propositions with selected tag appear
-10. Verify tags persist when editing/viewing propositions
+10. Test tag filter:
+    - Filter by different tags
+    - Verify only propositions with selected tag appear
+11. Verify tags persist when editing/viewing propositions
 
 **Comprovacao Workflow:**
-11. As user, submit comprovação for pendente proposition:
-   - Verify status changes to `em_analise`
-   - Verify historico entry created with correct data
-   - Verify proposition appears in admin's evaluation queue
-12. Test file selection and display in comprovacao form
+12. As user, submit comprovação for pendente proposition:
+    - Verify status changes to `em_analise`
+    - Verify historico entry created with correct data
+    - Verify proposition appears in admin's evaluation queue
+13. Test file selection and display in comprovacao form
 
 **Avaliacao Workflow:**
-13. As admin, access "Avaliar Comprovações" page
-14. Verify propositions with status `em_analise` appear in table
-15. Open evaluation modal and verify:
+14. As admin, access "Avaliar Comprovações" page
+15. Verify propositions with status `em_analise` appear in table
+16. Open evaluation modal and verify:
     - Latest comprovacao details displayed
     - All attached files listed
     - Decision form present
-16. Submit evaluation as `inadimplente`:
+17. Submit evaluation as `inadimplente`:
     - Verify status updates
     - Verify avaliacao added to historico
     - Verify proposition returns to user's comprovacao queue
     - Verify correição status remains 'ativo' (has incomplete propositions)
-17. Submit new comprovacao and evaluate as `adimplente`:
+18. Submit new comprovacao and evaluate as `adimplente`:
     - Verify full cycle completes
     - Verify historico shows complete timeline
     - Verify correição status changes to 'inativo' if all propositions complete
 
 **History & Timeline:**
-18. View details of proposition with multiple comprovacoes/avaliacoes
-19. Verify timeline displays chronologically
-20. Verify color coding (blue for comprovacao, green for avaliacao)
-21. Verify all data shown: dates, users, descriptions, files, status changes
+19. View details of proposition with multiple comprovacoes/avaliacoes
+20. Verify timeline displays chronologically
+21. Verify color coding (blue for comprovacao, green for avaliacao)
+22. Verify all data shown: dates, users, descriptions, files, status changes
 
 **Dashboard & Charts:**
-22. Verify dashboard cards include "Em Análise" counter
-23. Verify chart displays 6 bars (including em_analise)
-24. Verify all counters update after comprovacao/avaliacao operations
+23. Verify dashboard cards include "Em Análise" counter
+24. Verify chart displays 6 bars (including em_analise)
+25. Verify all counters update after comprovacao/avaliacao operations
 
 **UI/UX:**
-25. Test responsive layout at mobile breakpoint (768px)
-26. Verify modals scroll properly with long history
-27. Test responsive timeline on narrow screens
-28. Test correições table with many columns - verify horizontal scroll if needed
+26. Test responsive layout at mobile breakpoint (768px)
+27. Verify modals scroll properly with long history
+28. Test responsive timeline on narrow screens
+29. Test correições table with many columns - verify horizontal scroll if needed
+30. Test proposições table with new columns (tipo, unidade, membro) - verify readability
 
 ## Browser Compatibility Requirements
 
@@ -424,31 +444,46 @@ The system includes realistic sample data demonstrating all workflow states:
   - Theme: Correição nacional sobre compliance e integridade
   - **Demonstrates multiple UF selection for MPU**
 
-**Proposições (9 total) - Status Distribution:**
-- **PROP-2024-0001** (adimplente) - Complete workflow example with full historico
+**Proposições (13 total) - Enhanced with tipo, unidade, membro fields:**
+
+All propositions now include:
+- **Tipo**: Either "Determinação" (mandatory) or "Recomendação" (advisory)
+- **Unidade**: Specific MP unit responsible (e.g., Promotoria de Justiça de Cachoeira, Procuradoria-Geral)
+- **Membro**: Assigned member name (e.g., Dr. João Silva Santos, Dra. Maria Oliveira Costa)
+
+**Status Distribution:**
+- **PROP-2024-0001** (adimplente) - Determinação | Procuradoria-Geral de Justiça | Dr. João Silva Santos
   - Tags: tecnologia, gestao-documental
-  - 1 comprovacao + 1 avaliacao showing successful completion
-- **PROP-2024-0002** (pendente) - Fresh proposition awaiting initial comprovacao
+  - Complete workflow with historico
+- **PROP-2024-0002** (aguardando_comprovacao) - Recomendação | Promotoria de Justiça de Cachoeira | Dra. Maria Oliveira Costa
   - Tags: infraestrutura, compliance
-- **PROP-2024-0003** (inadimplente) - Deadline passed, needs urgent action
+  - Published and awaiting proof submission
+- **PROP-2024-0003** (inadimplente) - Determinação | Corregedoria-Geral de Justiça | Dr. Carlos Eduardo Mendes
   - Tags: recursos-humanos, administrativo
-- **PROP-2024-0004** (parcial) - Partial compliance example with historico
+  - Urgent priority
+- **PROP-2024-0004** (parcial) - Recomendação | Promotoria de Justiça de Caculé | Dra. Ana Paula Ferreira
   - Tags: financeiro, administrativo
-  - Shows comprovacao evaluated as partially compliant
-- **PROP-2024-0005** (pendente) - High priority pending
+  - Partial compliance with historico
+- **PROP-2024-0005** (pendente) - Determinação | Procuradoria-Geral de Justiça | Dr. Roberto Almeida Lima
   - Tags: compliance, administrativo
-- **PROP-2024-0006** (pendente) - Normal priority pending
+- **PROP-2024-0006** (pendente) - Recomendação | Promotoria de Justiça de Santo André | Dr. Fernando Souza Prado
   - Tags: capacitacao, recursos-humanos
-- **PROP-2024-0007** (adimplente) - Completed without historico (legacy data)
+- **PROP-2024-0007** (adimplente) - Determinação | Promotoria de Justiça de Osasco | Dra. Juliana Barbosa Reis
   - Tags: tecnologia, infraestrutura
-- **PROP-2024-0008** (prejudicada) - Superseded by new legislation
+- **PROP-2024-0008** (prejudicada) - Recomendação | Promotoria de Justiça de Niterói | Dr. Marcelo Tavares Cruz
   - Tags: administrativo, processual
-  - Shows avaliacao marking proposition as prejudicada with justification
-- **PROP-2024-0009** (em_analise) - **IDEAL FOR TESTING EVALUATION WORKFLOW**
+- **PROP-2024-0009** (em_analise) - Determinação | Procuradoria-Geral de Justiça | Dra. Patricia Moreira Santos
   - Tags: gestao-documental, tecnologia, compliance
-  - Has comprovacao awaiting Corregedoria evaluation
-  - Appears in "Avaliar Comprovações" queue
-  - Use this to test the complete admin evaluation process
+  - **IDEAL FOR TESTING EVALUATION WORKFLOW**
+- **PROP-2024-0010** (aguardando_comprovacao) - Recomendação | Promotoria de Justiça de Itabuna
+  - Tags: tecnologia, transparencia, compliance
+- **PROP-2024-0011** (aguardando_comprovacao) - Determinação | Corregedoria-Geral de Justiça
+  - Tags: compliance, administrativo, capacitacao
+- **PROP-2024-0012** (aguardando_comprovacao) - Recomendação | Promotoria de Justiça de Feira de Santana
+  - Tags: administrativo, processual, gestao-documental
+- **PROP-2024-0013** (aguardando_comprovacao) - Determinação | Procuradoria-Geral de Justiça
+  - Tags: tecnologia, compliance, administrativo
+  - Urgent priority
 
 **Testing Recommendation:**
 Start with PROP-2024-0009 to test the evaluation workflow, then test creating new comprovacoes for PROP-2024-0002 or PROP-2024-0003 to experience the complete cycle from both user and admin perspectives.
