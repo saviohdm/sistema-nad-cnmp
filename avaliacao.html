@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Comprovação - CNMP</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos específicos para a página de avaliação */
+        .avaliacao-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: white;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .breadcrumb a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .breadcrumb .separator {
+            color: var(--text-muted);
+        }
+
+        .breadcrumb .current {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .avaliacao-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .avaliacao-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .avaliacao-header .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .description-box {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .description-text {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+
+        .comprovacao-card {
+            background-color: white;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .comprovacao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .comprovacao-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .comprovacao-date {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .comprovacao-author {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .arquivos-list {
+            background-color: var(--light-bg);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .arquivo-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .arquivo-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-avaliacao {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .form-avaliacao .section-title {
+            border-color: var(--success-color);
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .decision-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .decision-option {
+            position: relative;
+        }
+
+        .decision-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .decision-label {
+            display: block;
+            padding: 1rem;
+            background-color: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .decision-option input[type="radio"]:checked + .decision-label {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .decision-option input[type="radio"]:checked + .decision-label.adimplente {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .decision-option input[type="radio"]:checked + .decision-label.parcial {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+            color: var(--text-dark);
+        }
+
+        .decision-option input[type="radio"]:checked + .decision-label.inadimplente {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .decision-option input[type="radio"]:checked + .decision-label.prejudicada {
+            background-color: var(--text-muted);
+            border-color: var(--text-muted);
+        }
+
+        .decision-label:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .parecer-container {
+            margin-top: 1.5rem;
+        }
+
+        .parecer-textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1rem;
+            line-height: 1.7;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .parecer-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .char-counter {
+            text-align: right;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .char-counter.warning {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .char-counter.danger {
+            color: var(--danger-color);
+            font-weight: 700;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background-color: var(--text-muted);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-primary {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .text-length-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #e7f3ff;
+            color: #004085;
+            margin-left: 0.5rem;
+        }
+
+        .text-length-badge.very-long {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .avaliacao-container {
+                padding: 1rem;
+            }
+
+            .avaliacao-header {
+                padding: 1.5rem;
+            }
+
+            .avaliacao-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .decision-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>CNMP - Sistema de Acompanhamento de Proposições</h1>
+        <div class="header-user">
+            <span id="userName">Corregedoria Nacional</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="avaliacao-container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="index.html">← Voltar para Lista de Avaliações</a>
+            <span class="separator">/</span>
+            <span class="current">Avaliar Comprovação</span>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <p>Carregando dados da proposição...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="empty-state hidden">
+            <div class="empty-state-icon">❌</div>
+            <p id="errorMessage">Erro ao carregar proposição.</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Voltar para Lista</a>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <!-- Header da Avaliação -->
+            <div class="avaliacao-header">
+                <h1 id="proposicaoNumero">PROP-2024-XXXX</h1>
+                <div class="subtitle" id="correicaoInfo">Correição: COR-2024-XX</div>
+            </div>
+
+            <!-- Seção: Informações da Proposição -->
+            <div class="section">
+                <h2 class="section-title">📋 Informações da Proposição</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Número</span>
+                        <span class="info-value" id="infNumero">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Tipo</span>
+                        <span class="info-value" id="infTipo">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Unidade</span>
+                        <span class="info-value" id="infUnidade">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Membro</span>
+                        <span class="info-value" id="infMembro">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Prioridade</span>
+                        <span class="info-value" id="infPrioridade">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status Atual</span>
+                        <span class="info-value" id="infStatus">-</span>
+                    </div>
+                </div>
+                <div class="description-box">
+                    <div class="info-label" style="margin-bottom: 0.5rem;">Descrição da Proposição <span id="descLengthBadge"></span></div>
+                    <div class="description-text" id="infDescricao">-</div>
+                </div>
+            </div>
+
+            <!-- Seção: Histórico Completo -->
+            <div class="section">
+                <h2 class="section-title">📜 Histórico Completo</h2>
+                <div id="historicoTimeline">
+                    <div class="empty-state">
+                        <p>Nenhum histórico registrado.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção: Comprovação Atual -->
+            <div class="section">
+                <h2 class="section-title">📎 Comprovação a Avaliar</h2>
+                <div id="comprovacaoAtual">
+                    <div class="empty-state">
+                        <p>Nenhuma comprovação encontrada.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário de Avaliação -->
+            <div class="section form-avaliacao">
+                <h2 class="section-title">⚖️ Formulário de Avaliação</h2>
+
+                <form id="avaliacaoForm">
+                    <div class="form-group">
+                        <label style="font-weight: 600; margin-bottom: 1rem; display: block;">Decisão da Corregedoria Nacional *</label>
+                        <div class="decision-grid">
+                            <div class="decision-option">
+                                <input type="radio" id="decisaoAdimplente" name="decisao" value="adimplente" required>
+                                <label for="decisaoAdimplente" class="decision-label adimplente">
+                                    ✅ Adimplente<br>
+                                    <small style="font-weight: normal;">Comprovação aceita</small>
+                                </label>
+                            </div>
+                            <div class="decision-option">
+                                <input type="radio" id="decisaoParcial" name="decisao" value="parcial" required>
+                                <label for="decisaoParcial" class="decision-label parcial">
+                                    ⚠️ Parcial<br>
+                                    <small style="font-weight: normal;">Comprovação parcial</small>
+                                </label>
+                            </div>
+                            <div class="decision-option">
+                                <input type="radio" id="decisaoInadimplente" name="decisao" value="inadimplente" required>
+                                <label for="decisaoInadimplente" class="decision-label inadimplente">
+                                    ❌ Inadimplente<br>
+                                    <small style="font-weight: normal;">Comprovação insuficiente</small>
+                                </label>
+                            </div>
+                            <div class="decision-option">
+                                <input type="radio" id="decisaoPrejudicada" name="decisao" value="prejudicada" required>
+                                <label for="decisaoPrejudicada" class="decision-label prejudicada">
+                                    ⊘ Prejudicada<br>
+                                    <small style="font-weight: normal;">Proposição superada</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="parecer-container">
+                        <label for="parecerTexto" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
+                            Parecer da Corregedoria Nacional *
+                        </label>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                            Descreva detalhadamente a justificativa da sua decisão. O parecer pode ter até 7.500 caracteres.
+                        </p>
+                        <textarea
+                            id="parecerTexto"
+                            class="parecer-textarea"
+                            placeholder="Descreva a justificativa da decisão de forma clara e fundamentada..."
+                            maxlength="7500"
+                            required
+                        ></textarea>
+                        <div class="char-counter" id="charCounter">0 / 7.500 caracteres</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">💾 Submeter Avaliação</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA STORAGE =====
+        let proposicaoId = null;
+        let proposicao = null;
+        let correicao = null;
+
+        // ===== UTILITY FUNCTIONS =====
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'pendente': 'Pendente',
+                'aguardando_comprovacao': 'Aguardando Comprovação',
+                'em_analise': 'Em Análise',
+                'adimplente': 'Adimplente',
+                'parcial': 'Parcialmente Adimplente',
+                'inadimplente': 'Inadimplente',
+                'prejudicada': 'Prejudicada'
+            };
+            return labels[status] || status;
+        }
+
+        function getStatusBadge(status) {
+            return `<span class="badge badge-${status}">${getStatusLabel(status)}</span>`;
+        }
+
+        function getPrioridadeLabel(prioridade) {
+            const labels = {
+                'normal': 'Normal',
+                'alta': 'Alta',
+                'urgente': 'Urgente'
+            };
+            return labels[prioridade] || prioridade;
+        }
+
+        function getTextLengthBadge(text) {
+            if (!text) return '';
+            const length = text.length;
+            if (length < 500) return '';
+            const badgeClass = length > 2000 ? 'very-long' : '';
+            return `<span class="text-length-badge ${badgeClass}">${length.toLocaleString('pt-BR')} caracteres</span>`;
+        }
+
+        // ===== CHARACTER COUNTER =====
+        function setupCharCounter() {
+            const textarea = document.getElementById('parecerTexto');
+            const counter = document.getElementById('charCounter');
+
+            function updateCounter() {
+                const length = textarea.value.length;
+                counter.textContent = `${length.toLocaleString('pt-BR')} / 7.500 caracteres`;
+
+                counter.classList.remove('warning', 'danger');
+                if (length > 7500 * 0.9) {
+                    counter.classList.add('danger');
+                } else if (length > 7500 * 0.75) {
+                    counter.classList.add('warning');
+                }
+            }
+
+            textarea.addEventListener('input', updateCounter);
+        }
+
+        // ===== LOAD DATA FROM URL =====
+        function getProposicaoIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        function loadDataFromLocalStorage() {
+            try {
+                const correicoesData = localStorage.getItem('correicoes');
+                const proposicoesData = localStorage.getItem('proposicoes');
+
+                if (!correicoesData || !proposicoesData) {
+                    throw new Error('Dados não encontrados no sistema. Por favor, acesse através do sistema principal.');
+                }
+
+                const correicoes = JSON.parse(correicoesData);
+                const proposicoes = JSON.parse(proposicoesData);
+
+                proposicao = proposicoes.find(p => p.id == proposicaoId);
+                if (!proposicao) {
+                    throw new Error('Proposição não encontrada.');
+                }
+
+                correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+
+                return { proposicao, correicao, proposicoes, correicoes };
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                throw error;
+            }
+        }
+
+        // ===== RENDER FUNCTIONS =====
+        function renderProposicaoInfo() {
+            document.getElementById('proposicaoNumero').textContent = proposicao.numero;
+            document.getElementById('correicaoInfo').textContent = correicao
+                ? `Correição: ${correicao.numero} - ${correicao.ramoMPNome}`
+                : 'Correição: N/A';
+
+            document.getElementById('infNumero').textContent = proposicao.numero;
+            document.getElementById('infTipo').textContent = proposicao.tipo || '-';
+            document.getElementById('infUnidade').textContent = proposicao.unidade || '-';
+            document.getElementById('infMembro').textContent = proposicao.membro || '-';
+            document.getElementById('infPrioridade').innerHTML = getPrioridadeLabel(proposicao.prioridade || 'normal');
+            document.getElementById('infStatus').innerHTML = getStatusBadge(proposicao.status);
+
+            document.getElementById('descLengthBadge').innerHTML = getTextLengthBadge(proposicao.descricao);
+            document.getElementById('infDescricao').textContent = proposicao.descricao || '-';
+        }
+
+        function renderHistorico() {
+            const container = document.getElementById('historicoTimeline');
+
+            if (!proposicao.historico || proposicao.historico.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Nenhum histórico registrado.</p></div>';
+                return;
+            }
+
+            const timelineHTML = proposicao.historico.map(item => {
+                let icon = '📝';
+                let borderColor = '#0066cc';
+                let bgColor = '#e7f3ff';
+
+                if (item.tipo === 'publicacao') {
+                    icon = '📢';
+                    borderColor = '#e65100';
+                    bgColor = '#fff3e0';
+                } else if (item.tipo === 'comprovacao') {
+                    icon = '📎';
+                    borderColor = '#0066cc';
+                    bgColor = '#e7f3ff';
+                } else if (item.tipo === 'avaliacao') {
+                    icon = '⚖️';
+                    borderColor = '#28a745';
+                    bgColor = '#d4edda';
+                }
+
+                let content = `
+                    <div style="background-color: white; border-left: 4px solid ${borderColor}; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <strong style="color: ${borderColor};">${icon} ${item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1)}</strong>
+                            <span style="color: var(--text-muted); font-size: 0.875rem;">${formatDateTime(item.data)}</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                            👤 ${item.usuario}
+                        </div>
+                        <div style="background-color: ${bgColor}; padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem;">
+                            <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;">${item.descricao}</p>
+                        </div>
+                `;
+
+                if (item.tipo === 'publicacao' && item.prazoComprovacao) {
+                    content += `
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #fff3cd; border-radius: 4px;">
+                            <strong>📅 Prazo para Comprovação:</strong> ${formatDate(item.prazoComprovacao)}
+                        </div>
+                    `;
+                }
+
+                if (item.tipo === 'comprovacao' && item.arquivos && item.arquivos.length > 0) {
+                    content += `
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: var(--light-bg); border-radius: 4px;">
+                            <strong>📎 Arquivos anexados:</strong>
+                            ${item.arquivos.map(arq => `<div style="padding: 0.25rem 0;">• ${arq}</div>`).join('')}
+                        </div>
+                    `;
+                }
+
+                if (item.tipo === 'avaliacao') {
+                    content += `
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                            <span>Status:</span>
+                            ${getStatusBadge(item.statusAnterior)}
+                            <span>→</span>
+                            ${getStatusBadge(item.statusNovo)}
+                        </div>
+                    `;
+                }
+
+                if (item.observacoes) {
+                    content += `
+                        <div style="margin-top: 0.5rem; font-style: italic; color: var(--text-muted);">
+                            <strong>Obs:</strong> ${item.observacoes}
+                        </div>
+                    `;
+                }
+
+                content += `</div>`;
+                return content;
+            }).join('');
+
+            container.innerHTML = timelineHTML;
+        }
+
+        function renderComprovacaoAtual() {
+            const container = document.getElementById('comprovacaoAtual');
+
+            const comprovacoes = proposicao.historico ? proposicao.historico.filter(h => h.tipo === 'comprovacao') : [];
+            if (comprovacoes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Nenhuma comprovação encontrada.</p></div>';
+                return;
+            }
+
+            const ultimaComprovacao = comprovacoes[comprovacoes.length - 1];
+
+            const html = `
+                <div class="comprovacao-card">
+                    <div class="comprovacao-header">
+                        <div class="comprovacao-meta">
+                            <div class="comprovacao-date">📅 ${formatDateTime(ultimaComprovacao.data)}</div>
+                            <div class="comprovacao-author">👤 Enviado por: ${ultimaComprovacao.usuario}</div>
+                        </div>
+                        <div>${getTextLengthBadge(ultimaComprovacao.descricao)}</div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">Descrição do Adimplemento:</strong>
+                        <div style="background-color: var(--light-bg); padding: 1rem; border-radius: 4px; white-space: pre-wrap; line-height: 1.7;">
+                            ${ultimaComprovacao.descricao}
+                        </div>
+                    </div>
+
+                    ${ultimaComprovacao.observacoes ? `
+                        <div style="margin-top: 1rem;">
+                            <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">Observações:</strong>
+                            <div style="font-style: italic; color: var(--text-muted);">
+                                ${ultimaComprovacao.observacoes}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${ultimaComprovacao.arquivos && ultimaComprovacao.arquivos.length > 0 ? `
+                        <div class="arquivos-list">
+                            <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">📎 Arquivos Comprobatórios (${ultimaComprovacao.arquivos.length}):</strong>
+                            ${ultimaComprovacao.arquivos.map(arquivo => `
+                                <div class="arquivo-item">
+                                    <span>📄</span>
+                                    <span>${arquivo}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ===== SUBMIT AVALIACAO =====
+        function submitAvaliacao(e) {
+            e.preventDefault();
+
+            const decisao = document.querySelector('input[name="decisao"]:checked');
+            const parecer = document.getElementById('parecerTexto').value.trim();
+
+            if (!decisao) {
+                alert('Por favor, selecione uma decisão.');
+                return;
+            }
+
+            if (!parecer) {
+                alert('Por favor, preencha o parecer.');
+                return;
+            }
+
+            if (parecer.length > 7500) {
+                alert('O parecer não pode ter mais de 7.500 caracteres.');
+                return;
+            }
+
+            // Criar avaliação
+            const novaAvaliacao = {
+                tipo: 'avaliacao',
+                data: new Date().toISOString(),
+                usuario: 'Corregedoria Nacional',
+                descricao: parecer,
+                statusAnterior: proposicao.status,
+                statusNovo: decisao.value
+            };
+
+            // Adicionar ao histórico
+            if (!proposicao.historico) {
+                proposicao.historico = [];
+            }
+            proposicao.historico.push(novaAvaliacao);
+
+            // Atualizar status
+            // Se decisão é parcial/inadimplente, status volta para 'pendente'
+            if (decisao.value === 'parcial' || decisao.value === 'inadimplente') {
+                proposicao.status = 'pendente';
+            } else {
+                proposicao.status = decisao.value;
+            }
+
+            // Salvar no localStorage
+            try {
+                const proposicoesData = JSON.parse(localStorage.getItem('proposicoes'));
+                const index = proposicoesData.findIndex(p => p.id == proposicaoId);
+                if (index !== -1) {
+                    proposicoesData[index] = proposicao;
+                    localStorage.setItem('proposicoes', JSON.stringify(proposicoesData));
+                }
+
+                alert('✅ Avaliação registrada com sucesso!');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Erro ao salvar avaliação:', error);
+                alert('❌ Erro ao salvar avaliação. Tente novamente.');
+            }
+        }
+
+        // ===== INITIALIZATION =====
+        function init() {
+            try {
+                // Get ID from URL
+                proposicaoId = getProposicaoIdFromURL();
+                if (!proposicaoId) {
+                    throw new Error('ID da proposição não fornecido na URL.');
+                }
+
+                // Load data
+                loadDataFromLocalStorage();
+
+                // Check if status is em_analise
+                if (proposicao.status !== 'em_analise') {
+                    throw new Error('Esta proposição não está disponível para avaliação. Status atual: ' + getStatusLabel(proposicao.status));
+                }
+
+                // Hide loading, show content
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+
+                // Render all sections
+                renderProposicaoInfo();
+                renderHistorico();
+                renderComprovacaoAtual();
+
+                // Setup form
+                setupCharCounter();
+                document.getElementById('avaliacaoForm').addEventListener('submit', submitAvaliacao);
+
+            } catch (error) {
+                console.error('Erro na inicialização:', error);
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('errorState').classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = error.message || 'Erro ao carregar proposição.';
+            }
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

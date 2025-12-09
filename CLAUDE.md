@@ -10,11 +10,22 @@ This is a **CNMP (Conselho Nacional do Ministério Público) Proposition Trackin
 
 ## Architecture
 
-### Single-File Design
-The entire application resides in `index.html` (~1,900 lines, ~75KB):
-- **Lines 1-657:** HTML structure and embedded CSS (includes timeline styles)
-- **Lines 658-1000:** HTML page layouts and components
-- **Lines 1001-1891:** JavaScript application logic
+### Modular Design
+The application has been refactored from a single-file to a modular structure:
+
+**Main Files:**
+- `index.html` - Main SPA (Single Page Application) with dashboard, lists, and forms
+- `avaliacao.html` - Dedicated standalone page for evaluating comprovações (913 lines)
+- `styles.css` - Shared CSS styles (1,090 lines) - used by both pages
+- `app.js` - Main JavaScript application logic (~2,500+ lines)
+
+**Evaluation Workflow:**
+- When admin clicks "Avaliar" button, system redirects to `avaliacao.html?id={proposicaoId}`
+- `avaliacao.html` loads data from `localStorage` independently
+- After submission, redirects back to `index.html` with updated data
+- Fully standalone - no modal dependencies
+
+**Legacy Note:** The function `abrirAvaliacaoModal()` in `app.js` now redirects to the dedicated page instead of opening a modal. Old modal code is kept for compatibility but is no longer used.
 
 ### Data Model Hierarchy
 ```
@@ -197,17 +208,42 @@ All forms use:
 ## UI Component Patterns
 
 ### Modal Detail Views
-- `viewDetails(id)` - shows proposição details with:
+- `viewDetails(id)` - shows proposição details modal with:
   - Linked correição info
   - Complete historical timeline of comprovacoes and avaliacoes
   - Color-coded timeline markers and content boxes
-- `viewCorreicaoDetails(id)` - shows correição with aggregated proposition statistics
-- `abrirAvaliacaoModal(id)` - admin-only modal for evaluating comprovacoes:
-  - Shows last comprovacao details
-  - Form to select decision (adimplente/parcial/inadimplente/prejudicada)
-  - Parecer (justification) textarea
+- `viewCorreicaoDetails(id)` - shows correição modal with aggregated proposition statistics
 - Modals populate innerHTML and toggle `.hidden` class
-- Close with `closeModal()` or `closeAvaliacaoModal()`
+- Close with `closeModal()`
+
+### Avaliação Page (avaliacao.html)
+**Dedicated standalone page for evaluating comprovações** - replaces old modal approach:
+
+**Features:**
+- Fully self-contained HTML page with embedded styles and scripts
+- Loads data from `localStorage` on initialization
+- Receives `id` parameter via URL query string (`?id=123`)
+- Professional UI with breadcrumb navigation back to index.html
+- Organized sections: Proposição Info, Complete Histórico, Current Comprovação
+- Advanced evaluation form with:
+  - Visual radio button cards for decision (adimplente/parcial/inadimplente/prejudicada)
+  - Large textarea for parecer (up to 7,500 characters)
+  - Real-time character counter with warning/danger states
+  - Form validation before submission
+- On submit: saves to localStorage and redirects to index.html
+
+**Key Functions (in avaliacao.html):**
+- `init()` - loads proposição by ID from URL, validates status, renders all sections
+- `loadDataFromLocalStorage()` - retrieves correicoes and proposicoes from localStorage
+- `renderProposicaoInfo()` - displays proposição metadata in info grid
+- `renderHistorico()` - builds complete timeline of all interactions
+- `renderComprovacaoAtual()` - shows last comprovacao details with files
+- `submitAvaliacao()` - creates avaliacao entry, updates status, saves to localStorage
+- `setupCharCounter()` - manages textarea character counter with visual feedback
+
+**Access Pattern:**
+- Admin clicks "Avaliar" button in renderAvaliacaoTable() → navigates to `avaliacao.html?id={proposicaoId}`
+- After successful submission → redirects back to `index.html`
 
 ### Table Rendering Pattern
 ```javascript
