@@ -229,14 +229,19 @@
                                     <option value="">Todas as correições</option>
                                 </select>
                                 <select id="statusFilter">
-                                    <option value="">Todos os status</option>
-                                    <option value="pendente">Pendente</option>
-                                    <option value="aguardando_comprovacao">Aguardando Comprovação</option>
-                                    <option value="em_analise">Em Análise</option>
-                                    <option value="adimplente">Adimplente</option>
-                                    <option value="parcial">Parcialmente Adimplente</option>
-                                    <option value="inadimplente">Inadimplente</option>
-                                    <option value="prejudicada">Prejudicada</option>
+                                    <option value="">Filtrar por Status/Valoração</option>
+                                    <optgroup label="Status Processual">
+                                        <option value="pendente">Pendente</option>
+                                        <option value="aguardando_comprovacao">Aguardando Comprovação</option>
+                                        <option value="em_analise">Em Análise</option>
+                                        <option value="encerrada">Encerrada</option>
+                                    </optgroup>
+                                    <optgroup label="Valoração">
+                                        <option value="adimplente">Adimplente</option>
+                                        <option value="parcial">Parcial</option>
+                                        <option value="inadimplente">Inadimplente</option>
+                                        <option value="prejudicada">Prejudicada</option>
+                                    </optgroup>
                                 </select>
                                 <select id="tagFilter">
                                     <option value="">Todas as tags</option>

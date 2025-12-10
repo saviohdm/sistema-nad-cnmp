@@ -9,6 +9,9 @@
             try {
                 localStorage.setItem('correicoes', JSON.stringify(correicoes));
                 localStorage.setItem('proposicoes', JSON.stringify(proposicoes));
+                if (currentUser) {
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                }
             } catch (error) {
                 console.error('Erro ao salvar dados no localStorage:', error);
             }
@@ -27,6 +30,20 @@
                 return false;
             } catch (error) {
                 console.error('Erro ao carregar dados do localStorage:', error);
+                return false;
+            }
+        }
+
+        function loadUserSession() {
+            try {
+                const userData = localStorage.getItem('currentUser');
+                if (userData) {
+                    currentUser = JSON.parse(userData);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Erro ao carregar sessão do usuário:', error);
                 return false;
             }
         }
@@ -322,7 +339,7 @@
                     descricao: 'Implementar sistema digital de protocolo de documentos',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'adimplente',
+                    status: ['encerrada', 'adimplente'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'gestao-documental'],
                     rascunhos: [],
@@ -339,8 +356,8 @@
                             data: '2024-11-20T14:00:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Comprovação aceita. Sistema implementado conforme especificado.',
-                            statusAnterior: 'em_analise',
-                            statusNovo: 'adimplente'
+                            statusAnterior: ['em_analise', 'nova'],
+                            statusNovo: ['encerrada', 'adimplente']
                         }
                     ]
                 },
@@ -354,11 +371,80 @@
                     descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: 'aguardando_comprovacao',
+                    status: ['aguardando_comprovacao', 'inadimplente'],
                     prioridade: 'normal',
                     tags: ['infraestrutura', 'compliance'],
                     rascunhos: [],
-                    historico: []
+                    historico: [
+                        {
+                            tipo: 'publicacao',
+                            data: '2024-06-15T09:00:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'Proposição publicada para comprovação inicial. É necessário adequar todas as instalações físicas da Promotoria de Justiça de Cachoeira conforme normas técnicas de acessibilidade (NBR 9050/2015), incluindo instalação de rampas de acesso, banheiros adaptados, sinalização tátil e elevador acessível.',
+                            prazoComprovacao: '2024-08-15',
+                            statusAnterior: ['pendente', 'nova'],
+                            statusNovo: ['aguardando_comprovacao', 'nova']
+                        },
+                        {
+                            tipo: 'comprovacao',
+                            data: '2024-08-10T14:30:00',
+                            usuario: 'MPBA',
+                            descricao: 'Informamos que foram iniciadas as obras de adequação das instalações físicas. Até o momento foram concluídas:\n\n1. Instalação de rampa de acesso principal (concluída em 15/07/2024)\n2. Adaptação de 01 (um) banheiro no térreo com barras de apoio e vaso sanitário elevado\n3. Sinalização tátil no piso da entrada principal\n\nAs obras de instalação do elevador estão em fase de licitação, com previsão de início para setembro/2024. Os demais banheiros estão programados para adaptação no segundo semestre.\n\nSegue em anexo o relatório fotográfico das obras concluídas e cronograma atualizado.',
+                            observacoes: 'Obras parcialmente executadas devido a necessidade de licitação para instalação do elevador.',
+                            arquivos: [
+                                'relatorio_fotografico_obras_jul2024.pdf',
+                                'cronograma_obras_acessibilidade.xlsx',
+                                'ata_reuniao_engenharia.pdf'
+                            ]
+                        },
+                        {
+                            tipo: 'avaliacao',
+                            data: '2024-08-20T11:15:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'A comprovação apresentada demonstra execução PARCIAL da proposição. Foram constatados avanços significativos com a conclusão da rampa de acesso e adaptação de banheiro, porém permanecem pendentes elementos essenciais:\n\n1. Instalação de elevador acessível (obra estrutural não iniciada)\n2. Adaptação dos demais banheiros do prédio\n3. Sinalização tátil completa em todos os pavimentos\n4. Vagas exclusivas de estacionamento para pessoas com deficiência\n\nDECISÃO: Considerar a proposição como PARCIALMENTE ADIMPLENTE. A unidade deverá apresentar novo cronograma detalhado com prazos definidos para conclusão integral das adequações, especialmente quanto à instalação do elevador que é item fundamental para acessibilidade vertical do edifício.\n\nDetermino REPUBLICAÇÃO da proposição com novo prazo para apresentação de comprovação da conclusão total das obras.',
+                            statusAnterior: ['em_analise', 'nova'],
+                            statusNovo: ['pendente', 'parcial']
+                        },
+                        {
+                            tipo: 'publicacao',
+                            data: '2024-09-01T10:00:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'REPUBLICAÇÃO: Proposição republicada após avaliação parcial. A unidade deverá comprovar a CONCLUSÃO INTEGRAL das adequações de acessibilidade, com ênfase especial na instalação do elevador acessível e adaptação completa de todos os sanitários. Apresentar cronograma executivo atualizado com marcos de conclusão e relatório fotográfico final.',
+                            prazoComprovacao: '2024-11-30',
+                            statusAnterior: ['pendente', 'parcial'],
+                            statusNovo: ['aguardando_comprovacao', 'parcial']
+                        },
+                        {
+                            tipo: 'comprovacao',
+                            data: '2024-11-25T16:45:00',
+                            usuario: 'MPBA',
+                            descricao: 'Informamos que, infelizmente, o processo licitatório para instalação do elevador foi suspenso devido a impugnação administrativa apresentada por licitante. O processo encontra-se em análise jurídica e deve ser retomado somente em janeiro/2025.\n\nNão obstante, foram concluídas outras adequações:\n\n1. Adaptação de mais 02 (dois) banheiros (1º e 2º pavimentos) - concluído em outubro/2024\n2. Sinalização tátil instalada em todos os corredores e escadas\n3. Piso tátil de alerta nas áreas de risco\n4. Demarcação de 03 vagas exclusivas no estacionamento\n\nSolicitamos prorrogação do prazo para apresentação da comprovação final, tendo em vista que a pendência da instalação do elevador decorre de motivos alheios à vontade da administração (suspensão do processo licitatório).',
+                            observacoes: 'Processo licitatório suspenso. Aguardando análise jurídica para retomada.',
+                            arquivos: [
+                                'oficio_licitacao_suspensa.pdf',
+                                'fotos_banheiros_adaptados_nov2024.pdf',
+                                'planta_sinalizacao_tatil.pdf',
+                                'termo_impugnacao_licitacao.pdf'
+                            ]
+                        },
+                        {
+                            tipo: 'avaliacao',
+                            data: '2024-12-01T10:00:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'A segunda comprovação apresentada demonstra novamente execução INCOMPLETA da proposição, ainda que com avanços nas adequações de sanitários e sinalização tátil.\n\nEmbora reconheça que a suspensão do processo licitatório configure óbice de natureza administrativa, é responsabilidade da gestão adotar providências alternativas tempestivas para não perpetuar a situação de INADEQUAÇÃO das instalações físicas.\n\nCONSTATAÇÕES:\n✓ Banheiros adaptados: 03 de 05 concluídos (60%)\n✓ Sinalização tátil: 100% concluída\n✓ Vagas estacionamento: 100% concluída\n✗ Elevador acessível: 0% (ITEM CRÍTICO NÃO INICIADO)\n✗ Banheiros pendentes: 02 unidades (40%)\n\nDECISÃO: Considerar INADIMPLENTE. A ausência de elevador acessível em prédio de múltiplos pavimentos inviabiliza o pleno acesso de pessoas com mobilidade reduzida, configurando descumprimento de norma constitucional e legal.\n\nDETERMINO:\n1. Republicação com novo prazo\n2. Apresentação de plano de ação emergencial\n3. Solução definitiva para a questão do elevador (retomada da licitação ou alternativa técnica)\n4. Conclusão dos 02 banheiros remanescentes',
+                            statusAnterior: ['em_analise', 'parcial'],
+                            statusNovo: ['pendente', 'inadimplente']
+                        },
+                        {
+                            tipo: 'publicacao',
+                            data: '2024-12-05T09:30:00',
+                            usuario: 'Corregedoria Nacional',
+                            descricao: 'SEGUNDA REPUBLICAÇÃO: Proposição republicada após segunda avaliação com resultado INADIMPLENTE. Exige-se a CONCLUSÃO DEFINITIVA E INTEGRAL de todas as adequações de acessibilidade. ESPECIAL ATENÇÃO para:\n\n1. ELEVADOR ACESSÍVEL - apresentar solução definitiva (retomada licitação ou alternativa técnica aprovada)\n2. Conclusão dos 02 banheiros remanescentes\n3. Plano de ação com cronograma executivo realista\n4. Comprovação fotográfica e documental completa\n\nEsta é a TERCEIRA PUBLICAÇÃO da mesma proposição. O não atendimento integral poderá ensejar outras medidas administrativas cabíveis.',
+                            prazoComprovacao: '2025-01-31',
+                            statusAnterior: ['pendente', 'inadimplente'],
+                            statusNovo: ['aguardando_comprovacao', 'inadimplente']
+                        }
+                    ]
                 },
                 {
                     id: 3,
@@ -370,7 +456,7 @@
                     descricao: 'Regularizar processos de gestão de pessoas',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'pendente',
+                    status: ['pendente', 'nova'],
                     prioridade: 'urgente',
                     tags: ['recursos-humanos', 'administrativo'],
                     rascunhos: [],
@@ -386,7 +472,7 @@
                     descricao: 'Atualizar inventário patrimonial',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'pendente',
+                    status: ['pendente', 'parcial'],
                     prioridade: 'normal',
                     tags: ['financeiro', 'administrativo'],
                     rascunhos: [],
@@ -403,8 +489,8 @@
                             data: '2024-11-12T15:30:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Adimplemento parcial aceito. Necessário completar os 40% restantes.',
-                            statusAnterior: 'em_analise',
-                            statusNovo: 'parcial'
+                            statusAnterior: ['em_analise', 'nova'],
+                            statusNovo: ['pendente', 'parcial']
                         }
                     ]
                 },
@@ -418,7 +504,7 @@
                     descricao: 'Implementar controles internos de correição',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'pendente',
+                    status: ['pendente', 'nova'],
                     prioridade: 'alta',
                     tags: ['compliance', 'administrativo'],
                     rascunhos: [],
@@ -434,7 +520,7 @@
                     descricao: 'Criar programa de capacitação continuada',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'pendente',
+                    status: ['pendente', 'nova'],
                     prioridade: 'normal',
                     tags: ['capacitacao', 'recursos-humanos'],
                     rascunhos: [],
@@ -450,7 +536,7 @@
                     descricao: 'Modernizar infraestrutura de TI',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'adimplente',
+                    status: ['encerrada', 'adimplente'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'infraestrutura'],
                     rascunhos: [],
@@ -466,7 +552,7 @@
                     descricao: 'Reorganizar estrutura administrativa - proposição superada por nova legislação',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'prejudicada',
+                    status: ['encerrada', 'prejudicada'],
                     prioridade: 'normal',
                     tags: ['administrativo', 'processual'],
                     rascunhos: [],
@@ -476,8 +562,8 @@
                             data: '2024-10-05T11:00:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Proposição prejudicada em razão da Lei nº 14.133/2021 que torna desnecessária a reorganização proposta.',
-                            statusAnterior: 'pendente',
-                            statusNovo: 'prejudicada'
+                            statusAnterior: ['pendente', 'nova'],
+                            statusNovo: ['encerrada', 'prejudicada']
                         }
                     ]
                 },
@@ -491,7 +577,7 @@
                     descricao: 'Implementar política de gestão documental e arquivística',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: 'em_analise',
+                    status: ['em_analise', 'nova'],
                     prioridade: 'alta',
                     tags: ['gestao-documental', 'tecnologia', 'compliance'],
                     rascunhos: [],
@@ -516,7 +602,7 @@
                     descricao: 'Implementar ouvidoria digital com canal de denúncias online',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: 'aguardando_comprovacao',
+                    status: ['aguardando_comprovacao', 'nova'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'transparencia', 'compliance'],
                     rascunhos: [],
@@ -532,7 +618,7 @@
                     descricao: 'Criar programa de compliance e integridade institucional',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: 'aguardando_comprovacao',
+                    status: ['aguardando_comprovacao', 'nova'],
                     prioridade: 'alta',
                     tags: ['compliance', 'administrativo', 'capacitacao'],
                     rascunhos: [],
@@ -548,10 +634,22 @@
                     descricao: 'Padronizar fluxos de trabalho e procedimentos administrativos',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: 'aguardando_comprovacao',
+                    status: ['aguardando_comprovacao', 'nova'],
                     prioridade: 'normal',
                     tags: ['administrativo', 'processual', 'gestao-documental'],
-                    rascunhos: [],
+                    rascunhos: [
+                        {
+                            descricao: 'Informamos que foi instituído Grupo de Trabalho por meio da Portaria PGJ nº 145/2024 para padronização dos fluxos de trabalho e procedimentos administrativos da Promotoria de Justiça de Feira de Santana.\n\nO Grupo de Trabalho, constituído por 05 (cinco) membros, realizou as seguintes ações:\n\n1. Mapeamento completo dos processos administrativos existentes (concluído em novembro/2024)\n2. Identificação de gargalos e pontos de melhoria nos fluxos atuais\n3. Elaboração de Manual de Procedimentos Administrativos padronizados (versão preliminar anexa)\n4. Realização de 03 (três) oficinas de capacitação com servidores da unidade\n5. Implementação de sistema de controle de prazos digitais\n\nO Manual de Procedimentos contempla:\n- Fluxo de recebimento e distribuição de expedientes\n- Procedimentos de protocolo e arquivo\n- Rotinas de atendimento ao público\n- Controle de diligências e prazos\n- Gestão documental e organização de autos\n\nA implementação integral está prevista para janeiro/2025, com acompanhamento mensal dos indicadores de eficiência operacional.',
+                            observacoes: 'Manual ainda em fase de revisão final pelo Grupo de Trabalho. Previsão de aprovação definitiva: 15/01/2025.',
+                            arquivos: [
+                                'portaria_pgj_145_2024_grupo_trabalho.pdf',
+                                'manual_procedimentos_administrativos_v1.pdf',
+                                'relatorio_mapeamento_processos.xlsx',
+                                'lista_presenca_oficinas_capacitacao.pdf',
+                                'cronograma_implementacao_2025.pdf'
+                            ]
+                        }
+                    ],
                     historico: []
                 },
                 {
@@ -564,10 +662,25 @@
                     descricao: 'Estabelecer política de segurança da informação e proteção de dados',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: 'aguardando_comprovacao',
+                    status: ['aguardando_comprovacao', 'nova'],
                     prioridade: 'urgente',
                     tags: ['tecnologia', 'compliance', 'administrativo'],
-                    rascunhos: [],
+                    rascunhos: [
+                        {
+                            descricao: 'Informamos a implementação da Política de Segurança da Informação e Proteção de Dados no âmbito da Procuradoria-Geral de Justiça, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).\n\nMEDIDAS IMPLEMENTADAS:\n\n1. NORMATIVAS E GOVERNANÇA:\n- Instituída Política de Segurança da Informação (Portaria PGJ nº 178/2024)\n- Criado Comitê Gestor de Proteção de Dados\n- Nomeado Encarregado de Dados (DPO) - Resolução PGJ nº 89/2024\n- Aprovado Regulamento de Uso de Sistemas e Recursos de TI\n\n2. MEDIDAS TÉCNICAS:\n- Implementação de sistema de autenticação multifator (MFA) em 100% dos acessos\n- Criptografia end-to-end em todas as bases de dados sensíveis\n- Firewall de nova geração com proteção DDoS\n- Sistema de backup automático com redundância geográfica\n- Antivírus corporativo centralizado (Kaspersky Enterprise)\n- Monitoramento 24/7 com sistema SIEM (Security Information and Event Management)\n\n3. CAPACITAÇÃO:\n- Realização de 08 (oito) treinamentos sobre LGPD e segurança da informação\n- Certificação de 100% dos servidores em curso EAD sobre proteção de dados\n- Workshop específico para gestores sobre gestão de incidentes de segurança\n\n4. PROCESSOS:\n- Mapeamento completo de tratamento de dados pessoais (inventário de dados)\n- Implementação de procedimentos de resposta a incidentes\n- Elaboração de Relatório de Impacto à Proteção de Dados (RIPD)\n- Revisão de contratos com fornecedores (cláusulas LGPD)\n\n5. INFRAESTRUTURA:\n- Atualização de todos os servidores para versões com suporte de segurança\n- Implementação de política de senhas fortes (12 caracteres, rotação 90 dias)\n- Segregação de redes (administrativa, judicial, visitantes)\n- Sistema de detecção e prevenção de intrusão (IDS/IPS)\n\nA Política está em pleno funcionamento desde dezembro/2024, com auditorias trimestrais programadas.',
+                            observacoes: 'Aguardando relatório final da auditoria externa de segurança (previsão: 20/01/2025) para anexar como evidência adicional.',
+                            arquivos: [
+                                'portaria_pgj_178_2024_politica_seguranca.pdf',
+                                'resolucao_pgj_89_2024_dpo.pdf',
+                                'regulamento_uso_sistemas_ti.pdf',
+                                'certificados_treinamento_lgpd.zip',
+                                'inventario_dados_pessoais.xlsx',
+                                'relatorio_impacto_protecao_dados_ripd.pdf',
+                                'contratos_revisados_fornecedores.zip',
+                                'relatorio_infraestrutura_ti_atualizada.pdf'
+                            ]
+                        }
+                    ],
                     historico: []
                 }
             ];
@@ -682,13 +795,26 @@
             // Try to load from localStorage first, otherwise initialize with sample data
             if (!loadFromLocalStorage()) {
                 initializeSampleData();
-                saveToLocalStorage();
             }
+            saveToLocalStorage();
+
+            // Initialize UI
+            atualizarStatusCorreicoes();
+            updateDashboard();
+            renderCorreicoesTable();
+            renderProposicoesTable();
+            populateCorreicaoFilter();
+            populateCorreicaoIdSelect();
+            populateProposicaoSelect();
+            renderAvaliacaoTable();
+            renderProposicoesComprovacaoTable();
+            carregarProposicoesParaPublicar();
         });
 
         // Logout
         function logout() {
             currentUser = null;
+            localStorage.removeItem('currentUser');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('loginForm').reset();
@@ -739,12 +865,12 @@
 
             const totalCorreicoes = filteredCorreicoes.length;
             const total = filteredProposicoes.length;
-            const adimplentes = filteredProposicoes.filter(p => p.status === 'adimplente').length;
-            const pendentes = filteredProposicoes.filter(p => p.status === 'pendente').length;
-            const aguardandoComprovacao = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao').length;
-            const inadimplentes = filteredProposicoes.filter(p => p.status === 'inadimplente').length;
-            const emAnalise = filteredProposicoes.filter(p => p.status === 'em_analise').length;
-            const prejudicadas = filteredProposicoes.filter(p => p.status === 'prejudicada').length;
+            const adimplentes = filteredProposicoes.filter(p => hasValoracao(p, 'adimplente')).length;
+            const pendentes = filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente')).length;
+            const aguardandoComprovacao = filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length;
+            const inadimplentes = filteredProposicoes.filter(p => hasValoracao(p, 'inadimplente')).length;
+            const emAnalise = filteredProposicoes.filter(p => hasStatusProcessual(p, 'em_analise')).length;
+            const prejudicadas = filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length;
             const prazoVencido = filteredProposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
 
             document.getElementById('totalCorreicoes').textContent = totalCorreicoes;
@@ -767,43 +893,35 @@
 
             const filteredProposicoes = getFilteredProposicoes();
 
+            // Chart shows only 4 processual status (not valorações)
             const data = {
-                adimplente: filteredProposicoes.filter(p => p.status === 'adimplente').length,
-                pendente: filteredProposicoes.filter(p => p.status === 'pendente').length,
-                aguardando_comprovacao: filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao').length,
-                em_analise: filteredProposicoes.filter(p => p.status === 'em_analise').length,
-                parcial: filteredProposicoes.filter(p => p.status === 'parcial').length,
-                inadimplente: filteredProposicoes.filter(p => p.status === 'inadimplente').length,
-                prejudicada: filteredProposicoes.filter(p => p.status === 'prejudicada').length
+                pendente: filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente')).length,
+                aguardando_comprovacao: filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
+                em_analise: filteredProposicoes.filter(p => hasStatusProcessual(p, 'em_analise')).length,
+                encerrada: filteredProposicoes.filter(p => hasStatusProcessual(p, 'encerrada')).length
             };
 
             const total = Object.values(data).reduce((a, b) => a + b, 0);
             const colors = {
-                adimplente: '#28a745',
                 pendente: '#ffc107',
                 aguardando_comprovacao: '#e65100',
                 em_analise: '#0066cc',
-                parcial: '#17a2b8',
-                inadimplente: '#dc3545',
-                prejudicada: '#6c757d'
+                encerrada: '#28a745'
             };
 
             const labels = {
-                adimplente: 'Adimplente',
                 pendente: 'Pendente',
                 aguardando_comprovacao: 'Aguard. Comprov.',
                 em_analise: 'Em Análise',
-                parcial: 'Parcial',
-                inadimplente: 'Inadimplente',
-                prejudicada: 'Prejudicada'
+                encerrada: 'Encerrada'
             };
 
             // Set canvas size
             canvas.width = canvas.offsetWidth;
             canvas.height = 300;
 
-            // Calculate bar width and spacing
-            const barWidth = (canvas.width - 100) / 7;
+            // Calculate bar width and spacing (4 bars now)
+            const barWidth = (canvas.width - 100) / 4;
             const maxValue = Math.max(...Object.values(data));
             const heightRatio = (canvas.height - 80) / (maxValue || 1);
 
@@ -852,7 +970,15 @@
                                     (p.tipo && p.tipo.toLowerCase().includes(searchTerm)) ||
                                     (p.unidade && p.unidade.toLowerCase().includes(searchTerm)) ||
                                     (p.membro && p.membro.toLowerCase().includes(searchTerm));
-                const matchesStatus = !statusFilter || p.status === statusFilter;
+
+                // Status filter checks both processual and valoração
+                let matchesStatus = true;
+                if (statusFilter) {
+                    const statusProcessual = getStatusProcessual(p);
+                    const valoracao = getValoracao(p);
+                    matchesStatus = statusProcessual === statusFilter || valoracao === statusFilter;
+                }
+
                 const matchesCorreicao = !correicaoFilter || p.correicaoId === parseInt(correicaoFilter);
                 const matchesTag = !tagFilter || (p.tags && p.tags.includes(tagFilter));
                 return matchesSearch && matchesStatus && matchesCorreicao && matchesTag;
@@ -889,7 +1015,7 @@
                         </td>
                         <td>${renderTagBadges(p.tags)}</td>
                         <td>
-                            <span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span>
+                            ${renderStatusBadges(p.status)}
                             ${prazoVencidoBadge}
                         </td>
                         <td>
@@ -902,6 +1028,44 @@
 
         // Search and filter
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-login if user session exists
+            if (loadUserSession() && loadFromLocalStorage()) {
+                // Restore user session
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+
+                // Hide/Show menu items based on user type
+                if (currentUser.type === 'user') {
+                    // Hide admin-only pages
+                    document.getElementById('navPublicar').style.display = 'none';
+                    document.getElementById('navAvaliar').style.display = 'none';
+                    document.getElementById('navCadastroCorreicao').style.display = 'none';
+                    document.getElementById('navCadastroProposicao').style.display = 'none';
+                } else {
+                    // Hide correicionado-only pages
+                    document.getElementById('navMinhasComprovacoes').style.display = 'none';
+                }
+
+                // Initialize UI
+                atualizarStatusCorreicoes();
+                updateDashboard();
+                renderCorreicoesTable();
+                renderProposicoesTable();
+                populateCorreicaoFilter();
+                populateCorreicaoIdSelect();
+                populateProposicaoSelect();
+                renderAvaliacaoTable();
+                renderProposicoesComprovacaoTable();
+                carregarProposicoesParaPublicar();
+
+                // Check for hash navigation (e.g., #enviar from comprovacao.html)
+                if (window.location.hash) {
+                    const page = window.location.hash.substring(1);
+                    showPage(page);
+                }
+            }
+
             setTimeout(() => {
                 const searchInput = document.getElementById('searchInput');
                 const statusFilter = document.getElementById('statusFilter');
@@ -1057,7 +1221,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Status:</span>
-                    <span class="detail-value"><span class="badge badge-${proposicao.status}">${getStatusLabel(proposicao.status)}</span></span>
+                    <span class="detail-value">${renderStatusBadges(proposicao.status)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Tags:</span>
@@ -1083,9 +1247,9 @@
 
             const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === id);
             const totalProposicoes = proposicoesCorreicao.length;
-            const adimplentes = proposicoesCorreicao.filter(p => p.status === 'adimplente').length;
-            const pendentes = proposicoesCorreicao.filter(p => p.status === 'pendente').length;
-            const inadimplentes = proposicoesCorreicao.filter(p => p.status === 'inadimplente').length;
+            const adimplentes = proposicoesCorreicao.filter(p => hasValoracao(p, 'adimplente')).length;
+            const pendentes = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length;
+            const inadimplentes = proposicoesCorreicao.filter(p => hasValoracao(p, 'inadimplente')).length;
 
             // Format UF array
             const ufDisplay = correicao.uf && correicao.uf.length > 0 ? correicao.uf.join(', ') : 'Não informado';
@@ -1277,7 +1441,7 @@
 
             // Get filtered proposições and filter by status
             const filteredProposicoes = getFilteredProposicoes();
-            const aguardando = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao');
+            const aguardando = filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao'));
             select.innerHTML = '<option value="">Selecione...</option>' +
                 aguardando.map(p => {
                     const correicao = correicoes.find(c => c.id === p.correicaoId);
@@ -1298,7 +1462,7 @@
 
             // Get filtered proposições first
             const filteredProposicoes = getFilteredProposicoes();
-            const aguardando = filteredProposicoes.filter(p => p.status === 'aguardando_comprovacao');
+            const aguardando = filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao'));
 
             if (aguardando.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição aguardando comprovação no momento</td></tr>';
@@ -1353,40 +1517,34 @@
             }
         }
 
-        // Open comprovação modal
+        // Open comprovação modal - redireciona para página dedicada
         function abrirComprovacaoModal(proposicaoId) {
             const proposicao = proposicoes.find(p => p.id === proposicaoId);
-            if (!proposicao) return;
+            if (!proposicao) {
+                alert('Proposição não encontrada.');
+                return;
+            }
 
-            document.getElementById('comprovacaoModalTitle').textContent = `Adicionar Comprovação - ${proposicao.numero}`;
-            document.getElementById('proposicaoIdRascunho').value = proposicaoId;
-            document.getElementById('descricaoComprovacaoRascunho').value = '';
-            document.getElementById('observacoesRascunho').value = '';
-            selectedFilesRascunho = [];
-            editingRascunhoIndex = null;
-            displayFilesRascunho();
+            // Salvar dados no localStorage antes de redirecionar
+            saveToLocalStorage();
 
-            document.getElementById('comprovacaoModal').classList.remove('hidden');
+            // Redirecionar para página de comprovação com ID
+            window.location.href = `comprovacao.html?id=${proposicaoId}`;
         }
 
-        // Edit rascunho
+        // Edit rascunho - redireciona para página dedicada (mesma página, detecta rascunho automaticamente)
         function editarRascunhoComprovacao(proposicaoId) {
             const proposicao = proposicoes.find(p => p.id === proposicaoId);
-            if (!proposicao || !proposicao.rascunhos || proposicao.rascunhos.length === 0) return;
+            if (!proposicao) {
+                alert('Proposição não encontrada.');
+                return;
+            }
 
-            const rascunho = proposicao.rascunhos[0]; // Get first (and only) rascunho
+            // Salvar dados no localStorage antes de redirecionar
+            saveToLocalStorage();
 
-            document.getElementById('comprovacaoModalTitle').textContent = `Editar Comprovação - ${proposicao.numero}`;
-            document.getElementById('proposicaoIdRascunho').value = proposicaoId;
-            document.getElementById('descricaoComprovacaoRascunho').value = rascunho.descricao;
-            document.getElementById('observacoesRascunho').value = rascunho.observacoes || '';
-
-            // Simulate files (we can't actually load files, but we'll show the names)
-            selectedFilesRascunho = rascunho.arquivos.map(filename => ({ name: filename, size: 0 }));
-            editingRascunhoIndex = 0;
-            displayFilesRascunho();
-
-            document.getElementById('comprovacaoModal').classList.remove('hidden');
+            // Redirecionar para página de comprovação (ela detectará e carregará o rascunho)
+            window.location.href = `comprovacao.html?id=${proposicaoId}`;
         }
 
         // Delete rascunho
@@ -1401,13 +1559,18 @@
             alert('Rascunho excluído com sucesso!');
         }
 
+        // === FUNÇÕES OBSOLETAS DO MODAL DE COMPROVAÇÃO ===
+        // As funções abaixo são mantidas para compatibilidade mas não são mais usadas
+        // A comprovação agora ocorre na página dedicada comprovacao.html
+
         function closeComprovacaoModal() {
+            // Obsoleta - mantida para compatibilidade
             document.getElementById('comprovacaoModal').classList.add('hidden');
             selectedFilesRascunho = [];
             editingRascunhoIndex = null;
         }
 
-        // File handling for rascunho
+        // File handling for rascunho (obsoleto)
         document.getElementById('fileInputRascunho')?.addEventListener('change', function(e) {
             selectedFilesRascunho = Array.from(e.target.files);
             displayFilesRascunho();
@@ -1468,7 +1631,7 @@
         // Open revisão modal
         function abrirRevisaoComprovacoes() {
             const aguardando = proposicoes.filter(p =>
-                p.status === 'aguardando_comprovacao' &&
+                hasStatusProcessual(p, 'aguardando_comprovacao') &&
                 p.rascunhos && p.rascunhos.length > 0
             );
 
@@ -1565,7 +1728,7 @@
             }
 
             const aguardando = proposicoes.filter(p =>
-                p.status === 'aguardando_comprovacao' &&
+                hasStatusProcessual(p, 'aguardando_comprovacao') &&
                 p.rascunhos && p.rascunhos.length > 0
             );
 
@@ -1591,8 +1754,9 @@
                 }
                 p.historico.push(novaComprovacao);
 
-                // Change status to em_analise
-                p.status = 'em_analise';
+                // Change status to em_analise - preserve valoração
+                const valoracaoAtual = getValoracao(p);
+                p.status = ['em_analise', valoracaoAtual];
 
                 // Clear rascunhos
                 p.rascunhos = [];
@@ -1697,12 +1861,12 @@
                 return 'ativo'; // No proposições yet, keep active
             }
 
-            // Check if ALL proposições are either 'adimplente' or 'prejudicada'
-            const todasFinalizadas = proposicoesCorreicao.every(p =>
-                p.status === 'adimplente' || p.status === 'prejudicada'
+            // Check if ALL proposições have status processual === 'encerrada'
+            const todasEncerradas = proposicoesCorreicao.every(p =>
+                hasStatusProcessual(p, 'encerrada')
             );
 
-            return todasFinalizadas ? 'inativo' : 'ativo';
+            return todasEncerradas ? 'inativo' : 'ativo';
         }
 
         // Update correição status for all correições
@@ -1759,11 +1923,16 @@
             return date.toLocaleDateString('pt-BR');
         }
 
+        // Helper functions for bidimensional status model
         function getStatusLabel(status) {
             const labels = {
+                // Conjunto 1: Status Processual
                 'pendente': 'Pendente',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
                 'em_analise': 'Em Análise',
+                'encerrada': 'Encerrada',
+                // Conjunto 2: Valoração
+                'nova': 'Nova',
                 'adimplente': 'Adimplente',
                 'parcial': 'Parcial',
                 'inadimplente': 'Inadimplente',
@@ -1772,12 +1941,46 @@
             return labels[status] || status;
         }
 
+        // Render status badges (stacked vertically)
+        function renderStatusBadges(statusArray) {
+            if (!Array.isArray(statusArray) || statusArray.length !== 2) {
+                return '<span class="badge badge-pendente">Erro</span>';
+            }
+            const [statusProcessual, valoracao] = statusArray;
+            return `
+                <div class="status-badges-container">
+                    <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
+                    <span class="badge badge-${valoracao}">${getStatusLabel(valoracao)}</span>
+                </div>
+            `;
+        }
+
+        // Get status processual (index 0)
+        function getStatusProcessual(proposicao) {
+            return Array.isArray(proposicao.status) ? proposicao.status[0] : proposicao.status;
+        }
+
+        // Get valoração (index 1)
+        function getValoracao(proposicao) {
+            return Array.isArray(proposicao.status) ? proposicao.status[1] : 'nova';
+        }
+
+        // Check if proposicao has specific status processual
+        function hasStatusProcessual(proposicao, statusProcessual) {
+            return getStatusProcessual(proposicao) === statusProcessual;
+        }
+
+        // Check if proposicao has specific valoração
+        function hasValoracao(proposicao, valoracao) {
+            return getValoracao(proposicao) === valoracao;
+        }
+
         // Render Avaliação Table
         function renderAvaliacaoTable() {
             const tbody = document.getElementById('avaliacaoTableBody');
             if (!tbody) return;
 
-            const emAnalise = proposicoes.filter(p => p.status === 'em_analise');
+            const emAnalise = proposicoes.filter(p => hasStatusProcessual(p, 'em_analise'));
 
             tbody.innerHTML = emAnalise.map(p => {
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
@@ -1785,13 +1988,18 @@
                 const ramoMP = correicao ? correicao.ramoMP : 'N/A';
                 const numComprovacoes = p.historico ? p.historico.filter(h => h.tipo === 'comprovacao').length : 0;
 
+                // Check if has draft evaluation
+                const hasDraft = p.rascunhosAvaliacao && p.rascunhosAvaliacao.length > 0;
+                const rowClass = hasDraft ? 'row-with-draft' : '';
+                const draftBadge = hasDraft ? '<span class="badge-rascunho" title="Rascunho de avaliação preparado por assessor">📝 Rascunho</span>' : '';
+
                 // Smart truncate description
                 const descPreview = smartTruncate(p.descricao, 120);
                 const lengthBadge = getTextLengthBadge(p.descricao);
 
                 return `
-                    <tr>
-                        <td>${p.numero}</td>
+                    <tr class="${rowClass}">
+                        <td>${p.numero}${draftBadge}</td>
                         <td>${correicaoInfo}</td>
                         <td>${ramoMP}</td>
                         <td>
@@ -1802,7 +2010,9 @@
                         </td>
                         <td>${numComprovacoes}</td>
                         <td>
-                            <a href="avaliacao.html?id=${p.id}" class="btn btn-primary btn-action" style="text-decoration: none; display: inline-block;">Avaliar</a>
+                            <a href="avaliacao.html?id=${p.id}" class="btn btn-primary btn-action" style="text-decoration: none; display: inline-block;">
+                                ${hasDraft ? '📋 Revisar' : 'Avaliar'}
+                            </a>
                         </td>
                     </tr>
                 `;
@@ -1851,12 +2061,13 @@
             }
 
             // Adicionar avaliação ao histórico
+            const statusAnterior = proposicao.status;
             const novaAvaliacao = {
                 tipo: 'avaliacao',
                 data: new Date().toISOString(),
                 usuario: 'Corregedoria Nacional',
                 descricao: parecer,
-                statusAnterior: proposicao.status,
+                statusAnterior: statusAnterior,
                 statusNovo: novoStatus
             };
 
@@ -1865,13 +2076,16 @@
             }
             proposicao.historico.push(novaAvaliacao);
 
-            // Atualizar status
-            // Se avaliação resulta em parcial/inadimplente, proposição volta para 'pendente'
-            // (aguardando republicação para permitir nova comprovação)
+            // Atualizar status (bidimensional)
+            // Se avaliação resulta em parcial/inadimplente, proposição volta para 'pendente' com valoração
             if (novoStatus === 'parcial' || novoStatus === 'inadimplente') {
-                proposicao.status = 'pendente';
+                proposicao.status = ['pendente', novoStatus];
+            } else if (novoStatus === 'adimplente' || novoStatus === 'prejudicada') {
+                // Encerrada com valoração
+                proposicao.status = ['encerrada', novoStatus];
             } else {
-                proposicao.status = novoStatus;
+                // Outros casos (não deveria acontecer)
+                proposicao.status = [novoStatus, 'nova'];
             }
 
             // Atualizar todas as views
@@ -1892,7 +2106,7 @@
 
         // Check if prazoComprovacao is expired
         function isPrazoComprovacaoVencido(proposicao) {
-            if (!proposicao.prazoComprovacao || proposicao.status !== 'aguardando_comprovacao') {
+            if (!proposicao.prazoComprovacao || !hasStatusProcessual(proposicao, 'aguardando_comprovacao')) {
                 return false;
             }
             const today = new Date();
@@ -1924,7 +2138,7 @@
 
             // Filter proposições with status 'pendente' from selected correição
             const proposicoesPendentes = proposicoes.filter(p =>
-                p.correicaoId === correicaoId && p.status === 'pendente'
+                p.correicaoId === correicaoId && hasStatusProcessual(p, 'pendente')
             );
 
             if (proposicoesPendentes.length === 0) {
@@ -1939,7 +2153,7 @@
                     <td>${p.numero}</td>
                     <td>${p.descricao.substring(0, 60)}...</td>
                     <td>${formatDate(p.prazo)}</td>
-                    <td><span class="badge badge-${p.status}">${getStatusLabel(p.status)}</span></td>
+                    <td>${renderStatusBadges(p.status)}</td>
                     <td>${p.prioridade.toUpperCase()}</td>
                 </tr>
             `).join('');
@@ -2002,8 +2216,10 @@
                     }
                     proposicao.historico.push(registroPublicacao);
 
-                    // Atualizar campos da proposição
-                    proposicao.status = 'aguardando_comprovacao';
+                    // Atualizar campos da proposição (status bidimensional)
+                    // Preserva valoração ao publicar
+                    const valoracaoAtual = getValoracao(proposicao);
+                    proposicao.status = ['aguardando_comprovacao', valoracaoAtual];
                     proposicao.prazoComprovacao = prazoComprovacao;
                     proposicao.dataPublicacao = dataPublicacao;
                 }

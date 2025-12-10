@@ -16,16 +16,25 @@ The application has been refactored from a single-file to a modular structure:
 **Main Files:**
 - `index.html` - Main SPA (Single Page Application) with dashboard, lists, and forms
 - `avaliacao.html` - Dedicated standalone page for evaluating comprovações (913 lines)
-- `styles.css` - Shared CSS styles (1,090 lines) - used by both pages
+- `comprovacao.html` - Dedicated standalone page for submitting comprovações (1,181 lines)
+- `styles.css` - Shared CSS styles (1,090 lines) - used by all pages
 - `app.js` - Main JavaScript application logic (~2,500+ lines)
 
-**Evaluation Workflow:**
+**Evaluation Workflow (Admin):**
 - When admin clicks "Avaliar" button, system redirects to `avaliacao.html?id={proposicaoId}`
 - `avaliacao.html` loads data from `localStorage` independently
 - After submission, redirects back to `index.html` with updated data
 - Fully standalone - no modal dependencies
 
-**Legacy Note:** The function `abrirAvaliacaoModal()` in `app.js` now redirects to the dedicated page instead of opening a modal. Old modal code is kept for compatibility but is no longer used.
+**Comprovação Workflow (User):**
+- When user clicks "Adicionar" or "Editar" button, system redirects to `comprovacao.html?id={proposicaoId}`
+- `comprovacao.html` loads data from `localStorage` independently
+- Page detects and auto-loads existing rascunho if present
+- User can save as rascunho (draft) or submit directly
+- After save/submit, redirects back to `index.html#enviar` with updated data
+- Fully standalone - no modal dependencies
+
+**Legacy Note:** The functions `abrirAvaliacaoModal()`, `abrirComprovacaoModal()`, and `editarRascunhoComprovacao()` in `app.js` now redirect to dedicated pages instead of opening modals. Old modal code is kept for compatibility but is no longer used.
 
 ### Data Model Hierarchy
 ```
@@ -244,6 +253,51 @@ All forms use:
 **Access Pattern:**
 - Admin clicks "Avaliar" button in renderAvaliacaoTable() → navigates to `avaliacao.html?id={proposicaoId}`
 - After successful submission → redirects back to `index.html`
+
+### Comprovação Page (comprovacao.html)
+**Dedicated standalone page for submitting comprovações** - replaces old modal approach:
+
+**Features:**
+- Fully self-contained HTML page with embedded styles and scripts (1,181 lines)
+- Loads data from `localStorage` on initialization
+- Receives `id` parameter via URL query string (`?id=123`)
+- Professional UI with breadcrumb navigation back to index.html
+- Organized sections: Proposição Info, Prazo Alert, Comprovação Form
+- Advanced comprovação form with:
+  - Large textarea for descrição do adimplemento (up to 7,500 characters)
+  - Real-time character counter with warning/danger states
+  - Observações adicionais field (up to 1,000 characters)
+  - Drag-and-drop file upload area with visual feedback
+  - Multiple file attachment support with file size display
+  - Visual list of uploaded files with remove buttons
+  - Two submission options: "Salvar como Rascunho" and "Enviar Comprovação"
+- Prazo alert with countdown and visual warning for overdue deadlines
+- Automatic rascunho detection and loading on page load
+- Visual indicator when editing existing rascunho
+
+**Key Functions (in comprovacao.html):**
+- `init()` - loads proposição by ID from URL, validates status, renders all sections
+- `loadDataFromLocalStorage()` - retrieves correicoes and proposicoes from localStorage
+- `renderProposicaoInfo()` - displays proposição metadata in info grid
+- `renderPrazoAlert()` - shows deadline with countdown and visual warnings
+- `loadRascunhoIfExists()` - automatically detects and loads existing rascunho
+- `setupFileUpload()` - manages drag-and-drop file upload with visual feedback
+- `renderFilesList()` - displays uploaded files with size and remove buttons
+- `salvarRascunho()` - saves draft to localStorage (replaces existing rascunho)
+- `submitComprovacao()` - creates comprovacao entry in historico, updates status to em_analise
+- `setupCharCounter()` - manages textarea character counter with visual feedback
+
+**Access Pattern:**
+- User clicks "Adicionar" button in renderProposicoesComprovacaoTable() → navigates to `comprovacao.html?id={proposicaoId}`
+- User clicks "Editar" button for existing rascunho → navigates to `comprovacao.html?id={proposicaoId}` (auto-loads rascunho)
+- After saving rascunho or submitting comprovação → redirects back to `index.html#enviar`
+
+**Workflow:**
+1. **Add New:** Click "Adicionar" → opens comprovacao.html → fill form → save as rascunho OR submit directly
+2. **Edit Rascunho:** Click "Editar" → opens comprovacao.html → form pre-filled with rascunho data → edit → save/submit
+3. **Status Changes:**
+   - Rascunho saved: stays as `aguardando_comprovacao`, rascunho stored in `proposicao.rascunhos`
+   - Comprovação submitted: changes to `em_analise`, rascunho cleared, entry added to `proposicao.historico`
 
 ### Table Rendering Pattern
 ```javascript

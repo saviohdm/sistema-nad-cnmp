@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avaliar Comprovação - CNMP</title>
+    <title>Adicionar Comprovação - CNMP</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Estilos específicos para a página de avaliação */
-        .avaliacao-container {
+        /* Estilos específicos para a página de comprovação */
+        .comprovacao-container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
@@ -44,22 +44,52 @@
             font-weight: 600;
         }
 
-        .avaliacao-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        .comprovacao-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%);
             color: white;
             padding: 2rem;
             border-radius: 8px;
             margin-bottom: 2rem;
         }
 
-        .avaliacao-header h1 {
+        .comprovacao-header h1 {
             font-size: 1.75rem;
             margin-bottom: 0.5rem;
         }
 
-        .avaliacao-header .subtitle {
+        .comprovacao-header .subtitle {
             font-size: 1rem;
             opacity: 0.9;
+        }
+
+        .prazo-alert {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .prazo-alert.vencido {
+            background-color: #ffebee;
+            border-left-color: var(--danger-color);
+        }
+
+        .prazo-alert .icon {
+            font-size: 2rem;
+        }
+
+        .prazo-alert .content {
+            flex: 1;
+        }
+
+        .prazo-alert .prazo-date {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 0.25rem;
         }
 
         .section {
@@ -119,141 +149,26 @@
             color: var(--text-dark);
         }
 
-        .comprovacao-card {
-            background-color: white;
-            border-left: 4px solid var(--secondary-color);
-            padding: 1.5rem;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .comprovacao-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .comprovacao-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .comprovacao-date {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .comprovacao-author {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .arquivos-list {
-            background-color: var(--light-bg);
-            border-radius: 4px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .arquivo-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background-color: white;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
-        }
-
-        .arquivo-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .form-avaliacao {
+        .form-comprovacao {
             background-color: white;
             padding: 2rem;
             border-radius: 8px;
-            border: 2px solid var(--primary-color);
+            border: 2px solid var(--secondary-color);
         }
 
-        .form-avaliacao .section-title {
-            border-color: var(--success-color);
-            color: var(--success-color);
-            margin-bottom: 1.5rem;
-        }
-
-        .decision-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .decision-option {
-            position: relative;
-        }
-
-        .decision-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .decision-label {
-            display: block;
-            padding: 1rem;
-            background-color: var(--light-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .decision-option input[type="radio"]:checked + .decision-label {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-            transform: scale(1.05);
-        }
-
-        .decision-option input[type="radio"]:checked + .decision-label.adimplente {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-        }
-
-        .decision-option input[type="radio"]:checked + .decision-label.parcial {
-            background-color: var(--warning-color);
-            border-color: var(--warning-color);
-            color: var(--text-dark);
-        }
-
-        .decision-option input[type="radio"]:checked + .decision-label.inadimplente {
-            background-color: var(--danger-color);
-            border-color: var(--danger-color);
-        }
-
-        .decision-option input[type="radio"]:checked + .decision-label.prejudicada {
-            background-color: var(--text-muted);
-            border-color: var(--text-muted);
-        }
-
-        .decision-label:hover {
+        .form-comprovacao .section-title {
             border-color: var(--secondary-color);
-            transform: translateY(-2px);
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
         }
 
-        .parecer-container {
-            margin-top: 1.5rem;
+        .descricao-container {
+            margin-bottom: 1.5rem;
         }
 
-        .parecer-textarea {
+        .descricao-textarea {
             width: 100%;
-            min-height: 300px;
+            min-height: 400px;
             padding: 1rem;
             border: 2px solid var(--border-color);
             border-radius: 8px;
@@ -264,9 +179,9 @@
             transition: border-color 0.3s;
         }
 
-        .parecer-textarea:focus {
+        .descricao-textarea:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: var(--secondary-color);
         }
 
         .char-counter {
@@ -284,6 +199,110 @@
         .char-counter.danger {
             color: var(--danger-color);
             font-weight: 700;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            background-color: var(--light-bg);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--secondary-color);
+            background-color: #e7f3ff;
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-text {
+            color: var(--text-dark);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-hint {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .uploaded-files-list {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .uploaded-files-list.hidden {
+            display: none;
+        }
+
+        .uploaded-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background-color: white;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .uploaded-file-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .file-size {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .btn-remove-file {
+            background-color: transparent;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .btn-remove-file:hover {
+            background-color: var(--danger-color);
+            color: white;
         }
 
         .form-actions {
@@ -314,6 +333,18 @@
             background-color: #5a6268;
         }
 
+        .btn-draft {
+            background-color: var(--warning-color);
+            color: var(--text-dark);
+            border: 2px solid #ffa000;
+        }
+
+        .btn-draft:hover {
+            background-color: #ffa000;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
         .btn-primary {
             background-color: var(--success-color);
             color: white;
@@ -325,20 +356,17 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .text-length-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background-color: #e7f3ff;
-            color: #004085;
-            margin-left: 0.5rem;
+        .helper-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: start;
+            gap: 0.5rem;
         }
 
-        .text-length-badge.very-long {
-            background-color: #fff3cd;
-            color: #856404;
+        .helper-text .icon {
+            margin-top: 0.1rem;
         }
 
         .empty-state {
@@ -372,18 +400,6 @@
             font-size: 0.875rem;
         }
 
-        .btn-draft {
-            background-color: var(--warning-color);
-            color: var(--text-dark);
-            border: 2px solid #ffa000;
-        }
-
-        .btn-draft:hover {
-            background-color: #ffa000;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
         /* Status badges - bidimensional model */
         .badge-encerrada {
             background-color: #e8eaf6;
@@ -405,23 +421,19 @@
 
         /* Responsividade */
         @media (max-width: 768px) {
-            .avaliacao-container {
+            .comprovacao-container {
                 padding: 1rem;
             }
 
-            .avaliacao-header {
+            .comprovacao-header {
                 padding: 1.5rem;
             }
 
-            .avaliacao-header h1 {
+            .comprovacao-header h1 {
                 font-size: 1.5rem;
             }
 
             .info-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .decision-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -432,6 +444,10 @@
             .btn {
                 width: 100%;
             }
+
+            .descricao-textarea {
+                min-height: 300px;
+            }
         }
     </style>
 </head>
@@ -440,17 +456,17 @@
     <header class="header">
         <h1>CNMP - Sistema de Acompanhamento de Proposições</h1>
         <div class="header-user">
-            <span id="userName">Corregedoria Nacional</span>
+            <span id="userName">Órgão Correicionado</span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <div class="avaliacao-container">
+    <div class="comprovacao-container">
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="index.html">← Voltar para Lista de Avaliações</a>
+            <a href="index.html">← Voltar para Minhas Comprovações</a>
             <span class="separator">/</span>
-            <span class="current">Avaliar Comprovação</span>
+            <span class="current">Adicionar Comprovação</span>
         </div>
 
         <!-- Loading State -->
@@ -468,16 +484,26 @@
 
         <!-- Main Content -->
         <div id="mainContent" class="hidden">
-            <!-- Header da Avaliação -->
-            <div class="avaliacao-header">
+            <!-- Header da Comprovação -->
+            <div class="comprovacao-header">
                 <h1 id="proposicaoNumero">PROP-2024-XXXX</h1>
                 <div class="subtitle" id="correicaoInfo">Correição: COR-2024-XX</div>
             </div>
 
+            <!-- Prazo Alert -->
+            <div id="prazoAlert" class="prazo-alert hidden">
+                <div class="icon">⏰</div>
+                <div class="content">
+                    <div><strong>Prazo para Comprovação</strong></div>
+                    <div class="prazo-date" id="prazoDate">DD/MM/YYYY</div>
+                    <div id="prazoStatus"></div>
+                </div>
+            </div>
+
             <!-- Rascunho Indicator -->
             <div id="rascunhoIndicator" class="rascunho-indicator hidden">
-                <div class="title">📝 Editando Rascunho de Avaliação</div>
-                <div class="description">Você está editando um rascunho preparado anteriormente (possivelmente por um assessor). As alterações substituirão o rascunho atual.</div>
+                <div class="title">📝 Editando Rascunho Existente</div>
+                <div class="description">Você está editando um rascunho salvo anteriormente. As alterações substituirão o rascunho atual.</div>
             </div>
 
             <!-- Seção: Informações da Proposição -->
@@ -510,14 +536,18 @@
                     </div>
                 </div>
                 <div class="description-box">
-                    <div class="info-label" style="margin-bottom: 0.5rem;">Descrição da Proposição <span id="descLengthBadge"></span></div>
+                    <div class="info-label" style="margin-bottom: 0.5rem;">Descrição da Proposição</div>
                     <div class="description-text" id="infDescricao">-</div>
                 </div>
             </div>
 
             <!-- Seção: Histórico Completo -->
             <div class="section">
-                <h2 class="section-title">📜 Histórico Completo</h2>
+                <h2 class="section-title">📜 Histórico Completo da Proposição</h2>
+                <p class="helper-text" style="margin-bottom: 1rem;">
+                    <span class="icon">ℹ️</span>
+                    <span>Acompanhe todo o histórico de publicações, comprovações e avaliações desta proposição. Isso ajuda a entender o contexto e a evolução do processo.</span>
+                </p>
                 <div id="historicoTimeline">
                     <div class="empty-state">
                         <p>Nenhum histórico registrado.</p>
@@ -525,76 +555,76 @@
                 </div>
             </div>
 
-            <!-- Seção: Comprovação Atual -->
-            <div class="section">
-                <h2 class="section-title">📎 Comprovação a Avaliar</h2>
-                <div id="comprovacaoAtual">
-                    <div class="empty-state">
-                        <p>Nenhuma comprovação encontrada.</p>
-                    </div>
-                </div>
-            </div>
+            <!-- Formulário de Comprovação -->
+            <div class="section form-comprovacao">
+                <h2 class="section-title">📎 Formulário de Comprovação</h2>
 
-            <!-- Formulário de Avaliação -->
-            <div class="section form-avaliacao">
-                <h2 class="section-title">⚖️ Formulário de Avaliação</h2>
-
-                <form id="avaliacaoForm">
-                    <div class="form-group">
-                        <label style="font-weight: 600; margin-bottom: 1rem; display: block;">Decisão da Corregedoria Nacional *</label>
-                        <div class="decision-grid">
-                            <div class="decision-option">
-                                <input type="radio" id="decisaoAdimplente" name="decisao" value="adimplente" required>
-                                <label for="decisaoAdimplente" class="decision-label adimplente">
-                                    ✅ Adimplente<br>
-                                    <small style="font-weight: normal;">Comprovação aceita</small>
-                                </label>
-                            </div>
-                            <div class="decision-option">
-                                <input type="radio" id="decisaoParcial" name="decisao" value="parcial" required>
-                                <label for="decisaoParcial" class="decision-label parcial">
-                                    ⚠️ Parcial<br>
-                                    <small style="font-weight: normal;">Comprovação parcial</small>
-                                </label>
-                            </div>
-                            <div class="decision-option">
-                                <input type="radio" id="decisaoInadimplente" name="decisao" value="inadimplente" required>
-                                <label for="decisaoInadimplente" class="decision-label inadimplente">
-                                    ❌ Inadimplente<br>
-                                    <small style="font-weight: normal;">Comprovação insuficiente</small>
-                                </label>
-                            </div>
-                            <div class="decision-option">
-                                <input type="radio" id="decisaoPrejudicada" name="decisao" value="prejudicada" required>
-                                <label for="decisaoPrejudicada" class="decision-label prejudicada">
-                                    ⊘ Prejudicada<br>
-                                    <small style="font-weight: normal;">Proposição superada</small>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="parecer-container">
-                        <label for="parecerTexto" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
-                            Parecer da Corregedoria Nacional *
+                <form id="comprovacaoForm">
+                    <!-- Descrição do Adimplemento -->
+                    <div class="descricao-container">
+                        <label for="descricaoAdimplemento" style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
+                            Descrição do Adimplemento *
                         </label>
-                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
-                            Descreva detalhadamente a justificativa da sua decisão. O parecer pode ter até 7.500 caracteres.
+                        <p class="helper-text">
+                            <span class="icon">ℹ️</span>
+                            <span>Descreva de forma detalhada as ações realizadas para cumprir a proposição. Seja claro e objetivo, incluindo datas, documentos e evidências relevantes. Você pode escrever até 7.500 caracteres.</span>
                         </p>
                         <textarea
-                            id="parecerTexto"
-                            class="parecer-textarea"
-                            placeholder="Descreva a justificativa da decisão de forma clara e fundamentada..."
+                            id="descricaoAdimplemento"
+                            class="descricao-textarea"
+                            placeholder="Descreva aqui todas as ações, medidas e providências adotadas para dar cumprimento à proposição..."
                             maxlength="7500"
                             required
                         ></textarea>
                         <div class="char-counter" id="charCounter">0 / 7.500 caracteres</div>
                     </div>
 
+                    <!-- Observações Adicionais -->
+                    <div class="form-group">
+                        <label for="observacoesAdicionais" style="font-weight: 600;">Observações Adicionais</label>
+                        <p class="helper-text">
+                            <span class="icon">ℹ️</span>
+                            <span>Informações complementares, contexto adicional ou justificativas (opcional).</span>
+                        </p>
+                        <textarea
+                            id="observacoesAdicionais"
+                            rows="4"
+                            placeholder="Informações complementares, se houver..."
+                            maxlength="1000"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;"
+                        ></textarea>
+                    </div>
+
+                    <!-- Upload de Arquivos -->
+                    <div style="margin-top: 1.5rem;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
+                            Documentos Comprobatórios *
+                        </label>
+                        <p class="helper-text">
+                            <span class="icon">ℹ️</span>
+                            <span>Anexe os documentos que comprovam o cumprimento da proposição (PDF, imagens, planilhas, etc.).</span>
+                        </p>
+
+                        <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                            <div class="file-upload-icon">📁</div>
+                            <div class="file-upload-text">Clique aqui para selecionar arquivos</div>
+                            <div class="file-upload-hint">ou arraste e solte os arquivos aqui</div>
+                            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+                        </div>
+
+                        <div id="uploadedFilesList" class="uploaded-files-list hidden">
+                            <strong style="display: block; margin-bottom: 0.75rem; color: var(--primary-color);">
+                                Arquivos Selecionados (<span id="fileCount">0</span>)
+                            </strong>
+                            <div id="filesContainer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancelar</button>
                         <button type="button" class="btn btn-draft" onclick="salvarRascunho()">💾 Salvar como Rascunho</button>
-                        <button type="submit" class="btn btn-primary">✅ Submeter Avaliação</button>
+                        <button type="submit" class="btn btn-primary">✅ Enviar Comprovação</button>
                     </div>
                 </form>
             </div>
@@ -606,6 +636,7 @@
         let proposicaoId = null;
         let proposicao = null;
         let correicao = null;
+        let selectedFiles = [];
         let isEditingRascunho = false;
 
         // ===== UTILITY FUNCTIONS =====
@@ -613,12 +644,6 @@
             if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('pt-BR');
-        }
-
-        function formatDateTime(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
 
         // Helper functions for bidimensional status model
@@ -680,17 +705,26 @@
             return labels[prioridade] || prioridade;
         }
 
-        function getTextLengthBadge(text) {
-            if (!text) return '';
-            const length = text.length;
-            if (length < 500) return '';
-            const badgeClass = length > 2000 ? 'very-long' : '';
-            return `<span class="text-length-badge ${badgeClass}">${length.toLocaleString('pt-BR')} caracteres</span>`;
+        function isPrazoVencido(prazoDate) {
+            if (!prazoDate) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const prazo = new Date(prazoDate);
+            prazo.setHours(0, 0, 0, 0);
+            return prazo < today;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
         // ===== CHARACTER COUNTER =====
         function setupCharCounter() {
-            const textarea = document.getElementById('parecerTexto');
+            const textarea = document.getElementById('descricaoAdimplemento');
             const counter = document.getElementById('charCounter');
 
             function updateCounter() {
@@ -706,6 +740,77 @@
             }
 
             textarea.addEventListener('input', updateCounter);
+        }
+
+        // ===== FILE UPLOAD =====
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const filesList = document.getElementById('uploadedFilesList');
+            const filesContainer = document.getElementById('filesContainer');
+            const fileCount = document.getElementById('fileCount');
+
+            fileInput.addEventListener('change', function(e) {
+                const newFiles = Array.from(e.target.files);
+                selectedFiles = selectedFiles.concat(newFiles);
+                renderFilesList();
+            });
+
+            // Drag and drop
+            const uploadArea = document.querySelector('.file-upload-area');
+
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--secondary-color)';
+                uploadArea.style.backgroundColor = '#e7f3ff';
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--border-color)';
+                uploadArea.style.backgroundColor = 'var(--light-bg)';
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--border-color)';
+                uploadArea.style.backgroundColor = 'var(--light-bg)';
+
+                const newFiles = Array.from(e.dataTransfer.files);
+                selectedFiles = selectedFiles.concat(newFiles);
+                renderFilesList();
+            });
+        }
+
+        function renderFilesList() {
+            const filesList = document.getElementById('uploadedFilesList');
+            const filesContainer = document.getElementById('filesContainer');
+            const fileCount = document.getElementById('fileCount');
+
+            if (selectedFiles.length === 0) {
+                filesList.classList.add('hidden');
+                return;
+            }
+
+            filesList.classList.remove('hidden');
+            fileCount.textContent = selectedFiles.length;
+
+            filesContainer.innerHTML = selectedFiles.map((file, index) => `
+                <div class="uploaded-file-item">
+                    <div class="file-info">
+                        <div class="file-icon">📄</div>
+                        <div class="file-details">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${file.size ? formatFileSize(file.size) : 'Tamanho desconhecido'}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-file" onclick="removeFile(${index})">Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFilesList();
         }
 
         // ===== LOAD DATA FROM URL =====
@@ -751,18 +856,54 @@
             document.getElementById('infTipo').textContent = proposicao.tipo || '-';
             document.getElementById('infUnidade').textContent = proposicao.unidade || '-';
             document.getElementById('infMembro').textContent = proposicao.membro || '-';
-            document.getElementById('infPrioridade').innerHTML = getPrioridadeLabel(proposicao.prioridade || 'normal');
+            document.getElementById('infPrioridade').textContent = getPrioridadeLabel(proposicao.prioridade || 'normal');
             document.getElementById('infStatus').innerHTML = renderStatusBadges(proposicao.status);
-
-            document.getElementById('descLengthBadge').innerHTML = getTextLengthBadge(proposicao.descricao);
             document.getElementById('infDescricao').textContent = proposicao.descricao || '-';
+        }
+
+        function renderPrazoAlert() {
+            if (!proposicao.prazoComprovacao) {
+                document.getElementById('prazoAlert').classList.add('hidden');
+                return;
+            }
+
+            const prazoAlert = document.getElementById('prazoAlert');
+            const prazoDate = document.getElementById('prazoDate');
+            const prazoStatus = document.getElementById('prazoStatus');
+
+            prazoDate.textContent = formatDate(proposicao.prazoComprovacao);
+
+            const vencido = isPrazoVencido(proposicao.prazoComprovacao);
+
+            if (vencido) {
+                prazoAlert.classList.add('vencido');
+                prazoStatus.innerHTML = '<strong style="color: var(--danger-color);">⚠️ PRAZO VENCIDO</strong>';
+            } else {
+                prazoAlert.classList.remove('vencido');
+
+                // Calculate days remaining
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const prazo = new Date(proposicao.prazoComprovacao);
+                prazo.setHours(0, 0, 0, 0);
+                const diffTime = prazo - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 3) {
+                    prazoStatus.innerHTML = `<strong style="color: var(--warning-color);">⚠️ Faltam ${diffDays} dia(s)</strong>`;
+                } else {
+                    prazoStatus.innerHTML = `Faltam ${diffDays} dia(s)`;
+                }
+            }
+
+            prazoAlert.classList.remove('hidden');
         }
 
         function renderHistorico() {
             const container = document.getElementById('historicoTimeline');
 
             if (!proposicao.historico || proposicao.historico.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhum histórico registrado.</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>Nenhum histórico registrado ainda. Este é o início do processo.</p></div>';
                 return;
             }
 
@@ -787,7 +928,7 @@
 
                 let content = `
                     <div style="background-color: white; border-left: 4px solid ${borderColor}; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                             <strong style="color: ${borderColor};">${icon} ${item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1)}</strong>
                             <span style="color: var(--text-muted); font-size: 0.875rem;">${formatDateTime(item.data)}</span>
                         </div>
@@ -810,7 +951,7 @@
                 if (item.tipo === 'comprovacao' && item.arquivos && item.arquivos.length > 0) {
                     content += `
                         <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: var(--light-bg); border-radius: 4px;">
-                            <strong>📎 Arquivos anexados:</strong>
+                            <strong>📎 Arquivos anexados (${item.arquivos.length}):</strong>
                             ${item.arquivos.map(arq => `<div style="padding: 0.25rem 0;">• ${arq}</div>`).join('')}
                         </div>
                     `;
@@ -818,10 +959,8 @@
 
                 if (item.tipo === 'avaliacao') {
                     content += `
-                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
-                            <span>Status:</span>
-                            ${getStatusBadge(item.statusAnterior)}
-                            <span>→</span>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span>Resultado da Avaliação:</span>
                             ${getStatusBadge(item.statusNovo)}
                         </div>
                     `;
@@ -829,8 +968,9 @@
 
                 if (item.observacoes) {
                     content += `
-                        <div style="margin-top: 0.5rem; font-style: italic; color: var(--text-muted);">
-                            <strong>Obs:</strong> ${item.observacoes}
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: #fffbf0; border-left: 3px solid #ffc107; border-radius: 4px;">
+                            <strong style="color: #856404;">💬 Observações:</strong>
+                            <div style="margin-top: 0.25rem; color: #856404;">${item.observacoes}</div>
                         </div>
                     `;
                 }
@@ -842,74 +982,28 @@
             container.innerHTML = timelineHTML;
         }
 
-        function renderComprovacaoAtual() {
-            const container = document.getElementById('comprovacaoAtual');
-
-            const comprovacoes = proposicao.historico ? proposicao.historico.filter(h => h.tipo === 'comprovacao') : [];
-            if (comprovacoes.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhuma comprovação encontrada.</p></div>';
-                return;
-            }
-
-            const ultimaComprovacao = comprovacoes[comprovacoes.length - 1];
-
-            const html = `
-                <div class="comprovacao-card">
-                    <div class="comprovacao-header">
-                        <div class="comprovacao-meta">
-                            <div class="comprovacao-date">📅 ${formatDateTime(ultimaComprovacao.data)}</div>
-                            <div class="comprovacao-author">👤 Enviado por: ${ultimaComprovacao.usuario}</div>
-                        </div>
-                        <div>${getTextLengthBadge(ultimaComprovacao.descricao)}</div>
-                    </div>
-
-                    <div style="margin-top: 1rem;">
-                        <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">Descrição do Adimplemento:</strong>
-                        <div style="background-color: var(--light-bg); padding: 1rem; border-radius: 4px; white-space: pre-wrap; line-height: 1.7;">
-                            ${ultimaComprovacao.descricao}
-                        </div>
-                    </div>
-
-                    ${ultimaComprovacao.observacoes ? `
-                        <div style="margin-top: 1rem;">
-                            <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">Observações:</strong>
-                            <div style="font-style: italic; color: var(--text-muted);">
-                                ${ultimaComprovacao.observacoes}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${ultimaComprovacao.arquivos && ultimaComprovacao.arquivos.length > 0 ? `
-                        <div class="arquivos-list">
-                            <strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">📎 Arquivos Comprobatórios (${ultimaComprovacao.arquivos.length}):</strong>
-                            ${ultimaComprovacao.arquivos.map(arquivo => `
-                                <div class="arquivo-item">
-                                    <span>📄</span>
-                                    <span>${arquivo}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-
-            container.innerHTML = html;
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
 
         function loadRascunhoIfExists() {
-            if (proposicao.rascunhosAvaliacao && proposicao.rascunhosAvaliacao.length > 0) {
-                const rascunho = proposicao.rascunhosAvaliacao[0];
+            if (proposicao.rascunhos && proposicao.rascunhos.length > 0) {
+                const rascunho = proposicao.rascunhos[0];
 
-                // Load rascunho data - decisão
-                if (rascunho.decisao) {
-                    const radioButton = document.getElementById(`decisao${rascunho.decisao.charAt(0).toUpperCase() + rascunho.decisao.slice(1)}`);
-                    if (radioButton) {
-                        radioButton.checked = true;
-                    }
+                // Load rascunho data
+                document.getElementById('descricaoAdimplemento').value = rascunho.descricao || '';
+                document.getElementById('observacoesAdicionais').value = rascunho.observacoes || '';
+
+                // Load files (simulate File objects)
+                if (rascunho.arquivos && rascunho.arquivos.length > 0) {
+                    selectedFiles = rascunho.arquivos.map(filename => ({
+                        name: filename,
+                        size: 0 // We can't know the real size
+                    }));
+                    renderFilesList();
                 }
-
-                // Load rascunho data - parecer
-                document.getElementById('parecerTexto').value = rascunho.parecer || '';
 
                 // Show indicator
                 document.getElementById('rascunhoIndicator').classList.remove('hidden');
@@ -917,29 +1011,30 @@
 
                 // Update character counter
                 const event = new Event('input');
-                document.getElementById('parecerTexto').dispatchEvent(event);
+                document.getElementById('descricaoAdimplemento').dispatchEvent(event);
             }
         }
 
         // ===== SAVE RASCUNHO =====
         function salvarRascunho() {
-            const decisao = document.querySelector('input[name="decisao"]:checked');
-            const parecer = document.getElementById('parecerTexto').value.trim();
+            const descricao = document.getElementById('descricaoAdimplemento').value.trim();
+            const observacoes = document.getElementById('observacoesAdicionais').value.trim();
 
-            if (!decisao) {
-                alert('Por favor, selecione uma decisão para salvar o rascunho.');
+            if (!descricao) {
+                alert('Por favor, preencha a descrição do adimplemento.');
                 return;
             }
 
-            if (!parecer) {
-                alert('Por favor, preencha o parecer para salvar o rascunho.');
+            if (selectedFiles.length === 0) {
+                alert('Por favor, anexe pelo menos um documento comprobatório.');
                 return;
             }
 
             // Create rascunho object
             const rascunho = {
-                decisao: decisao.value,
-                parecer: parecer
+                descricao: descricao,
+                observacoes: observacoes,
+                arquivos: selectedFiles.map(f => f.name)
             };
 
             // Save to proposicao
@@ -949,87 +1044,81 @@
 
                 if (index !== -1) {
                     // Replace rascunho (only one per proposição)
-                    proposicoesData[index].rascunhosAvaliacao = [rascunho];
+                    proposicoesData[index].rascunhos = [rascunho];
                     localStorage.setItem('proposicoes', JSON.stringify(proposicoesData));
                 }
 
-                alert('✅ Rascunho de avaliação salvo com sucesso! O corregedor poderá revisar e confirmar posteriormente.');
-                window.location.href = 'index.html';
+                alert('✅ Rascunho salvo com sucesso! Você pode continuar editando depois ou enviar quando estiver pronto.');
+                window.location.href = 'index.html#enviar';
             } catch (error) {
                 console.error('Erro ao salvar rascunho:', error);
                 alert('❌ Erro ao salvar rascunho. Tente novamente.');
             }
         }
 
-        // ===== SUBMIT AVALIACAO =====
-        function submitAvaliacao(e) {
+        // ===== SUBMIT COMPROVACAO =====
+        function submitComprovacao(e) {
             e.preventDefault();
 
-            const decisao = document.querySelector('input[name="decisao"]:checked');
-            const parecer = document.getElementById('parecerTexto').value.trim();
+            const descricao = document.getElementById('descricaoAdimplemento').value.trim();
+            const observacoes = document.getElementById('observacoesAdicionais').value.trim();
 
-            if (!decisao) {
-                alert('Por favor, selecione uma decisão.');
+            if (!descricao) {
+                alert('Por favor, preencha a descrição do adimplemento.');
                 return;
             }
 
-            if (!parecer) {
-                alert('Por favor, preencha o parecer.');
+            if (descricao.length > 7500) {
+                alert('A descrição não pode ter mais de 7.500 caracteres.');
                 return;
             }
 
-            if (parecer.length > 7500) {
-                alert('O parecer não pode ter mais de 7.500 caracteres.');
+            if (selectedFiles.length === 0) {
+                alert('Por favor, anexe pelo menos um documento comprobatório.');
                 return;
             }
 
-            // Determinar novo status bidimensional baseado na decisão
-            let novoStatus;
-            if (decisao.value === 'adimplente') {
-                novoStatus = ['encerrada', 'adimplente'];
-            } else if (decisao.value === 'prejudicada') {
-                novoStatus = ['encerrada', 'prejudicada'];
-            } else if (decisao.value === 'parcial') {
-                novoStatus = ['pendente', 'parcial'];
-            } else if (decisao.value === 'inadimplente') {
-                novoStatus = ['pendente', 'inadimplente'];
+            if (!confirm('Confirma o envio desta comprovação? Após o envio, ela será encaminhada para análise da Corregedoria Nacional.')) {
+                return;
             }
 
-            // Criar avaliação
-            const novaAvaliacao = {
-                tipo: 'avaliacao',
+            // Create comprovacao entry for historico
+            const novaComprovacao = {
+                tipo: 'comprovacao',
                 data: new Date().toISOString(),
-                usuario: 'Corregedoria Nacional',
-                descricao: parecer,
-                statusAnterior: proposicao.status,
-                statusNovo: novoStatus
+                usuario: correicao ? correicao.ramoMP : 'Órgão Correicionado',
+                descricao: descricao,
+                observacoes: observacoes,
+                arquivos: selectedFiles.map(f => f.name)
             };
 
-            // Adicionar ao histórico
-            if (!proposicao.historico) {
-                proposicao.historico = [];
-            }
-            proposicao.historico.push(novaAvaliacao);
-
-            // Atualizar status
-            proposicao.status = novoStatus;
-
-            // Salvar no localStorage
+            // Update proposicao
             try {
                 const proposicoesData = JSON.parse(localStorage.getItem('proposicoes'));
                 const index = proposicoesData.findIndex(p => p.id == proposicaoId);
+
                 if (index !== -1) {
-                    proposicoesData[index] = proposicao;
-                    // Clear rascunhos de avaliação
-                    proposicoesData[index].rascunhosAvaliacao = [];
+                    // Add to historico
+                    if (!proposicoesData[index].historico) {
+                        proposicoesData[index].historico = [];
+                    }
+                    proposicoesData[index].historico.push(novaComprovacao);
+
+                    // Update status to em_analise (preserva a valoração atual)
+                    const valoracaoAtual = getValoracao(proposicoesData[index]);
+                    proposicoesData[index].status = ['em_analise', valoracaoAtual];
+
+                    // Clear rascunhos
+                    proposicoesData[index].rascunhos = [];
+
                     localStorage.setItem('proposicoes', JSON.stringify(proposicoesData));
                 }
 
-                alert('✅ Avaliação registrada com sucesso!');
-                window.location.href = 'index.html';
+                alert('✅ Comprovação enviada com sucesso! A Corregedoria Nacional receberá sua comprovação para análise.');
+                window.location.href = 'index.html#enviar';
             } catch (error) {
-                console.error('Erro ao salvar avaliação:', error);
-                alert('❌ Erro ao salvar avaliação. Tente novamente.');
+                console.error('Erro ao enviar comprovação:', error);
+                alert('❌ Erro ao enviar comprovação. Tente novamente.');
             }
         }
 
@@ -1045,12 +1134,12 @@
                 // Load data
                 loadDataFromLocalStorage();
 
-                // Check if status is em_analise (verificar status processual)
-                if (!Array.isArray(proposicao.status) || proposicao.status[0] !== 'em_analise') {
+                // Check if status is aguardando_comprovacao (verificar status processual)
+                if (!Array.isArray(proposicao.status) || proposicao.status[0] !== 'aguardando_comprovacao') {
                     const statusLabel = Array.isArray(proposicao.status)
                         ? `${getStatusLabel(proposicao.status[0])} / ${getStatusLabel(proposicao.status[1])}`
                         : getStatusLabel(proposicao.status);
-                    throw new Error('Esta proposição não está disponível para avaliação. Status atual: ' + statusLabel);
+                    throw new Error('Esta proposição não está disponível para comprovação. Status atual: ' + statusLabel);
                 }
 
                 // Hide loading, show content
@@ -1059,13 +1148,14 @@
 
                 // Render all sections
                 renderProposicaoInfo();
+                renderPrazoAlert();
                 renderHistorico();
-                renderComprovacaoAtual();
                 loadRascunhoIfExists();
 
                 // Setup form
                 setupCharCounter();
-                document.getElementById('avaliacaoForm').addEventListener('submit', submitAvaliacao);
+                setupFileUpload();
+                document.getElementById('comprovacaoForm').addEventListener('submit', submitComprovacao);
 
             } catch (error) {
                 console.error('Erro na inicialização:', error);
