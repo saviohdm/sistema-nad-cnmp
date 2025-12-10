@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar Proposições - CNMP</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>CNMP - Sistema de Acompanhamento de Proposições</h1>
+        <div class="header-user">
+            <span id="userName">Usuário</span>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <div class="nav-item" onclick="window.location.href='index.html'">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='index.html#correicoes'">
+                    <span class="nav-icon">🏛️</span>
+                    <span>Correições</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='proposicoes.html'">
+                    <span class="nav-icon">📋</span>
+                    <span>Proposições</span>
+                </div>
+                <div class="nav-item active" onclick="window.location.href='publicacao.html'">
+                    <span class="nav-icon">📢</span>
+                    <span>Publicar Proposições</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='index.html#avaliar'">
+                    <span class="nav-icon">⚖️</span>
+                    <span>Avaliar Comprovações</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='index.html#cadastroCorreicao'">
+                    <span class="nav-icon">➕</span>
+                    <span>Nova Correição</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='index.html#cadastro'">
+                    <span class="nav-icon">✏️</span>
+                    <span>Nova Proposição</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 1.5rem;">
+                <a href="index.html" style="color: var(--secondary-color); text-decoration: none;">← Voltar ao Dashboard</a>
+            </div>
+
+            <!-- Header com Botão de Exportação -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="page-title" style="margin: 0;">Publicar Proposições</h2>
+
+                <!-- Botão de Exportação -->
+                <div class="export-dropdown">
+                    <button class="export-btn" onclick="toggleExportMenu('publicacaoExportMenu')">
+                        📥 Exportar
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div id="publicacaoExportMenu" class="export-menu hidden">
+                        <button onclick="exportarPendentesJSON()" class="export-menu-item">
+                            💾 Exportar Pendentes (JSON)
+                        </button>
+                        <button onclick="exportarSelecionadasJSON()" class="export-menu-item">
+                            📋 Exportar Selecionadas (JSON)
+                        </button>
+                        <button onclick="exportarOficioPublicacao()" class="export-menu-item">
+                            📄 Gerar Ofício de Publicação (PDF)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seletor de Correição (Obrigatório) -->
+            <div class="form-container" style="margin-bottom: 2rem;">
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">1. Selecione a Correição</h3>
+                <div class="form-group">
+                    <label for="correicaoSelect">Correição *</label>
+                    <select id="correicaoSelect" required onchange="onCorreicaoChange()">
+                        <option value="">Selecione uma correição...</option>
+                    </select>
+                </div>
+
+                <!-- Informações da Correição Selecionada -->
+                <div id="correicaoInfo" class="hidden" style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 4px; border-left: 4px solid var(--primary-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">Informações da Correição</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Temática:</strong>
+                            <p id="infoTematica" style="margin: 0.25rem 0;"></p>
+                        </div>
+                        <div>
+                            <strong>Órgão Correicionado:</strong>
+                            <p id="infoRamoMP" style="margin: 0.25rem 0;"></p>
+                        </div>
+                        <div>
+                            <strong>Proposições Pendentes:</strong>
+                            <p id="infoPendentes" style="margin: 0.25rem 0; color: var(--warning-color); font-weight: bold;"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros e Busca Avançada -->
+            <div id="filtrosContainer" class="hidden">
+                <div class="table-container" style="margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem;">2. Filtros e Busca</h3>
+                    <div class="table-header">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="🔍 Buscar por número, unidade, membro ou descrição...">
+                            <select id="tipoFilter">
+                                <option value="">Todos os tipos</option>
+                                <option value="Determinação">Determinação</option>
+                                <option value="Recomendação">Recomendação</option>
+                            </select>
+                            <select id="tagFilter">
+                                <option value="">Todas as tags</option>
+                            </select>
+                            <select id="prioridadeFilter">
+                                <option value="">Todas as prioridades</option>
+                                <option value="urgente">Urgente</option>
+                                <option value="alta">Alta</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="text-align: right; margin-top: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="limparFiltros()" style="font-size: 0.875rem;">
+                            🔄 Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Proposições Pendentes -->
+                <div class="table-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="color: var(--primary-color); margin: 0;">3. Proposições Pendentes de Publicação</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span id="selectedCount" style="color: var(--text-muted); font-size: 0.875rem;">0 selecionada(s)</span>
+                            <button class="btn btn-secondary btn-sm" onclick="selecionarTodas()" style="font-size: 0.875rem;">
+                                ☑️ Selecionar Todas
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="desselecionarTodas()" style="font-size: 0.875rem;">
+                                ☐ Desmarcar Todas
+                            </button>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" title="Selecionar/Desmarcar todas">
+                                </th>
+                                <th style="width: 10%;">Número</th>
+                                <th style="width: 10%;">Tipo</th>
+                                <th style="width: 15%;">Unidade</th>
+                                <th style="width: 30%;">Descrição</th>
+                                <th style="width: 12%;">Tags</th>
+                                <th style="width: 10%;">Prioridade</th>
+                                <th style="width: 8%;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proposicoesTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Formulário de Publicação em Lote -->
+                <div id="publicacaoForm" class="form-container hidden" style="margin-top: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem;">4. Dados da Publicação</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                        Defina o prazo de comprovação e observações que serão aplicados a todas as <strong id="numSelecionadas">0</strong> proposição(ões) selecionada(s).
+                    </p>
+
+                    <form id="formPublicar" onsubmit="publicarProposicoes(event)">
+                        <div class="form-group">
+                            <label for="prazoComprovacao">Prazo de Comprovação *</label>
+                            <input type="date" id="prazoComprovacao" required>
+                            <small style="color: var(--text-muted);">Data limite para os correicionados enviarem as comprovações</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="observacoes">Observações</label>
+                            <textarea id="observacoes" rows="4" maxlength="1000" placeholder="Observações sobre esta publicação (opcional)..."></textarea>
+                            <div class="textarea-counter">
+                                <span class="char-count" id="obsCharCount">0 / 1000 caracteres</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cancelarPublicacao()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                📢 Publicar <span id="btnNumSelecionadas">0</span> Proposição(ões)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Placeholder quando nenhuma correição selecionada -->
+            <div id="placeholderMessage" class="hidden" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📢</div>
+                <h3 style="color: var(--text-dark);">Selecione uma Correição</h3>
+                <p>Para visualizar as proposições pendentes de publicação, primeiro selecione uma correição acima.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalhes da Proposição</h3>
+                <button class="btn-close" onclick="closeModal('detailModal')">&times;</button>
+            </div>
+            <div id="detailContent">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data
+        let correicoes = [];
+        let proposicoes = [];
+        let currentUser = null;
+        let selectedProposicoes = new Set(); // Track selected proposition IDs
+
+        // Available tags
+        const availableTags = [
+            { id: 'administrativo', label: 'Administrativo' },
+            { id: 'recursos-humanos', label: 'Recursos Humanos' },
+            { id: 'infraestrutura', label: 'Infraestrutura' },
+            { id: 'tecnologia', label: 'Tecnologia' },
+            { id: 'processual', label: 'Processual' },
+            { id: 'financeiro', label: 'Financeiro' },
+            { id: 'capacitacao', label: 'Capacitação' },
+            { id: 'gestao-documental', label: 'Gestão Documental' },
+            { id: 'compliance', label: 'Compliance' },
+            { id: 'transparencia', label: 'Transparência' },
+            { id: 'outros', label: 'Outros' }
+        ];
+
+        // Load data from localStorage
+        function loadDataFromLocalStorage() {
+            try {
+                const correicoesData = localStorage.getItem('correicoes');
+                const proposicoesData = localStorage.getItem('proposicoes');
+
+                if (correicoesData) {
+                    correicoes = JSON.parse(correicoesData);
+                }
+
+                if (proposicoesData) {
+                    proposicoes = JSON.parse(proposicoesData);
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Erro ao carregar dados do localStorage:', error);
+                alert('Erro ao carregar dados. Redirecionando para a página principal.');
+                window.location.href = 'index.html';
+                return false;
+            }
+        }
+
+        // Load user session
+        function loadUserSession() {
+            try {
+                const userData = localStorage.getItem('currentUser');
+                if (userData) {
+                    currentUser = JSON.parse(userData);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Erro ao carregar sessão do usuário:', error);
+                return false;
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        // Helper functions for bidimensional status model
+        function getStatusLabel(status) {
+            const labels = {
+                // Conjunto 1: Status Processual
+                'pendente': 'Pendente',
+                'aguardando_comprovacao': 'Aguardando Comprovação',
+                'em_analise': 'Em Análise',
+                'encerrada': 'Encerrada',
+                // Conjunto 2: Valoração
+                'nova': 'Nova',
+                'adimplente': 'Adimplente',
+                'parcial': 'Parcial',
+                'inadimplente': 'Inadimplente',
+                'prejudicada': 'Prejudicada'
+            };
+            return labels[status] || status;
+        }
+
+        // Render status badges (stacked vertically)
+        function renderStatusBadges(statusArray) {
+            if (!Array.isArray(statusArray) || statusArray.length !== 2) {
+                return '<span class="badge badge-pendente">Erro</span>';
+            }
+            const [statusProcessual, valoracao] = statusArray;
+            return `
+                <div class="status-badges-container">
+                    <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
+                    <span class="badge badge-${valoracao}">${getStatusLabel(valoracao)}</span>
+                </div>
+            `;
+        }
+
+        // Get status processual (index 0)
+        function getStatusProcessual(proposicao) {
+            return Array.isArray(proposicao.status) ? proposicao.status[0] : proposicao.status;
+        }
+
+        // Get valoração (index 1)
+        function getValoracao(proposicao) {
+            return Array.isArray(proposicao.status) ? proposicao.status[1] : 'nova';
+        }
+
+        // Render tag badges
+        function renderTagBadges(tags) {
+            if (!tags || tags.length === 0) return '<span style="color: var(--text-muted); font-size: 0.75rem;">-</span>';
+
+            return tags.map(tagId => {
+                const tag = availableTags.find(t => t.id === tagId);
+                const label = tag ? tag.label : tagId;
+                return `<span class="tag-badge tag-${tagId}">${label}</span>`;
+            }).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Smart truncate
+        function smartTruncate(text, maxLength) {
+            if (!text || text.length <= maxLength) return text || '';
+            return text.substring(0, maxLength) + '...';
+        }
+
+        // Populate correição select dropdown
+        function populateCorreicaoSelect() {
+            const select = document.getElementById('correicaoSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Selecione uma correição...</option>' +
+                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP} - ${c.ramoMPNome}</option>`).join('');
+        }
+
+        // Populate tag filter
+        function populateTagFilter() {
+            const select = document.getElementById('tagFilter');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Todas as tags</option>' +
+                availableTags.map(tag => `<option value="${tag.id}">${tag.label}</option>`).join('');
+        }
+
+        // Handle correição selection change
+        function onCorreicaoChange() {
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            const correicaoInfo = document.getElementById('correicaoInfo');
+            const filtrosContainer = document.getElementById('filtrosContainer');
+            const placeholderMessage = document.getElementById('placeholderMessage');
+
+            // Clear selection
+            selectedProposicoes.clear();
+            updateSelectedCount();
+            hidePublicacaoForm();
+
+            if (!correicaoId) {
+                // No correição selected - show placeholder
+                correicaoInfo.classList.add('hidden');
+                filtrosContainer.classList.add('hidden');
+                placeholderMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Correição selected - show info and filters
+            const correicao = correicoes.find(c => c.id == correicaoId);
+            if (!correicao) return;
+
+            // Count pending propositions
+            const pendentes = proposicoes.filter(p =>
+                p.correicaoId == correicaoId && getStatusProcessual(p) === 'pendente'
+            ).length;
+
+            // Display correição information
+            document.getElementById('infoTematica').textContent = correicao.tematica || 'N/A';
+            document.getElementById('infoRamoMP').textContent = `${correicao.ramoMP} - ${correicao.ramoMPNome}`;
+            document.getElementById('infoPendentes').textContent = `${pendentes} proposição(ões)`;
+
+            correicaoInfo.classList.remove('hidden');
+            filtrosContainer.classList.remove('hidden');
+            placeholderMessage.classList.add('hidden');
+
+            // Render table with filtered propositions
+            renderProposicoesTable();
+        }
+
+        // Clear all filters
+        function limparFiltros() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('tipoFilter').value = '';
+            document.getElementById('tagFilter').value = '';
+            document.getElementById('prioridadeFilter').value = '';
+            renderProposicoesTable();
+        }
+
+        // Render proposições table
+        function renderProposicoesTable() {
+            const tbody = document.getElementById('proposicoesTableBody');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (!tbody) return;
+
+            // Get selected correição (MANDATORY)
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            if (!correicaoId) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Selecione uma correição para visualizar proposições pendentes</td></tr>';
+                selectAllCheckbox.checked = false;
+                return;
+            }
+
+            // Get filter values
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const tipoFilter = document.getElementById('tipoFilter').value;
+            const tagFilter = document.getElementById('tagFilter').value;
+            const prioridadeFilter = document.getElementById('prioridadeFilter').value;
+
+            // Filter propositions - ONLY PENDENTES
+            const filtered = proposicoes.filter(p => {
+                // MANDATORY: Only show propositions from selected correição with status PENDENTE
+                if (p.correicaoId != correicaoId) return false;
+                if (getStatusProcessual(p) !== 'pendente') return false;
+
+                // Search filter
+                const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
+                const matchesSearch = searchText.includes(searchTerm);
+
+                // Tipo filter
+                const matchesTipo = !tipoFilter || p.tipo === tipoFilter;
+
+                // Tag filter
+                const matchesTag = !tagFilter || (p.tags && p.tags.includes(tagFilter));
+
+                // Prioridade filter
+                const matchesPrioridade = !prioridadeFilter || p.prioridade === prioridadeFilter;
+
+                return matchesSearch && matchesTipo && matchesTag && matchesPrioridade;
+            });
+
+            // Update select all checkbox state
+            const allSelected = filtered.length > 0 && filtered.every(p => selectedProposicoes.has(p.id));
+            selectAllCheckbox.checked = allSelected;
+
+            // Render table rows
+            tbody.innerHTML = filtered.map(p => {
+                const descPreview = smartTruncate(p.descricao, 100);
+                const isSelected = selectedProposicoes.has(p.id);
+                const prioridadeClass = p.prioridade === 'urgente' ? 'style="color: var(--danger-color); font-weight: bold;"' :
+                                       p.prioridade === 'alta' ? 'style="color: var(--warning-color); font-weight: bold;"' : '';
+
+                return `
+                    <tr class="${isSelected ? 'row-selected' : ''}">
+                        <td style="text-align: center;">
+                            <input type="checkbox"
+                                   class="prop-checkbox"
+                                   data-id="${p.id}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleProposicao(${p.id})">
+                        </td>
+                        <td><strong>${p.numero}</strong></td>
+                        <td>${p.tipo}</td>
+                        <td style="font-size: 0.875rem;">${p.unidade}</td>
+                        <td style="font-size: 0.875rem;">${descPreview}</td>
+                        <td>${renderTagBadges(p.tags)}</td>
+                        <td ${prioridadeClass}>${p.prioridade.charAt(0).toUpperCase() + p.prioridade.slice(1)}</td>
+                        <td>
+                            <button class="btn btn-primary btn-action" onclick="viewDetails(${p.id})" title="Ver detalhes completos">
+                                👁️ Ver
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Nenhuma proposição pendente encontrada com os filtros aplicados</td></tr>';
+                selectAllCheckbox.checked = false;
+            }
+        }
+
+        // Toggle single proposition selection
+        function toggleProposicao(id) {
+            if (selectedProposicoes.has(id)) {
+                selectedProposicoes.delete(id);
+            } else {
+                selectedProposicoes.add(id);
+            }
+            updateSelectedCount();
+            renderProposicoesTable(); // Re-render to update row styling
+
+            // Show/hide publication form based on selection
+            if (selectedProposicoes.size > 0) {
+                showPublicacaoForm();
+            } else {
+                hidePublicacaoForm();
+            }
+        }
+
+        // Toggle select all checkbox
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox.checked) {
+                selecionarTodas();
+            } else {
+                desselecionarTodas();
+            }
+        }
+
+        // Select all filtered propositions
+        function selecionarTodas() {
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            if (!correicaoId) return;
+
+            // Get all filtered propositions
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const tipoFilter = document.getElementById('tipoFilter').value;
+            const tagFilter = document.getElementById('tagFilter').value;
+            const prioridadeFilter = document.getElementById('prioridadeFilter').value;
+
+            const filtered = proposicoes.filter(p => {
+                if (p.correicaoId != correicaoId) return false;
+                if (getStatusProcessual(p) !== 'pendente') return false;
+
+                const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
+                const matchesSearch = searchText.includes(searchTerm);
+                const matchesTipo = !tipoFilter || p.tipo === tipoFilter;
+                const matchesTag = !tagFilter || (p.tags && p.tags.includes(tagFilter));
+                const matchesPrioridade = !prioridadeFilter || p.prioridade === prioridadeFilter;
+
+                return matchesSearch && matchesTipo && matchesTag && matchesPrioridade;
+            });
+
+            // Add all to selection
+            filtered.forEach(p => selectedProposicoes.add(p.id));
+
+            updateSelectedCount();
+            renderProposicoesTable();
+
+            if (selectedProposicoes.size > 0) {
+                showPublicacaoForm();
+            }
+        }
+
+        // Deselect all propositions
+        function desselecionarTodas() {
+            selectedProposicoes.clear();
+            updateSelectedCount();
+            renderProposicoesTable();
+            hidePublicacaoForm();
+        }
+
+        // Update selected count display
+        function updateSelectedCount() {
+            const count = selectedProposicoes.size;
+            document.getElementById('selectedCount').textContent = `${count} selecionada(s)`;
+            document.getElementById('numSelecionadas').textContent = count;
+            document.getElementById('btnNumSelecionadas').textContent = count;
+        }
+
+        // Show publication form
+        function showPublicacaoForm() {
+            document.getElementById('publicacaoForm').classList.remove('hidden');
+            // Scroll to form
+            document.getElementById('publicacaoForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Hide publication form
+        function hidePublicacaoForm() {
+            document.getElementById('publicacaoForm').classList.add('hidden');
+        }
+
+        // Cancel publication
+        function cancelarPublicacao() {
+            if (confirm('Deseja realmente cancelar? A seleção será desmarcada.')) {
+                desselecionarTodas();
+                document.getElementById('formPublicar').reset();
+            }
+        }
+
+        // Publish selected propositions
+        function publicarProposicoes(event) {
+            event.preventDefault();
+
+            if (selectedProposicoes.size === 0) {
+                alert('⚠️ Nenhuma proposição selecionada!');
+                return;
+            }
+
+            const prazoComprovacao = document.getElementById('prazoComprovacao').value;
+            const observacoes = document.getElementById('observacoes').value;
+
+            if (!confirm(`Confirma a publicação de ${selectedProposicoes.size} proposição(ões) com prazo de comprovação em ${formatDate(prazoComprovacao)}?`)) {
+                return;
+            }
+
+            const correicao = correicoes.find(c => c.id == document.getElementById('correicaoSelect').value);
+            const dataPublicacao = new Date().toISOString().split('T')[0];
+
+            // Update each selected proposition
+            selectedProposicoes.forEach(propId => {
+                const proposicao = proposicoes.find(p => p.id === propId);
+                if (!proposicao) return;
+
+                // Store previous status
+                const statusAnterior = proposicao.status;
+
+                // Update status to aguardando_comprovacao
+                proposicao.status = ['aguardando_comprovacao', getValoracao(proposicao)];
+                proposicao.prazoComprovacao = prazoComprovacao;
+                proposicao.dataPublicacao = dataPublicacao;
+
+                // Add publication entry to historico
+                if (!proposicao.historico) {
+                    proposicao.historico = [];
+                }
+
+                proposicao.historico.push({
+                    tipo: 'publicacao',
+                    data: dataPublicacao,
+                    usuario: 'Corregedoria Nacional',
+                    descricao: `Proposição publicada para ${correicao.ramoMP} - ${correicao.ramoMPNome}`,
+                    observacoes: observacoes || null,
+                    prazoComprovacao: prazoComprovacao,
+                    statusAnterior: statusAnterior,
+                    statusNovo: proposicao.status
+                });
+            });
+
+            // Save to localStorage
+            localStorage.setItem('proposicoes', JSON.stringify(proposicoes));
+
+            // Show success message
+            alert(`✅ ${selectedProposicoes.size} proposição(ões) publicada(s) com sucesso!\n\n📧 E-mails de notificação serão enviados automaticamente aos correicionados.`);
+
+            // Clear selection and form
+            desselecionarTodas();
+            document.getElementById('formPublicar').reset();
+
+            // Refresh table
+            onCorreicaoChange();
+        }
+
+        // View details modal
+        function viewDetails(id) {
+            const proposicao = proposicoes.find(p => p.id === id);
+            if (!proposicao) return;
+
+            const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('detailContent');
+
+            // Build timeline from historico
+            let timelineHTML = '';
+            if (proposicao.historico && proposicao.historico.length > 0) {
+                timelineHTML = `
+                    <div style="margin-top: 2rem;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Histórico de Interações</h4>
+                        <div class="timeline">
+                            ${proposicao.historico.map(h => {
+                                const statusBadges = h.statusNovo ?
+                                    (Array.isArray(h.statusNovo) ? renderStatusBadges(h.statusNovo) : `<span class="badge badge-${h.statusNovo}">${getStatusLabel(h.statusNovo)}</span>`) : '';
+
+                                return `
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker ${h.tipo}"></div>
+                                        <div class="timeline-content ${h.tipo}">
+                                            <div class="timeline-header">
+                                                <strong>${h.tipo === 'publicacao' ? '📢 Publicação' : h.tipo === 'comprovacao' ? '📤 Comprovação' : '⚖️ Avaliação'}</strong>
+                                                <span class="timeline-date">${formatDate(h.data)}</span>
+                                            </div>
+                                            <div class="timeline-body">
+                                                <p><strong>Usuário:</strong> ${h.usuario}</p>
+                                                <p>${h.descricao}</p>
+                                                ${h.observacoes ? `<p><em>${h.observacoes}</em></p>` : ''}
+                                                ${h.prazoComprovacao ? `<p><strong>Prazo de Comprovação:</strong> ${formatDate(h.prazoComprovacao)}</p>` : ''}
+                                                ${h.statusNovo ? `<p><strong>Novo Status:</strong> ${statusBadges}</p>` : ''}
+                                                ${h.arquivos && h.arquivos.length > 0 ? `
+                                                    <div class="timeline-files">
+                                                        <strong>Arquivos:</strong>
+                                                        ${h.arquivos.map(file => `<span class="timeline-file">📎 ${file}</span>`).join('')}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Número:</span>
+                    <span class="detail-value">${proposicao.numero}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Correição:</span>
+                    <span class="detail-value">${correicao ? correicao.numero : 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Órgão Correicionado:</span>
+                    <span class="detail-value">${correicao ? `${correicao.ramoMP} - ${correicao.ramoMPNome}` : 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tipo:</span>
+                    <span class="detail-value">${proposicao.tipo}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Unidade:</span>
+                    <span class="detail-value">${proposicao.unidade}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Membro:</span>
+                    <span class="detail-value">${proposicao.membro}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">${renderStatusBadges(proposicao.status)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Prioridade:</span>
+                    <span class="detail-value" style="color: ${proposicao.prioridade === 'urgente' ? 'var(--danger-color)' : proposicao.prioridade === 'alta' ? 'var(--warning-color)' : 'inherit'}; font-weight: ${proposicao.prioridade === 'urgente' || proposicao.prioridade === 'alta' ? 'bold' : 'normal'};">
+                        ${proposicao.prioridade.charAt(0).toUpperCase() + proposicao.prioridade.slice(1)}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tags:</span>
+                    <span class="detail-value">${renderTagBadges(proposicao.tags)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Descrição:</span>
+                    <span class="detail-value">${proposicao.descricao}</span>
+                </div>
+                ${proposicao.prazoComprovacao ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Prazo de Comprovação:</span>
+                        <span class="detail-value">${formatDate(proposicao.prazoComprovacao)}</span>
+                    </div>
+                ` : ''}
+                ${proposicao.dataPublicacao ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Data de Publicação:</span>
+                        <span class="detail-value">${formatDate(proposicao.dataPublicacao)}</span>
+                    </div>
+                ` : ''}
+                ${timelineHTML}
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Setup character counter for observações
+        function setupObsCharCounter() {
+            const textarea = document.getElementById('observacoes');
+            const counter = document.getElementById('obsCharCount');
+
+            if (textarea && counter) {
+                textarea.addEventListener('input', () => {
+                    const length = textarea.value.length;
+                    counter.textContent = `${length} / 1000 caracteres`;
+
+                    if (length > 900) {
+                        counter.style.color = 'var(--danger-color)';
+                    } else if (length > 700) {
+                        counter.style.color = 'var(--warning-color)';
+                    } else {
+                        counter.style.color = 'var(--text-muted)';
+                    }
+                });
+            }
+        }
+
+        // ========== FUNÇÕES DE EXPORTAÇÃO ==========
+
+        // Toggle Export Menu
+        function toggleExportMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            const dropdown = menu.closest('.export-dropdown');
+
+            // Close all other menus
+            document.querySelectorAll('.export-menu').forEach(m => {
+                if (m.id !== menuId) {
+                    m.classList.add('hidden');
+                    m.closest('.export-dropdown')?.classList.remove('active');
+                }
+            });
+
+            // Toggle current menu
+            menu.classList.toggle('hidden');
+            dropdown?.classList.toggle('active');
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.export-dropdown')) {
+                document.querySelectorAll('.export-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                    menu.closest('.export-dropdown')?.classList.remove('active');
+                });
+            }
+        });
+
+        // Exportar Proposições Pendentes em JSON
+        function exportarPendentesJSON() {
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            if (!correicaoId) {
+                alert('Por favor, selecione uma correição primeiro.');
+                return;
+            }
+
+            const correicao = correicoes.find(c => c.id == correicaoId);
+            const pendentes = proposicoes.filter(p =>
+                p.correicaoId == correicaoId && hasStatusProcessual(p, 'pendente')
+            );
+
+            if (pendentes.length === 0) {
+                alert('Nenhuma proposição pendente para exportar nesta correição.');
+                return;
+            }
+
+            const exportData = {
+                titulo: 'Proposições Pendentes - CNMP',
+                dataExportacao: new Date().toISOString(),
+                correicao: {
+                    numero: correicao?.numero || '',
+                    ramoMP: correicao?.ramoMPNome || '',
+                    tematica: correicao?.tematica || ''
+                },
+                totalPendentes: pendentes.length,
+                usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
+                proposicoes: pendentes
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `pendentes-${correicao?.numero || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('publicacaoExportMenu').classList.add('hidden');
+            alert(`${pendentes.length} proposição(ões) pendente(s) exportada(s) com sucesso!`);
+        }
+
+        // Exportar Proposições Selecionadas em JSON
+        function exportarSelecionadasJSON() {
+            if (selectedProposicoes.size === 0) {
+                alert('Nenhuma proposição selecionada. Selecione ao menos uma proposição para exportar.');
+                return;
+            }
+
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            const correicao = correicoes.find(c => c.id == correicaoId);
+            const selecionadas = proposicoes.filter(p => selectedProposicoes.has(p.id));
+
+            const exportData = {
+                titulo: 'Proposições Selecionadas para Publicação - CNMP',
+                dataExportacao: new Date().toISOString(),
+                correicao: {
+                    numero: correicao?.numero || '',
+                    ramoMP: correicao?.ramoMPNome || '',
+                    tematica: correicao?.tematica || ''
+                },
+                totalSelecionadas: selecionadas.length,
+                usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
+                proposicoes: selecionadas
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `selecionadas-${correicao?.numero || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('publicacaoExportMenu').classList.add('hidden');
+            alert(`${selecionadas.length} proposição(ões) selecionada(s) exportada(s) com sucesso!`);
+        }
+
+        // Gerar Ofício de Publicação (PDF)
+        function exportarOficioPublicacao() {
+            if (selectedProposicoes.size === 0) {
+                alert('Nenhuma proposição selecionada. Selecione ao menos uma proposição para gerar o ofício.');
+                return;
+            }
+
+            const correicaoId = document.getElementById('correicaoSelect').value;
+            const correicao = correicoes.find(c => c.id == correicaoId);
+            const selecionadas = proposicoes.filter(p => selectedProposicoes.has(p.id));
+
+            // Get prazo if filled
+            const prazoInput = document.getElementById('prazoComprovacao');
+            const prazo = prazoInput && prazoInput.value ? formatDate(prazoInput.value) : '[A DEFINIR]';
+
+            const printWindow = window.open('', '', 'width=900,height=700');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Ofício de Publicação - ${correicao?.numero || ''}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: 'Times New Roman', serif;
+                            padding: 40px;
+                            color: #000;
+                            line-height: 1.8;
+                            font-size: 12pt;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #000;
+                            padding-bottom: 20px;
+                        }
+                        .header h1 {
+                            font-size: 16pt;
+                            font-weight: bold;
+                            margin-bottom: 5px;
+                        }
+                        .header h2 {
+                            font-size: 14pt;
+                            font-weight: normal;
+                        }
+                        .oficio-number {
+                            text-align: right;
+                            margin-bottom: 20px;
+                            font-size: 11pt;
+                        }
+                        .destinatario {
+                            margin: 30px 0;
+                            font-size: 12pt;
+                        }
+                        .corpo {
+                            text-align: justify;
+                            margin: 20px 0;
+                            font-size: 12pt;
+                        }
+                        .proposicoes-list {
+                            margin: 20px 0;
+                            padding-left: 20px;
+                        }
+                        .proposicao-item {
+                            margin: 15px 0;
+                            padding: 10px;
+                            border: 1px solid #ddd;
+                            page-break-inside: avoid;
+                        }
+                        .proposicao-header {
+                            font-weight: bold;
+                            font-size: 11pt;
+                            margin-bottom: 5px;
+                        }
+                        .proposicao-details {
+                            font-size: 10pt;
+                            color: #333;
+                            margin-top: 5px;
+                        }
+                        .assinatura {
+                            margin-top: 60px;
+                            text-align: center;
+                        }
+                        .assinatura-linha {
+                            border-top: 1px solid #000;
+                            width: 300px;
+                            margin: 60px auto 10px auto;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            font-size: 9pt;
+                            color: #666;
+                            text-align: center;
+                            border-top: 1px solid #ddd;
+                            padding-top: 10px;
+                        }
+                        @media print {
+                            body { padding: 20px; }
+                            .proposicao-item { page-break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>CONSELHO NACIONAL DO MINISTÉRIO PÚBLICO</h1>
+                        <h2>Corregedoria Nacional</h2>
+                    </div>
+
+                    <div class="oficio-number">
+                        <strong>OFÍCIO Nº _____ /CNMP-CN</strong><br>
+                        Brasília-DF, ${formatDate(new Date().toISOString().split('T')[0])}
+                    </div>
+
+                    <div class="destinatario">
+                        <strong>Ao(À) Excelentíssimo(a) Senhor(a)</strong><br>
+                        <strong>${correicao?.ramoMPNome || '[DESTINATÁRIO]'}</strong><br>
+                        <em>Ref.: Correição ${correicao?.numero || ''}</em>
+                    </div>
+
+                    <div class="corpo">
+                        <p style="text-indent: 2cm;">
+                            Senhor(a) Procurador(a)-Geral,
+                        </p>
+                        <br>
+                        <p style="text-indent: 2cm;">
+                            No uso das atribuições previstas na Lei Complementar nº 75/1993 e no Regimento Interno
+                            do Conselho Nacional do Ministério Público, venho, por meio deste, <strong>PUBLICAR</strong>
+                            as proposições listadas abaixo, decorrentes da <strong>${correicao?.numero || 'Correição'}</strong>,
+                            com temática "${correicao?.tematica || ''}", realizada no período de
+                            ${correicao ? `${formatDate(correicao.dataInicio)} a ${formatDate(correicao.dataFim)}` : '[PERÍODO]'}.
+                        </p>
+                        <br>
+                        <p style="text-indent: 2cm;">
+                            As proposições a seguir relacionadas deverão ter comprovação de adimplemento enviada
+                            até a data de <strong>${prazo}</strong>, através do Sistema NAD - Núcleo de Acompanhamento de Decisões.
+                        </p>
+                    </div>
+
+                    <div class="proposicoes-list">
+                        <h3 style="font-size: 12pt; margin-bottom: 15px;">PROPOSIÇÕES PUBLICADAS (${selecionadas.length})</h3>
+                        ${selecionadas.map((p, index) => {
+                            const tipo = p.tipo || 'Determinação';
+                            return `
+                            <div class="proposicao-item">
+                                <div class="proposicao-header">
+                                    ${index + 1}. ${p.numero} - ${tipo.toUpperCase()}
+                                </div>
+                                <div class="proposicao-details">
+                                    <strong>Unidade:</strong> ${p.unidade || '-'}<br>
+                                    <strong>Descrição:</strong> ${p.descricao || '-'}
+                                </div>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="corpo">
+                        <p style="text-indent: 2cm;">
+                            Sem mais para o momento, renovo votos de estima e consideração.
+                        </p>
+                    </div>
+
+                    <div class="assinatura">
+                        <div class="assinatura-linha"></div>
+                        <strong>[NOME DO CORREGEDOR NACIONAL]</strong><br>
+                        Corregedor Nacional do Ministério Público
+                    </div>
+
+                    <div class="footer">
+                        <p>Documento gerado automaticamente pelo Sistema NAD - Núcleo de Acompanhamento de Decisões</p>
+                        <p>Conselho Nacional do Ministério Público - CNMP</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                };
+            };
+
+            document.getElementById('publicacaoExportMenu').classList.add('hidden');
+        }
+
+        // Initialize page
+        function init() {
+            // Load user session
+            if (!loadUserSession()) {
+                alert('Sessão expirada. Por favor, faça login novamente.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Check if user is admin
+            if (currentUser.type !== 'admin') {
+                alert('⛔ Acesso negado. Esta página é exclusiva para administradores (Corregedoria Nacional).');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Display user name
+            document.getElementById('userName').textContent = currentUser.username;
+
+            // Load data
+            if (!loadDataFromLocalStorage()) {
+                return;
+            }
+
+            // Populate correição selector
+            populateCorreicaoSelect();
+
+            // Populate tag filter
+            populateTagFilter();
+
+            // Show placeholder initially (no correição selected)
+            document.getElementById('placeholderMessage').classList.remove('hidden');
+            document.getElementById('filtrosContainer').classList.add('hidden');
+            document.getElementById('correicaoInfo').classList.add('hidden');
+
+            // Setup character counter
+            setupObsCharCounter();
+
+            // Add event listeners for filters
+            document.getElementById('searchInput').addEventListener('input', renderProposicoesTable);
+            document.getElementById('tipoFilter').addEventListener('change', renderProposicoesTable);
+            document.getElementById('tagFilter').addEventListener('change', renderProposicoesTable);
+            document.getElementById('prioridadeFilter').addEventListener('change', renderProposicoesTable);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

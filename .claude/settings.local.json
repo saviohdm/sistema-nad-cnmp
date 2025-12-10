@@ -6,7 +6,9 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit - Sistema de Acompanhamento de Proposições CNMP\n\nImplementação completa do sistema NAD (Núcleo de Acompanhamento de Decisões):\n- Interface web single-page application\n- Gestão de correições e proposições\n- Workflow de comprovação e avaliação\n- Timeline histórica de interações\n- Dashboard com estatísticas e gráficos\n- Zero dependencies (HTML5, CSS3, Vanilla JS)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pkill:*)",
+      "Bash(open http://localhost:8000)"
     ],
     "deny": [],
     "ask": []
