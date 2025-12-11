@@ -1,0 +1,910 @@
+# Modelo de Dados
+## Sistema de Acompanhamento de Proposições - CNMP
+
+**Versão:** 1.0
+**Data:** 10/12/2025
+**Autor:** Documentação Técnica - NAD/CNMP
+
+---
+
+## 1. Introdução
+
+Este documento descreve o modelo de dados do Sistema de Acompanhamento de Proposições do Conselho Nacional do Ministério Público (CNMP). O sistema gerencia correições (procedimentos de revisão judicial) e o acompanhamento de proposições (determinações e recomendações) emitidas para os 27 Ministérios Públicos brasileiros.
+
+### 1.1 Objetivos do Documento
+
+- Especificar todas as entidades de dados do sistema
+- Detalhar atributos, tipos e restrições
+- Documentar relacionamentos entre entidades
+- Estabelecer regras de integridade e negócio
+- Servir como base para implementação do banco de dados
+
+---
+
+## 2. Visão Geral do Modelo
+
+O modelo de dados é composto por **3 entidades principais**:
+
+1. **Correição** - Representa um procedimento de revisão judicial
+2. **Proposição** - Determinação ou recomendação emitida durante uma correição
+3. **Histórico** - Registro de interações (publicação, comprovação, avaliação) em uma proposição
+
+### 2.1 Diagrama Entidade-Relacionamento
+
+```
+┌─────────────────────┐
+│     CORREIÇÃO       │
+│─────────────────────│
+│ PK: id              │
+│     numero          │
+│     ramoMP          │
+│     ramoMPNome      │
+│     tematica        │
+│     numeroElo       │
+│     tipo            │
+│     mp              │
+│     uf[]            │
+│     status          │
+│     dataInicio      │
+│     dataFim         │
+│     observacoes     │
+└─────────────────────┘
+           │
+           │ 1:N
+           │
+           ▼
+┌─────────────────────┐
+│    PROPOSIÇÃO       │
+│─────────────────────│
+│ PK: id              │
+│     numero          │
+│ FK: correicaoId     │
+│     tipo            │
+│     unidade         │
+│     membro          │
+│     descricao       │
+│     prioridade      │
+│     prazoComprovacao│
+│     dataPublicacao  │
+│     status[]        │◄────┐
+│     tags[]          │     │ Status Bidimensional
+│     rascunhos[]     │     │ [statusProcessual, valoracao]
+└─────────────────────┘     │
+           │                 │
+           │ 1:N (embedded)  │
+           │                 │
+           ▼                 │
+┌─────────────────────┐     │
+│     HISTÓRICO       │     │
+│─────────────────────│     │
+│     tipo            │     │
+│     data            │     │
+│     usuario         │     │
+│     descricao       │     │
+│     observacoes     │     │
+│     arquivos[]      │     │
+│     prazoComprovacao│     │
+│     statusAnterior[]├─────┘
+│     statusNovo[]    │
+└─────────────────────┘
+```
+
+---
+
+## 3. Entidades
+
+### 3.1 Correição
+
+Representa um procedimento de correição (revisão judicial) realizado pela Corregedoria Nacional do Ministério Público.
+
+#### 3.1.1 Atributos
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | Integer | Sim | Identificador único da correição (PK, autoincremento) |
+| `numero` | String(50) | Sim | Número de identificação da correição (ex: "COR-2024-01") |
+| `ramoMP` | String(10) | Sim | Sigla do MP correicionado (ex: "MPBA", "MPRJ") |
+| `ramoMPNome` | String(200) | Sim | Nome completo do MP (ex: "Ministério Público do Estado da Bahia") |
+| `tematica` | Text | Não | Descrição do tema da correição (ex: "Direitos fundamentais e meio ambiente") |
+| `numeroElo` | String(30) | Não | Identificador no sistema ELO (formato: NNNNNNN-DD.AAAA.J.TT.OOOO) |
+| `tipo` | Enum | Sim | Tipo de correição: 'Ordinária', 'Extraordinária', 'OCD', 'Inspeção' |
+| `mp` | Enum | Sim | Nível do MP: 'MPE' (estadual) ou 'MPU' (federal) |
+| `uf` | Array[String] | Sim | Lista de estados (códigos UF) - 1 item para MPE, múltiplos para MPU |
+| `status` | Enum | Sim | Status calculado: 'ativo' ou 'inativo' |
+| `dataInicio` | Date | Sim | Data de início da correição |
+| `dataFim` | Date | Não | Data de encerramento da correição |
+| `observacoes` | Text(5000) | Não | Observações gerais sobre a correição |
+
+#### 3.1.2 Regras de Negócio
+
+- **RN-COR-01:** O campo `numero` deve ser único no sistema e sequencial, zerando todos os anos
+- **RN-COR-02:** O campo `numeroElo` deve seguir o formato: NNNNNNN-DD.AAAA.J.TT.OOOO
+- **RN-COR-03:** Se `mp = 'MPE'`, o array `uf` deve conter exatamente 1 elemento
+- **RN-COR-04:** Se `mp = 'MPU'`, o array `uf` pode conter múltiplos elementos
+- **RN-COR-05:** O campo `status` é calculado automaticamente:
+  - `'ativo'`: se existir pelo menos uma proposição vinculada com valoração diferente de 'adimplente' ou 'prejudicada'
+  - `'inativo'`: se todas as proposições vinculadas tiverem valoração 'adimplente' ou 'prejudicada'
+- **RN-COR-06:** `dataFim` deve ser maior ou igual a `dataInicio`
+- **RN-COR-07:** Valores válidos para `uf`: AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC, SP, SE, TO
+
+#### 3.1.3 Índices
+
+- PRIMARY KEY: `id`
+- UNIQUE: `numero`
+- INDEX: `ramoMP`
+- INDEX: `status`
+- INDEX: `dataInicio`
+
+---
+
+### 3.2 Proposição
+
+Representa uma determinação (obrigatória) ou recomendação (sugestiva) emitida durante uma correição para um órgão do Ministério Público.
+
+#### 3.2.1 Atributos
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | Integer | Sim | Identificador único da proposição (PK, autoincremento) |
+| `numero` | String(50) | Sim | Número de identificação da proposição (ex: "PROP-2024-0001") |
+| `correicaoId` | Integer | Sim | Chave estrangeira para Correição (FK) |
+| `tipo` | Enum | Sim | Tipo: 'Determinação' (mandatória) ou 'Recomendação' (sugestiva) |
+| `unidade` | String(200) | Sim | Unidade do MP responsável (ex: "Promotoria de Justiça de Cachoeira") |
+| `membro` | String(200) | Sim | Nome do membro designado (ex: "Dr. João Silva Santos") |
+| `descricao` | Text(5000) | Sim | Descrição detalhada da proposição |
+| `prioridade` | Enum | Sim | Prioridade: 'urgente', 'alta', 'normal' (default: 'normal') |
+| `prazoComprovacao` | Date | Não | Prazo para envio de comprovação (definido na publicação) |
+| `dataPublicacao` | Date | Não | Data em que a proposição foi publicada |
+| `status` | Array[Enum] | Sim | Status bidimensional: [statusProcessual, valoracao] |
+| `tags` | Array[String] | Não | Lista de tags para categorização |
+| `rascunhos` | Array[Object] | Não | Rascunhos de comprovação preparados pelo correicionado |
+
+#### 3.2.2 Campo Status - Estrutura Bidimensional
+
+O campo `status` é um **array de 2 elementos**: `[statusProcessual, valoracao]`
+
+##### Status Processual (índice 0)
+
+Representa o estado do fluxo de trabalho:
+
+| Valor | Descrição |
+|-------|-----------|
+| `pendente` | Aguardando publicação inicial ou republicação |
+| `aguardando_comprovacao` | Publicada, aguardando envio de comprovação |
+| `em_analise` | Comprovação enviada, aguardando avaliação |
+| `encerrada` | Processo finalizado |
+
+##### Valoração (índice 1)
+
+Representa a avaliação de conformidade:
+
+| Valor | Descrição |
+|-------|-----------|
+| `nova` | Sem avaliação (valor inicial) |
+| `adimplente` | Totalmente cumprida |
+| `parcial` | Parcialmente cumprida |
+| `inadimplente` | Não cumprida |
+| `prejudicada` | Superada ou não aplicável |
+
+**Exemplo:**
+```json
+{
+  "status": ["aguardando_comprovacao", "nova"]
+}
+```
+
+#### 3.2.3 Campo Tags - Valores Permitidos
+
+| Tag ID | Label |
+|--------|-------|
+| `administrativo` | Administrativo |
+| `recursos-humanos` | Recursos Humanos |
+| `infraestrutura` | Infraestrutura |
+| `tecnologia` | Tecnologia |
+| `processual` | Processual |
+| `financeiro` | Financeiro |
+| `capacitacao` | Capacitação |
+| `gestao-documental` | Gestão Documental |
+| `compliance` | Compliance |
+| `transparencia` | Transparência |
+| `outros` | Outros |
+
+#### 3.2.4 Campo Rascunhos - Estrutura
+
+Array de objetos com a seguinte estrutura:
+
+```json
+{
+  "id": 1,
+  "descricao": "Texto da comprovação (máx 7500 caracteres)",
+  "observacoes": "Observações adicionais (máx 1000 caracteres)",
+  "arquivos": ["arquivo1.pdf", "arquivo2.jpg"],
+  "dataCriacao": "2024-12-01",
+  "dataModificacao": "2024-12-05"
+}
+```
+
+**Regra:** Cada proposição pode ter **no máximo 1 rascunho ativo** por vez.
+
+#### 3.2.5 Regras de Negócio
+
+- **RN-PROP-01:** O campo `numero` deve ser único no sistema
+- **RN-PROP-02:** Toda proposição deve estar vinculada a uma correição válida (`correicaoId` deve existir)
+- **RN-PROP-03:** O status inicial de uma proposição deve ser `['pendente', 'nova']`
+- **RN-PROP-04:** `prazoComprovacao` e `dataPublicacao` só são preenchidos após a publicação
+- **RN-PROP-05:** Uma proposição só pode receber comprovação se `statusProcessual = 'aguardando_comprovacao'`
+- **RN-PROP-06:** Proposições com status `['pendente', *]` não podem receber comprovação (necessário publicar primeiro)
+- **RN-PROP-07:** Quando uma proposição é avaliada como `parcial` ou `inadimplente`, o statusProcessual volta para `'pendente'` (aguardando republicação)
+- **RN-PROP-08:** Uma proposição encerrada tem `statusProcessual = 'encerrada'` e `valoracao ∈ {adimplente, prejudicada}`
+- **RN-PROP-09:** Tags devem conter apenas valores da lista predefinida
+- **RN-PROP-10:** `descricao` tem limite de 5.000 caracteres
+- **RN-PROP-11:** Máximo de 1 rascunho ativo por proposição
+
+#### 3.2.6 Índices
+
+- PRIMARY KEY: `id`
+- UNIQUE: `numero`
+- FOREIGN KEY: `correicaoId` REFERENCES `Correicao(id)` ON DELETE RESTRICT
+- INDEX: `correicaoId`
+- INDEX: `status[0]` (statusProcessual)
+- INDEX: `status[1]` (valoracao)
+- INDEX: `prazoComprovacao`
+
+---
+
+### 3.3 Histórico
+
+Representa uma interação registrada em uma proposição. Cada entrada no histórico documenta uma publicação, comprovação ou avaliação. O histórico é **embarcado** na entidade Proposição como um array.
+
+#### 3.3.1 Estrutura
+
+O histórico é armazenado como um **array de objetos** no campo `historico` da entidade Proposição.
+
+#### 3.3.2 Atributos
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `tipo` | Enum | Sim | Tipo de interação: 'publicacao', 'comprovacao', 'avaliacao' |
+| `data` | DateTime | Sim | Data e hora da interação (ISO 8601) |
+| `usuario` | String(200) | Sim | Identificação do usuário (ramoMP ou "Corregedoria Nacional") |
+| `descricao` | Text(5000) | Sim | Descrição detalhada da interação |
+| `observacoes` | Text(1000) | Não | Observações adicionais (opcional) |
+| `arquivos` | Array[String] | Não | Lista de nomes de arquivos anexados (apenas para comprovacao) |
+| `prazoComprovacao` | Date | Não | Prazo definido (apenas para publicacao) |
+| `statusAnterior` | Array[Enum] | Não | Status antes da interação (publicacao e avaliacao) |
+| `statusNovo` | Array[Enum] | Não | Status após a interação (publicacao e avaliacao) |
+
+#### 3.3.3 Estrutura por Tipo de Interação
+
+##### Tipo: `publicacao`
+
+Registra quando a Corregedoria Nacional publica ou republica uma proposição.
+
+**Campos obrigatórios:**
+- `tipo`, `data`, `usuario`, `descricao`, `prazoComprovacao`, `statusAnterior`, `statusNovo`
+
+**Exemplo:**
+```json
+{
+  "tipo": "publicacao",
+  "data": "2024-12-01T10:30:00.000Z",
+  "usuario": "Corregedoria Nacional",
+  "descricao": "Proposição publicada para MPBA - Ministério Público do Estado da Bahia",
+  "observacoes": "Primeira publicação desta determinação",
+  "prazoComprovacao": "2024-12-31",
+  "statusAnterior": ["pendente", "nova"],
+  "statusNovo": ["aguardando_comprovacao", "nova"]
+}
+```
+
+##### Tipo: `comprovacao`
+
+Registra quando o correicionado envia comprovação de cumprimento.
+
+**Campos obrigatórios:**
+- `tipo`, `data`, `usuario`, `descricao`, `arquivos`
+
+**Exemplo:**
+```json
+{
+  "tipo": "comprovacao",
+  "data": "2024-12-15T14:20:00.000Z",
+  "usuario": "MPBA - Ministério Público do Estado da Bahia",
+  "descricao": "Implementação concluída do sistema de protocolo eletrônico em todas as promotorias da comarca.",
+  "observacoes": "Incluindo capacitação de 45 servidores",
+  "arquivos": ["relatorio_implementacao.pdf", "lista_presenca_treinamento.pdf", "prints_sistema.jpg"]
+}
+```
+
+##### Tipo: `avaliacao`
+
+Registra quando a Corregedoria avalia uma comprovação recebida.
+
+**Campos obrigatórios:**
+- `tipo`, `data`, `usuario`, `descricao`, `statusAnterior`, `statusNovo`
+
+**Exemplo:**
+```json
+{
+  "tipo": "avaliacao",
+  "data": "2024-12-20T16:45:00.000Z",
+  "usuario": "Corregedoria Nacional",
+  "descricao": "Comprovação analisada e aprovada. Sistema implementado conforme especificado.",
+  "observacoes": "Documentação técnica completa e evidências satisfatórias",
+  "statusAnterior": ["em_analise", "nova"],
+  "statusNovo": ["encerrada", "adimplente"]
+}
+```
+
+#### 3.3.4 Regras de Negócio
+
+- **RN-HIST-01:** Entradas no histórico são **imutáveis** (apenas inserção, sem edição ou exclusão)
+- **RN-HIST-02:** O histórico deve ser **ordenado cronologicamente** por `data`
+- **RN-HIST-03:** Para `tipo = 'publicacao'`:
+  - `prazoComprovacao` é obrigatório
+  - `statusAnterior[0]` deve ser `'pendente'`
+  - `statusNovo[0]` deve ser `'aguardando_comprovacao'`
+- **RN-HIST-04:** Para `tipo = 'comprovacao'`:
+  - `arquivos` deve conter pelo menos 1 elemento
+  - Altera status da proposição de `'aguardando_comprovacao'` para `'em_analise'`
+- **RN-HIST-05:** Para `tipo = 'avaliacao'`:
+  - `statusAnterior[0]` deve ser `'em_analise'`
+  - Se `statusNovo[1] ∈ {parcial, inadimplente}`, então `statusNovo[0]` deve ser `'pendente'`
+  - Se `statusNovo[1] ∈ {adimplente, prejudicada}`, então `statusNovo[0]` deve ser `'encerrada'`
+- **RN-HIST-06:** Campo `usuario`:
+  - Para publicacao e avaliacao: "Corregedoria Nacional"
+  - Para comprovacao: "{ramoMP} - {ramoMPNome}"
+- **RN-HIST-07:** Uma proposição pode ter **múltiplas publicações** (republicações) no histórico
+- **RN-HIST-08:** Cada comprovação deve ser seguida de uma avaliação
+- **RN-HIST-09:** O campo `data` deve ser em formato ISO 8601 com timezone UTC
+
+---
+
+## 4. Relacionamentos
+
+### 4.1 Correição → Proposição (1:N)
+
+**Tipo:** One-to-Many (Uma correição possui muitas proposições)
+
+**Cardinalidade:**
+- Uma correição pode ter 0 ou mais proposições
+- Uma proposição pertence a exatamente 1 correição
+
+**Implementação:**
+- Chave estrangeira `correicaoId` na tabela Proposição
+- Integridade referencial: `ON DELETE RESTRICT` (não permite excluir correição com proposições vinculadas)
+
+**Regras:**
+- Ao criar uma proposição, deve-se validar que o `correicaoId` existe
+- O status da correição é recalculado automaticamente com base nas proposições vinculadas
+
+---
+
+### 4.2 Proposição → Histórico (1:N Embedded)
+
+**Tipo:** One-to-Many Embedded (Uma proposição possui muitos registros de histórico)
+
+**Cardinalidade:**
+- Uma proposição pode ter 0 ou mais entradas de histórico
+- Cada entrada de histórico pertence a exatamente 1 proposição
+
+**Implementação:**
+- Array embarcado `historico` na entidade Proposição
+- Não há tabela separada para histórico
+- Ordenação cronológica mantida pelo array
+
+**Regras:**
+- Histórico é imutável (append-only)
+- Cada mudança de status gera uma entrada no histórico
+- Histórico preserva auditoria completa do ciclo de vida da proposição
+
+---
+
+## 5. Enumerações
+
+### 5.1 Tipo de Correição
+
+```
+enum TipoCorreicao {
+  ORDINARIA = 'Ordinária',
+  EXTRAORDINARIA = 'Extraordinária',
+  OCD = 'OCD',
+  INSPECAO = 'Inspeção'
+}
+```
+
+### 5.2 Nível do MP
+
+```
+enum NivelMP {
+  MPE = 'MPE',  // Estadual
+  MPU = 'MPU'   // Federal
+}
+```
+
+### 5.3 Status da Correição
+
+```
+enum StatusCorreicao {
+  ATIVO = 'ativo',
+  INATIVO = 'inativo'
+}
+```
+
+### 5.4 Tipo de Proposição
+
+```
+enum TipoProposicao {
+  DETERMINACAO = 'Determinação',
+  RECOMENDACAO = 'Recomendação'
+}
+```
+
+### 5.5 Prioridade
+
+```
+enum Prioridade {
+  URGENTE = 'urgente',
+  ALTA = 'alta',
+  NORMAL = 'normal'
+}
+```
+
+### 5.6 Status Processual
+
+```
+enum StatusProcessual {
+  PENDENTE = 'pendente',
+  AGUARDANDO_COMPROVACAO = 'aguardando_comprovacao',
+  EM_ANALISE = 'em_analise',
+  ENCERRADA = 'encerrada'
+}
+```
+
+### 5.7 Valoração
+
+```
+enum Valoracao {
+  NOVA = 'nova',
+  ADIMPLENTE = 'adimplente',
+  PARCIAL = 'parcial',
+  INADIMPLENTE = 'inadimplente',
+  PREJUDICADA = 'prejudicada'
+}
+```
+
+### 5.8 Tipo de Histórico
+
+```
+enum TipoHistorico {
+  PUBLICACAO = 'publicacao',
+  COMPROVACAO = 'comprovacao',
+  AVALIACAO = 'avaliacao'
+}
+```
+
+### 5.9 Tags
+
+```
+enum Tags {
+  ADMINISTRATIVO = 'administrativo',
+  RECURSOS_HUMANOS = 'recursos-humanos',
+  INFRAESTRUTURA = 'infraestrutura',
+  TECNOLOGIA = 'tecnologia',
+  PROCESSUAL = 'processual',
+  FINANCEIRO = 'financeiro',
+  CAPACITACAO = 'capacitacao',
+  GESTAO_DOCUMENTAL = 'gestao-documental',
+  COMPLIANCE = 'compliance',
+  TRANSPARENCIA = 'transparencia',
+  OUTROS = 'outros'
+}
+```
+
+---
+
+## 6. Regras de Integridade Global
+
+### 6.1 Integridade Referencial
+
+- **RI-01:** Toda proposição deve referenciar uma correição existente
+- **RI-02:** Não é permitido excluir uma correição que possua proposições vinculadas
+- **RI-03:** Ao excluir uma proposição, todo seu histórico é excluído em cascata (embarcado)
+
+### 6.2 Integridade de Dados
+
+- **ID-01:** Campos com limite de caracteres devem ser validados na aplicação
+- **ID-02:** Datas devem ser armazenadas em formato ISO 8601
+- **ID-03:** Arrays não podem conter valores duplicados (tags, arquivos)
+- **ID-04:** Enumerações devem ser validadas estritamente
+
+### 6.3 Regras de Workflow
+
+- **WF-01:** Status bidimensional deve ser sempre sincronizado com o histórico
+- **WF-02:** Mudanças de status devem sempre gerar entrada no histórico
+- **WF-03:** Histórico deve ser preservado permanentemente (auditoria)
+- **WF-04:** Republicações devem criar nova entrada de publicação no histórico (não sobrescrever)
+
+---
+
+## 7. Considerações de Implementação
+
+### 7.1 Banco de Dados Relacional (SQL)
+
+**Estrutura de Tabelas:**
+
+```sql
+-- Tabela: Correicao
+CREATE TABLE correicao (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  numero VARCHAR(50) UNIQUE NOT NULL,
+  ramoMP VARCHAR(10) NOT NULL,
+  ramoMPNome VARCHAR(200) NOT NULL,
+  tematica TEXT NOT NULL,
+  numeroElo VARCHAR(30) NOT NULL,
+  tipo ENUM('Ordinária', 'Extraordinária', 'OCD', 'Inspeção') NOT NULL,
+  mp ENUM('MPE', 'MPU') NOT NULL,
+  uf JSON NOT NULL, -- Array de strings
+  status ENUM('ativo', 'inativo') NOT NULL,
+  dataInicio DATE NOT NULL,
+  dataFim DATE,
+  observacoes TEXT,
+  INDEX idx_ramoMP (ramoMP),
+  INDEX idx_status (status),
+  INDEX idx_dataInicio (dataInicio)
+);
+
+-- Tabela: Proposicao
+CREATE TABLE proposicao (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  numero VARCHAR(50) UNIQUE NOT NULL,
+  correicaoId INT NOT NULL,
+  tipo ENUM('Determinação', 'Recomendação') NOT NULL,
+  unidade VARCHAR(200) NOT NULL,
+  membro VARCHAR(200) NOT NULL,
+  descricao TEXT NOT NULL,
+  prioridade ENUM('urgente', 'alta', 'normal') DEFAULT 'normal',
+  prazoComprovacao DATE,
+  dataPublicacao DATE,
+  statusProcessual ENUM('pendente', 'aguardando_comprovacao', 'em_analise', 'encerrada') NOT NULL,
+  valoracao ENUM('nova', 'adimplente', 'parcial', 'inadimplente', 'prejudicada') NOT NULL,
+  tags JSON, -- Array de strings
+  rascunhos JSON, -- Array de objetos
+  historico JSON, -- Array de objetos
+  FOREIGN KEY (correicaoId) REFERENCES correicao(id) ON DELETE RESTRICT,
+  INDEX idx_correicaoId (correicaoId),
+  INDEX idx_statusProcessual (statusProcessual),
+  INDEX idx_valoracao (valoracao),
+  INDEX idx_prazoComprovacao (prazoComprovacao)
+);
+```
+
+**Observações:**
+- Campos array/object armazenados como JSON
+- Status bidimensional desmembrado em 2 campos (statusProcessual + valoracao) para facilitar indexação e consultas
+
+### 7.2 Banco de Dados NoSQL (MongoDB)
+
+**Coleção: correicoes**
+```javascript
+{
+  _id: ObjectId("..."),
+  numero: "COR-2024-01",
+  ramoMP: "MPBA",
+  ramoMPNome: "Ministério Público do Estado da Bahia",
+  tematica: "Direitos fundamentais e meio ambiente",
+  numeroElo: "1234567-89.2024.1.01.0001",
+  tipo: "Ordinária",
+  mp: "MPE",
+  uf: ["BA"],
+  status: "ativo",
+  dataInicio: ISODate("2024-01-15"),
+  dataFim: ISODate("2024-03-20"),
+  observacoes: "..."
+}
+```
+
+**Coleção: proposicoes**
+```javascript
+{
+  _id: ObjectId("..."),
+  numero: "PROP-2024-0001",
+  correicaoId: ObjectId("..."),
+  tipo: "Determinação",
+  unidade: "Procuradoria-Geral de Justiça",
+  membro: "Dr. João Silva Santos",
+  descricao: "...",
+  prioridade: "normal",
+  prazoComprovacao: ISODate("2024-12-31"),
+  dataPublicacao: ISODate("2024-11-01"),
+  status: ["encerrada", "adimplente"],
+  tags: ["tecnologia", "gestao-documental"],
+  rascunhos: [],
+  historico: [
+    {
+      tipo: "publicacao",
+      data: ISODate("2024-11-01T10:00:00Z"),
+      usuario: "Corregedoria Nacional",
+      descricao: "...",
+      observacoes: null,
+      prazoComprovacao: ISODate("2024-12-31"),
+      statusAnterior: ["pendente", "nova"],
+      statusNovo: ["aguardando_comprovacao", "nova"]
+    },
+    {
+      tipo: "comprovacao",
+      data: ISODate("2024-11-15T14:30:00Z"),
+      usuario: "MPBA - Ministério Público do Estado da Bahia",
+      descricao: "...",
+      observacoes: "...",
+      arquivos: ["doc1.pdf", "doc2.pdf"]
+    },
+    {
+      tipo: "avaliacao",
+      data: ISODate("2024-11-20T16:00:00Z"),
+      usuario: "Corregedoria Nacional",
+      descricao: "...",
+      observacoes: null,
+      statusAnterior: ["em_analise", "nova"],
+      statusNovo: ["encerrada", "adimplente"]
+    }
+  ]
+}
+```
+
+**Índices MongoDB:**
+```javascript
+db.correicoes.createIndex({ numero: 1 }, { unique: true })
+db.correicoes.createIndex({ ramoMP: 1 })
+db.correicoes.createIndex({ status: 1 })
+
+db.proposicoes.createIndex({ numero: 1 }, { unique: true })
+db.proposicoes.createIndex({ correicaoId: 1 })
+db.proposicoes.createIndex({ "status.0": 1 })
+db.proposicoes.createIndex({ "status.1": 1 })
+db.proposicoes.createIndex({ prazoComprovacao: 1 })
+```
+
+### 7.3 Validações Recomendadas
+
+**Nível de Aplicação:**
+- Validar formato do `numeroElo` via regex
+- Validar códigos UF contra lista oficial
+- Validar tamanho de strings e textos
+- Validar transições de status permitidas
+- Validar que arquivos anexados existem no storage
+
+**Nível de Banco:**
+- Constraints de NOT NULL
+- Constraints de UNIQUE
+- Foreign keys com integridade referencial
+- Enumerações estritamente validadas
+
+---
+
+## 8. Glossário
+
+| Termo | Definição |
+|-------|-----------|
+| **Correição** | Procedimento de revisão judicial realizado pela Corregedoria Nacional do MP |
+| **Proposição** | Determinação (obrigatória) ou recomendação (sugestiva) emitida durante uma correição |
+| **Comprovação** | Evidência documental enviada pelo correicionado para demonstrar cumprimento da proposição |
+| **Avaliação** | Análise realizada pela Corregedoria Nacional sobre a comprovação recebida |
+| **Rascunho** | Comprovação preparada mas ainda não enviada oficialmente |
+| **Histórico** | Registro cronológico de todas as interações em uma proposição |
+| **Status Processual** | Estado atual do fluxo de trabalho da proposição |
+| **Valoração** | Avaliação de conformidade/cumprimento da proposição |
+| **Correicionado** | Órgão do Ministério Público que está sendo correicionado |
+| **ELO** | Sistema oficial de numeração de processos administrativos do CNMP |
+| **NAD** | Núcleo de Acompanhamento de Decisões (setor responsável pelo sistema) |
+
+---
+
+## 9. Controle de Versões
+
+| Versão | Data | Autor | Alterações |
+|--------|------|-------|------------|
+| 1.0 | 10/12/2025 | Documentação Técnica | Versão inicial do documento |
+
+---
+
+## 10. Anexos
+
+### 10.1 Lista Completa de Ministérios Públicos (27 MPs)
+
+**Estaduais (26):**
+- MPAC - Ministério Público do Estado do Acre
+- MPAL - Ministério Público do Estado de Alagoas
+- MPAM - Ministério Público do Estado do Amazonas
+- MPAP - Ministério Público do Estado do Amapá
+- MPBA - Ministério Público do Estado da Bahia
+- MPCE - Ministério Público do Estado do Ceará
+- MPDF - Ministério Público do Distrito Federal e Territórios
+- MPES - Ministério Público do Estado do Espírito Santo
+- MPGO - Ministério Público do Estado de Goiás
+- MPMA - Ministério Público do Estado do Maranhão
+- MPMG - Ministério Público do Estado de Minas Gerais
+- MPMS - Ministério Público do Estado de Mato Grosso do Sul
+- MPMT - Ministério Público do Estado de Mato Grosso
+- MPPA - Ministério Público do Estado do Pará
+- MPPB - Ministério Público do Estado da Paraíba
+- MPPE - Ministério Público do Estado de Pernambuco
+- MPPI - Ministério Público do Estado do Piauí
+- MPPR - Ministério Público do Estado do Paraná
+- MPRJ - Ministério Público do Estado do Rio de Janeiro
+- MPRN - Ministério Público do Estado do Rio Grande do Norte
+- MPRO - Ministério Público do Estado de Rondônia
+- MPRR - Ministério Público do Estado de Roraima
+- MPRS - Ministério Público do Estado do Rio Grande do Sul
+- MPSC - Ministério Público do Estado de Santa Catarina
+- MPSE - Ministério Público do Estado de Sergipe
+- MPSP - Ministério Público do Estado de São Paulo
+- MPTO - Ministério Público do Estado do Tocantins
+
+**Federal (1):**
+- MPU - Ministério Público da União
+
+### 10.2 Exemplo de Fluxo Completo de Dados
+
+**Cenário:** Criação de correição → publicação de proposição → comprovação → avaliação
+
+**1. Criação da Correição**
+```json
+{
+  "id": 1,
+  "numero": "COR-2024-01",
+  "ramoMP": "MPBA",
+  "ramoMPNome": "Ministério Público do Estado da Bahia",
+  "tematica": "Direitos fundamentais e meio ambiente",
+  "numeroElo": "1234567-89.2024.1.01.0001",
+  "tipo": "Ordinária",
+  "mp": "MPE",
+  "uf": ["BA"],
+  "status": "ativo",
+  "dataInicio": "2024-01-15",
+  "dataFim": "2024-03-20",
+  "observacoes": null
+}
+```
+
+**2. Criação da Proposição (status inicial)**
+```json
+{
+  "id": 1,
+  "numero": "PROP-2024-0001",
+  "correicaoId": 1,
+  "tipo": "Determinação",
+  "unidade": "Procuradoria-Geral de Justiça",
+  "membro": "Dr. João Silva Santos",
+  "descricao": "Implementar sistema de protocolo eletrônico em todas as promotorias da comarca.",
+  "prioridade": "normal",
+  "prazoComprovacao": null,
+  "dataPublicacao": null,
+  "status": ["pendente", "nova"],
+  "tags": ["tecnologia", "gestao-documental"],
+  "rascunhos": [],
+  "historico": []
+}
+```
+
+**3. Publicação (admin publica a proposição)**
+```json
+{
+  "id": 1,
+  "numero": "PROP-2024-0001",
+  "correicaoId": 1,
+  "tipo": "Determinação",
+  "unidade": "Procuradoria-Geral de Justiça",
+  "membro": "Dr. João Silva Santos",
+  "descricao": "Implementar sistema de protocolo eletrônico em todas as promotorias da comarca.",
+  "prioridade": "normal",
+  "prazoComprovacao": "2024-12-31",
+  "dataPublicacao": "2024-11-01",
+  "status": ["aguardando_comprovacao", "nova"],
+  "tags": ["tecnologia", "gestao-documental"],
+  "rascunhos": [],
+  "historico": [
+    {
+      "tipo": "publicacao",
+      "data": "2024-11-01T10:00:00.000Z",
+      "usuario": "Corregedoria Nacional",
+      "descricao": "Proposição publicada para MPBA - Ministério Público do Estado da Bahia",
+      "observacoes": "Primeira publicação",
+      "prazoComprovacao": "2024-12-31",
+      "statusAnterior": ["pendente", "nova"],
+      "statusNovo": ["aguardando_comprovacao", "nova"]
+    }
+  ]
+}
+```
+
+**4. Comprovação (correicionado envia evidências)**
+```json
+{
+  "id": 1,
+  "numero": "PROP-2024-0001",
+  "correicaoId": 1,
+  "tipo": "Determinação",
+  "unidade": "Procuradoria-Geral de Justiça",
+  "membro": "Dr. João Silva Santos",
+  "descricao": "Implementar sistema de protocolo eletrônico em todas as promotorias da comarca.",
+  "prioridade": "normal",
+  "prazoComprovacao": "2024-12-31",
+  "dataPublicacao": "2024-11-01",
+  "status": ["em_analise", "nova"],
+  "tags": ["tecnologia", "gestao-documental"],
+  "rascunhos": [],
+  "historico": [
+    {
+      "tipo": "publicacao",
+      "data": "2024-11-01T10:00:00.000Z",
+      "usuario": "Corregedoria Nacional",
+      "descricao": "Proposição publicada para MPBA - Ministério Público do Estado da Bahia",
+      "observacoes": "Primeira publicação",
+      "prazoComprovacao": "2024-12-31",
+      "statusAnterior": ["pendente", "nova"],
+      "statusNovo": ["aguardando_comprovacao", "nova"]
+    },
+    {
+      "tipo": "comprovacao",
+      "data": "2024-11-15T14:30:00.000Z",
+      "usuario": "MPBA - Ministério Público do Estado da Bahia",
+      "descricao": "Sistema de protocolo eletrônico implementado e em operação em todas as 12 promotorias da comarca.",
+      "observacoes": "Incluindo capacitação de 45 servidores",
+      "arquivos": ["relatorio_implementacao.pdf", "lista_presenca_treinamento.pdf", "prints_sistema.jpg"]
+    }
+  ]
+}
+```
+
+**5. Avaliação (corregedoria avalia como adimplente)**
+```json
+{
+  "id": 1,
+  "numero": "PROP-2024-0001",
+  "correicaoId": 1,
+  "tipo": "Determinação",
+  "unidade": "Procuradoria-Geral de Justiça",
+  "membro": "Dr. João Silva Santos",
+  "descricao": "Implementar sistema de protocolo eletrônico em todas as promotorias da comarca.",
+  "prioridade": "normal",
+  "prazoComprovacao": "2024-12-31",
+  "dataPublicacao": "2024-11-01",
+  "status": ["encerrada", "adimplente"],
+  "tags": ["tecnologia", "gestao-documental"],
+  "rascunhos": [],
+  "historico": [
+    {
+      "tipo": "publicacao",
+      "data": "2024-11-01T10:00:00.000Z",
+      "usuario": "Corregedoria Nacional",
+      "descricao": "Proposição publicada para MPBA - Ministério Público do Estado da Bahia",
+      "observacoes": "Primeira publicação",
+      "prazoComprovacao": "2024-12-31",
+      "statusAnterior": ["pendente", "nova"],
+      "statusNovo": ["aguardando_comprovacao", "nova"]
+    },
+    {
+      "tipo": "comprovacao",
+      "data": "2024-11-15T14:30:00.000Z",
+      "usuario": "MPBA - Ministério Público do Estado da Bahia",
+      "descricao": "Sistema de protocolo eletrônico implementado e em operação em todas as 12 promotorias da comarca.",
+      "observacoes": "Incluindo capacitação de 45 servidores",
+      "arquivos": ["relatorio_implementacao.pdf", "lista_presenca_treinamento.pdf", "prints_sistema.jpg"]
+    },
+    {
+      "tipo": "avaliacao",
+      "data": "2024-11-20T16:00:00.000Z",
+      "usuario": "Corregedoria Nacional",
+      "descricao": "Comprovação analisada e aprovada. Sistema implementado conforme especificado, com documentação técnica completa e evidências satisfatórias.",
+      "observacoes": null,
+      "statusAnterior": ["em_analise", "nova"],
+      "statusNovo": ["encerrada", "adimplente"]
+    }
+  ]
+}
+```
+
+---
+
+**Fim do Documento**
