@@ -94,7 +94,7 @@ Correição (Judicial Review)
     ├── prazoComprovacao, dataPublicacao
     ├── status: [statusProcessual, valoracao] (bidimensional array)
     │   ├── statusProcessual: 'pendente' | 'aguardando_comprovacao' | 'em_analise' | 'encerrada'
-    │   └── valoracao: 'nova' | 'adimplente' | 'parcial' | 'inadimplente' | 'prejudicada'
+    │   └── valoracao: 'nova' | 'finalizada' | 'parcial' | 'em_andamento' | 'prejudicada'
     ├── tags[] (array of tag IDs for categorization)
     ├── rascunhos[] (array of draft comprovacoes)
     └── historico[] (array of interactions)
@@ -145,9 +145,9 @@ The system uses a bidimensional status array `[statusProcessual, valoracao]` to 
 
 **Valoração (index 1)** - Compliance evaluation:
 - `nova`: No evaluation yet (initial value)
-- `adimplente`: Fully compliant
+- `finalizada`: Fully compliant
 - `parcial`: Partially compliant
-- `inadimplente`: Non-compliant
+- `em_andamento`: Non-compliant
 - `prejudicada`: Superseded or no longer applicable
 
 **Display Pattern:**
@@ -206,8 +206,8 @@ The system uses a bidimensional status array `[statusProcessual, valoracao]` to 
 
 **Correição Status Automation:**
 - `calcularStatusCorreicao(correicaoId)` - calculates status based on linked propositions
-  - Returns 'ativo' if any proposition is not 'adimplente' or 'prejudicada'
-  - Returns 'inativo' if all propositions are 'adimplente' or 'prejudicada'
+  - Returns 'ativo' if any proposition is not 'finalizada' or 'prejudicada'
+  - Returns 'inativo' if all propositions are 'finalizada' or 'prejudicada'
 - `atualizarStatusCorreicoes()` - recalculates status for all correições
   - Called during initialization to ensure data consistency
 - `toggleUFMultiple()` - manages UF selection behavior in cadastro form
@@ -231,9 +231,9 @@ python3 -m http.server 8000
 Custom properties define the color scheme:
 - `--primary-color: #003366` (CNMP blue)
 - `--secondary-color: #0066cc` (em_analise status, links)
-- `--success-color: #28a745` (adimplente status)
+- `--success-color: #28a745` (finalizada status)
 - `--warning-color: #ffc107` (pendente status)
-- `--danger-color: #dc3545` (inadimplente status)
+- `--danger-color: #dc3545` (em_andamento status)
 - `--text-muted: #6c757d` (prejudicada status)
 
 ### Timeline Styles (lines 565-656)
@@ -283,9 +283,9 @@ CSS for visual feedback on selected table rows (used in publicacao.html):
 **Chart 2: "Valoração"** (Evaluation Status - 5 bars)
 - Shows propositions by **valoração**:
   - Nova (gray) - no evaluation yet
-  - Adimplente (green) - fully compliant
+  - Finalizada (green) - fully compliant
   - Parcial (orange) - partially compliant
-  - Inadimplente (red) - non-compliant
+  - Em Andamento (red) - non-compliant
   - Prejudicada (dark gray) - superseded
 - Dynamically calculates bar width based on 5 categories
 - Auto-scales height based on max value
@@ -361,7 +361,7 @@ CSS for visual feedback on selected table rows (used in publicacao.html):
   2. **Status Processual** - Breakdown by workflow state:
      - Pendente, Aguardando Comprovação, Em Análise, Encerrada
   3. **Valoração** - Breakdown by compliance evaluation:
-     - Nova, Adimplente, Parcial, Inadimplente, Prejudicada
+     - Nova, Finalizada, Parcial, Em Andamento, Prejudicada
 - Color-coded counters matching badge system
 - Complete visibility of all 9 possible proposition states
 
@@ -447,7 +447,7 @@ All forms use:
 - Advanced filtering system:
   - Search: número, unidade, membro, descrição
   - Tipo: Determinação/Recomendação
-  - Status: Both processual (pendente/aguardando/em_analise/encerrada) and valoração (adimplente/parcial/inadimplente/prejudicada)
+  - Status: Both processual (pendente/aguardando/em_analise/encerrada) and valoração (finalizada/parcial/em_andamento/prejudicada)
   - Tags: 11 predefined categories
   - Prioridade: urgente/alta/normal
   - "Limpar Filtros" button to reset all filters
@@ -616,7 +616,7 @@ All forms use:
 - Professional UI with breadcrumb navigation back to index.html
 - Organized sections: Proposição Info, Complete Histórico, Current Comprovação
 - Advanced evaluation form with:
-  - Visual radio button cards for decision (adimplente/parcial/inadimplente/prejudicada)
+  - Visual radio button cards for decision (finalizada/parcial/em_andamento/prejudicada)
   - Large textarea for parecer (up to 7,500 characters)
   - Real-time character counter with warning/danger states
   - Form validation before submission
@@ -789,9 +789,9 @@ Located in dashboard header, provides system-wide reporting:
         },
         valoracao: {
             nova: 8,
-            adimplente: 2,
+            finalizada: 2,
             parcial: 1,
-            inadimplente: 0,
+            em_andamento: 0,
             prejudicada: 2
         }
     },
@@ -912,7 +912,7 @@ Located in proposicoes page header (standalone page), provides proposition-level
             prioridade: 'normal',
             prazoComprovacao: '2024-12-31',
             dataPublicacao: '2024-11-01',
-            status: ['encerrada', 'adimplente'],
+            status: ['encerrada', 'finalizada'],
             tags: ['tecnologia', 'gestao-documental'],
             historico: [ /* complete timeline */ ]
         }
@@ -971,7 +971,7 @@ function viewDetails(id) {
         membro: 'Dr. João Silva Santos',
         descricao: '...',
         prioridade: 'normal',
-        status: ['encerrada', 'adimplente'],
+        status: ['encerrada', 'finalizada'],
         tags: ['tecnologia', 'gestao-documental'],
         historico: [ /* complete timeline */ ],
         correicao: {
@@ -1348,7 +1348,7 @@ tbody.innerHTML = filtered.map(item => `
 
 ### Badge System
 **Status Badges:** Use class pattern `badge badge-${status}`
-- Maps to CSS classes: `.badge-pendente`, `.badge-adimplente`, etc.
+- Maps to CSS classes: `.badge-pendente`, `.badge-finalizada`, etc.
 - Colors must be distinct and accessible
 
 **Tag Badges:** Use class pattern `tag-badge tag-${tagId}`
@@ -1387,8 +1387,8 @@ Hide admin pages in login handler: `document.getElementById('navAvaliar').style.
   - High "Em Análise" bar → evaluation backlog building up
   - Growing "Aguardando Comprovação" bar → correicionados not responding
 - **Valoração chart:** Compliance quality overview
-  - High "Adimplente" bar → good compliance rates
-  - High "Inadimplente/Parcial" bars → compliance issues, need follow-up
+  - High "Finalizada" bar → good compliance rates
+  - High "Em Andamento/Parcial" bars → compliance issues, need follow-up
   - High "Nova" bar → many propositions not yet evaluated
 
 **Correições Table Sorting:**
@@ -1472,7 +1472,7 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
 ┌─────────────────────────────────────────────────────────────┐
 │ pendente (nunca publicada OU aguardando republicação)       │
 │ - Proposições novas começam aqui                            │
-│ - Proposições com avaliação parcial/inadimplente voltam aqui│
+│ - Proposições com avaliação parcial/em_andamento voltam aqui│
 └─────────────────────────────────────────────────────────────┘
                           ↓
                     [PUBLICAÇÃO]
@@ -1497,7 +1497,7 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
                           ↓
         ┌─────────────────┴─────────────────┐
         ↓                                     ↓
-  adimplente/prejudicada            parcial/inadimplente
+  finalizada/prejudicada            parcial/em_andamento
         ↓                                     ↓
     FIM ✓                            volta para: pendente
                                      (aguarda republicação)
@@ -1509,7 +1509,7 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
 - Admin accesses "Publicar Proposições" page
 - Selects correição and views propositions with status `pendente`
   - **Includes:** Never-published propositions
-  - **Includes:** Propositions with previous parcial/inadimplente evaluations
+  - **Includes:** Propositions with previous parcial/em_andamento evaluations
 - Defines `prazoComprovacao` (deadline for proof submission)
 - System creates `publicacao` entry in historico array with:
   - Date, prazoComprovacao, status transition (pendente → aguardando_comprovacao)
@@ -1532,30 +1532,30 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
 - Views propositions with status `em_analise`
 - Opens evaluation modal showing complete history and latest comprovacao
 - Selects decision:
-  - `adimplente` - fully compliant → **cycle ends** ✓
+  - `finalizada` - fully compliant → **cycle ends** ✓
   - `prejudicada` - superseded → **cycle ends** ✓
   - `parcial` - partially compliant → **status changes to `pendente`**
-  - `inadimplente` - non-compliant → **status changes to `pendente`**
+  - `em_andamento` - non-compliant → **status changes to `pendente`**
 - Provides written justification (parecer)
 - System creates `avaliacao` entry in historico with actual decision
-- **Key behavior:** If decision is parcial/inadimplente:
-  - `proposicao.status` = `'pendente'` (not parcial/inadimplente)
-  - `historico` records the true evaluation decision (parcial or inadimplente)
+- **Key behavior:** If decision is parcial/em_andamento:
+  - `proposicao.status` = `'pendente'` (not parcial/em_andamento)
+  - `historico` records the true evaluation decision (parcial or em_andamento)
   - Proposition requires **new publication** before accepting new comprovação
 
 **Step 3: Iterative Cycle (Republicação)**
-- Propositions evaluated as `parcial` or `inadimplente` return to status `pendente`
+- Propositions evaluated as `parcial` or `em_andamento` return to status `pendente`
 - They appear in "Publicar Proposições" alongside never-published propositions
 - Corregedoria can republish with **new prazoComprovacao**
 - Each republicação is recorded in historico as new `publicacao` entry
 - Cycle repeats: publicação → comprovação → avaliação → ...
-- **Termination:** Cycle ends when evaluation is `adimplente` or `prejudicada`
+- **Termination:** Cycle ends when evaluation is `finalizada` or `prejudicada`
 
 ### Status Meanings
 
 **`pendente`** - Dual meaning:
 1. **Never published:** New propositions awaiting initial publication
-2. **Awaiting republicação:** Propositions with parcial/inadimplente evaluation requiring new publication cycle
+2. **Awaiting republicação:** Propositions with parcial/em_andamento evaluation requiring new publication cycle
 
 **Key insight:** Status `pendente` = "cannot receive comprovação until published/republished"
 
@@ -1573,7 +1573,7 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
 - `renderAvaliacaoTable()` - shows queue of propositions with status `em_analise`
 - `abrirAvaliacaoModal(id)` - opens evaluation interface with complete history
 - `submitAvaliacao(proposicaoId)` - records decision in historico, updates status
-  - **Special logic (line 3158-3162):** If decision is parcial/inadimplente, sets status to `pendente`
+  - **Special logic (line 3158-3162):** If decision is parcial/em_andamento, sets status to `pendente`
 
 **History Display:**
 - `viewDetails(id)` - renders complete timeline with publicacoes, comprovacoes, and avaliacoes
@@ -1586,7 +1586,7 @@ The system implements the complete NAD (Núcleo de Acompanhamento de Decisões) 
 3. **Clear State Transitions:** Status `pendente` unambiguously means "needs (re)publication"
 4. **Prevents Premature Comprovação:** System blocks comprovação submission for unpublished propositions
 5. **Supports Iterative Remediation:** Failed evaluations return to pendente, requiring explicit republicação
-6. **Transparent Evaluation History:** Historico preserves actual decisions (parcial/inadimplente) even when status changes
+6. **Transparent Evaluation History:** Historico preserves actual decisions (parcial/em_andamento) even when status changes
 7. **Flexible Republicação:** Admin can republish even if prazo expires without response
 
 ## Testing Approach
@@ -1808,9 +1808,9 @@ No automated tests. Manual testing checklist:
     - All attached files listed
     - Complete historico (publicacoes, comprovacoes, avaliacoes) displayed
     - Decision form present
-39. Submit evaluation as `parcial` or `inadimplente`:
-    - **Verify status changes to `pendente`** (not parcial/inadimplente)
-    - Verify avaliacao added to historico with actual decision (parcial/inadimplente)
+39. Submit evaluation as `parcial` or `em_andamento`:
+    - **Verify status changes to `pendente`** (not parcial/em_andamento)
+    - Verify avaliacao added to historico with actual decision (parcial/em_andamento)
     - Verify proposition appears in "Publicar Proposições" page (awaiting republicação)
     - Verify proposition does NOT appear in user's comprovacao dropdown
     - Verify correição status remains 'ativo' (has incomplete propositions)
@@ -1818,7 +1818,7 @@ No automated tests. Manual testing checklist:
     - Verify status changes to `aguardando_comprovacao`
     - Verify new publicacao entry in historico
     - Verify proposition now available for comprovação
-41. Submit new comprovacao and evaluate as `adimplente`:
+41. Submit new comprovacao and evaluate as `finalizada`:
     - Verify full cycle completes
     - Verify historico shows complete timeline with multiple publicacoes
     - Verify correição status changes to 'inativo' if all propositions complete
@@ -1840,7 +1840,7 @@ No automated tests. Manual testing checklist:
     - Test as user - verify sees only correições from their ramoMP
 48. Test dual-chart system:
     - **Fluxo de Trabalho chart:** Verify shows 4 bars (Pendente, Aguardando Comprovação, Em Análise, Encerrada)
-    - **Valoração chart:** Verify shows 5 bars (Nova, Adimplente, Parcial, Inadimplente, Prejudicada)
+    - **Valoração chart:** Verify shows 5 bars (Nova, Finalizada, Parcial, Em Andamento, Prejudicada)
     - Verify color coding matches badge system
     - Verify bars scale correctly based on data
     - Verify chart values match card counters
@@ -1940,7 +1940,7 @@ All propositions now include:
 - **Membro**: Assigned member name (e.g., Dr. João Silva Santos, Dra. Maria Oliveira Costa)
 
 **Status Distribution:**
-- **PROP-2024-0001** (adimplente) - Determinação | Procuradoria-Geral de Justiça | Dr. João Silva Santos
+- **PROP-2024-0001** (finalizada) - Determinação | Procuradoria-Geral de Justiça | Dr. João Silva Santos
   - Tags: tecnologia, gestao-documental
   - Complete workflow with historico
 - **PROP-2024-0002** (aguardando_comprovacao) - Recomendação | Promotoria de Justiça de Cachoeira | Dra. Maria Oliveira Costa
@@ -1956,7 +1956,7 @@ All propositions now include:
   - Tags: compliance, administrativo
 - **PROP-2024-0006** (pendente) - Recomendação | Promotoria de Justiça de Santo André | Dr. Fernando Souza Prado
   - Tags: capacitacao, recursos-humanos
-- **PROP-2024-0007** (adimplente) - Determinação | Promotoria de Justiça de Osasco | Dra. Juliana Barbosa Reis
+- **PROP-2024-0007** (finalizada) - Determinação | Promotoria de Justiça de Osasco | Dra. Juliana Barbosa Reis
   - Tags: tecnologia, infraestrutura
 - **PROP-2024-0008** (prejudicada) - Recomendação | Promotoria de Justiça de Niterói | Dr. Marcelo Tavares Cruz
   - Tags: administrativo, processual
@@ -1976,7 +1976,7 @@ All propositions now include:
 **Testing Recommendation:**
 
 **For Complete Workflow Testing:**
-1. **Test Evaluation:** Use PROP-2024-0009 (em_analise) - evaluate as parcial/inadimplente to see it return to 'pendente'
+1. **Test Evaluation:** Use PROP-2024-0009 (em_analise) - evaluate as parcial/em_andamento to see it return to 'pendente'
 2. **Test Republicação:** After step 1, republish PROP-2024-0009 from "Publicar Proposições" page with new prazoComprovacao
 3. **Test Fresh Publication:** Publish PROP-2024-0003 or PROP-2024-0005 (both pendente, never published)
 4. **Test Comprovação:** Submit comprovação for PROP-2024-0002 (aguardando_comprovacao)

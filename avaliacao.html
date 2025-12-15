@@ -221,7 +221,7 @@
             transform: scale(1.05);
         }
 
-        .decision-option input[type="radio"]:checked + .decision-label.adimplente {
+        .decision-option input[type="radio"]:checked + .decision-label.finalizada {
             background-color: var(--success-color);
             border-color: var(--success-color);
         }
@@ -232,7 +232,7 @@
             color: var(--text-dark);
         }
 
-        .decision-option input[type="radio"]:checked + .decision-label.inadimplente {
+        .decision-option input[type="radio"]:checked + .decision-label.em-andamento {
             background-color: var(--danger-color);
             border-color: var(--danger-color);
         }
@@ -544,9 +544,9 @@
                         <label style="font-weight: 600; margin-bottom: 1rem; display: block;">Decisão da Corregedoria Nacional *</label>
                         <div class="decision-grid">
                             <div class="decision-option">
-                                <input type="radio" id="decisaoAdimplente" name="decisao" value="adimplente" required>
-                                <label for="decisaoAdimplente" class="decision-label adimplente">
-                                    ✅ Adimplente<br>
+                                <input type="radio" id="decisaoFinalizada" name="decisao" value="finalizada" required>
+                                <label for="decisaoFinalizada" class="decision-label finalizada">
+                                    ✅ Finalizada<br>
                                     <small style="font-weight: normal;">Comprovação aceita</small>
                                 </label>
                             </div>
@@ -558,9 +558,9 @@
                                 </label>
                             </div>
                             <div class="decision-option">
-                                <input type="radio" id="decisaoInadimplente" name="decisao" value="inadimplente" required>
-                                <label for="decisaoInadimplente" class="decision-label inadimplente">
-                                    ❌ Inadimplente<br>
+                                <input type="radio" id="decisaoEm Andamento" name="decisao" value="em_andamento" required>
+                                <label for="decisaoEm Andamento" class="decision-label em-andamento">
+                                    ❌ Em Andamento<br>
                                     <small style="font-weight: normal;">Comprovação insuficiente</small>
                                 </label>
                             </div>
@@ -631,9 +631,9 @@
                 'encerrada': 'Encerrada',
                 // Conjunto 2: Valoração
                 'nova': 'Nova',
-                'adimplente': 'Adimplente',
+                'finalizada': 'Finalizada',
                 'parcial': 'Parcial',
-                'inadimplente': 'Inadimplente',
+                'em_andamento': 'Em Andamento',
                 'prejudicada': 'Prejudicada'
             };
             return labels[status] || status;
@@ -985,14 +985,14 @@
 
             // Determinar novo status bidimensional baseado na decisão
             let novoStatus;
-            if (decisao.value === 'adimplente') {
-                novoStatus = ['encerrada', 'adimplente'];
+            if (decisao.value === 'finalizada') {
+                novoStatus = ['encerrada', 'finalizada'];
             } else if (decisao.value === 'prejudicada') {
                 novoStatus = ['encerrada', 'prejudicada'];
             } else if (decisao.value === 'parcial') {
                 novoStatus = ['pendente', 'parcial'];
-            } else if (decisao.value === 'inadimplente') {
-                novoStatus = ['pendente', 'inadimplente'];
+            } else if (decisao.value === 'em_andamento') {
+                novoStatus = ['pendente', 'em_andamento'];
             }
 
             // Criar avaliação

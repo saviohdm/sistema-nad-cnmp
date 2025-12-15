@@ -360,7 +360,7 @@
                     descricao: 'Implementar sistema digital de protocolo de documentos',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['encerrada', 'adimplente'],
+                    status: ['encerrada', 'finalizada'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'gestao-documental'],
                     rascunhos: [],
@@ -378,7 +378,7 @@
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Comprovação aceita. Sistema implementado conforme especificado.',
                             statusAnterior: ['em_analise', 'nova'],
-                            statusNovo: ['encerrada', 'adimplente']
+                            statusNovo: ['encerrada', 'finalizada']
                         }
                     ]
                 },
@@ -392,7 +392,7 @@
                     descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'inadimplente'],
+                    status: ['aguardando_comprovacao', 'em_andamento'],
                     prioridade: 'normal',
                     tags: ['infraestrutura', 'compliance'],
                     rascunhos: [],
@@ -422,7 +422,7 @@
                             tipo: 'avaliacao',
                             data: '2024-08-20T11:15:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'A comprovação apresentada demonstra execução PARCIAL da proposição. Foram constatados avanços significativos com a conclusão da rampa de acesso e adaptação de banheiro, porém permanecem pendentes elementos essenciais:\n\n1. Instalação de elevador acessível (obra estrutural não iniciada)\n2. Adaptação dos demais banheiros do prédio\n3. Sinalização tátil completa em todos os pavimentos\n4. Vagas exclusivas de estacionamento para pessoas com deficiência\n\nDECISÃO: Considerar a proposição como PARCIALMENTE ADIMPLENTE. A unidade deverá apresentar novo cronograma detalhado com prazos definidos para conclusão integral das adequações, especialmente quanto à instalação do elevador que é item fundamental para acessibilidade vertical do edifício.\n\nDetermino REPUBLICAÇÃO da proposição com novo prazo para apresentação de comprovação da conclusão total das obras.',
+                            descricao: 'A comprovação apresentada demonstra execução PARCIAL da proposição. Foram constatados avanços significativos com a conclusão da rampa de acesso e adaptação de banheiro, porém permanecem pendentes elementos essenciais:\n\n1. Instalação de elevador acessível (obra estrutural não iniciada)\n2. Adaptação dos demais banheiros do prédio\n3. Sinalização tátil completa em todos os pavimentos\n4. Vagas exclusivas de estacionamento para pessoas com deficiência\n\nDECISÃO: Considerar a proposição como PARCIALMENTE FINALIZADA. A unidade deverá apresentar novo cronograma detalhado com prazos definidos para conclusão integral das adequações, especialmente quanto à instalação do elevador que é item fundamental para acessibilidade vertical do edifício.\n\nDetermino REPUBLICAÇÃO da proposição com novo prazo para apresentação de comprovação da conclusão total das obras.',
                             statusAnterior: ['em_analise', 'nova'],
                             statusNovo: ['pendente', 'parcial']
                         },
@@ -452,18 +452,18 @@
                             tipo: 'avaliacao',
                             data: '2024-12-01T10:00:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'A segunda comprovação apresentada demonstra novamente execução INCOMPLETA da proposição, ainda que com avanços nas adequações de sanitários e sinalização tátil.\n\nEmbora reconheça que a suspensão do processo licitatório configure óbice de natureza administrativa, é responsabilidade da gestão adotar providências alternativas tempestivas para não perpetuar a situação de INADEQUAÇÃO das instalações físicas.\n\nCONSTATAÇÕES:\n✓ Banheiros adaptados: 03 de 05 concluídos (60%)\n✓ Sinalização tátil: 100% concluída\n✓ Vagas estacionamento: 100% concluída\n✗ Elevador acessível: 0% (ITEM CRÍTICO NÃO INICIADO)\n✗ Banheiros pendentes: 02 unidades (40%)\n\nDECISÃO: Considerar INADIMPLENTE. A ausência de elevador acessível em prédio de múltiplos pavimentos inviabiliza o pleno acesso de pessoas com mobilidade reduzida, configurando descumprimento de norma constitucional e legal.\n\nDETERMINO:\n1. Republicação com novo prazo\n2. Apresentação de plano de ação emergencial\n3. Solução definitiva para a questão do elevador (retomada da licitação ou alternativa técnica)\n4. Conclusão dos 02 banheiros remanescentes',
+                            descricao: 'A segunda comprovação apresentada demonstra novamente execução INCOMPLETA da proposição, ainda que com avanços nas adequações de sanitários e sinalização tátil.\n\nEmbora reconheça que a suspensão do processo licitatório configure óbice de natureza administrativa, é responsabilidade da gestão adotar providências alternativas tempestivas para não perpetuar a situação de INADEQUAÇÃO das instalações físicas.\n\nCONSTATAÇÕES:\n✓ Banheiros adaptados: 03 de 05 concluídos (60%)\n✓ Sinalização tátil: 100% concluída\n✓ Vagas estacionamento: 100% concluída\n✗ Elevador acessível: 0% (ITEM CRÍTICO NÃO INICIADO)\n✗ Banheiros pendentes: 02 unidades (40%)\n\nDECISÃO: Considerar EM ANDAMENTO. A ausência de elevador acessível em prédio de múltiplos pavimentos inviabiliza o pleno acesso de pessoas com mobilidade reduzida, configurando descumprimento de norma constitucional e legal.\n\nDETERMINO:\n1. Republicação com novo prazo\n2. Apresentação de plano de ação emergencial\n3. Solução definitiva para a questão do elevador (retomada da licitação ou alternativa técnica)\n4. Conclusão dos 02 banheiros remanescentes',
                             statusAnterior: ['em_analise', 'parcial'],
-                            statusNovo: ['pendente', 'inadimplente']
+                            statusNovo: ['pendente', 'em_andamento']
                         },
                         {
                             tipo: 'publicacao',
                             data: '2024-12-05T09:30:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'SEGUNDA REPUBLICAÇÃO: Proposição republicada após segunda avaliação com resultado INADIMPLENTE. Exige-se a CONCLUSÃO DEFINITIVA E INTEGRAL de todas as adequações de acessibilidade. ESPECIAL ATENÇÃO para:\n\n1. ELEVADOR ACESSÍVEL - apresentar solução definitiva (retomada licitação ou alternativa técnica aprovada)\n2. Conclusão dos 02 banheiros remanescentes\n3. Plano de ação com cronograma executivo realista\n4. Comprovação fotográfica e documental completa\n\nEsta é a TERCEIRA PUBLICAÇÃO da mesma proposição. O não atendimento integral poderá ensejar outras medidas administrativas cabíveis.',
+                            descricao: 'SEGUNDA REPUBLICAÇÃO: Proposição republicada após segunda avaliação com resultado EM ANDAMENTO. Exige-se a CONCLUSÃO DEFINITIVA E INTEGRAL de todas as adequações de acessibilidade. ESPECIAL ATENÇÃO para:\n\n1. ELEVADOR ACESSÍVEL - apresentar solução definitiva (retomada licitação ou alternativa técnica aprovada)\n2. Conclusão dos 02 banheiros remanescentes\n3. Plano de ação com cronograma executivo realista\n4. Comprovação fotográfica e documental completa\n\nEsta é a TERCEIRA PUBLICAÇÃO da mesma proposição. O não atendimento integral poderá ensejar outras medidas administrativas cabíveis.',
                             prazoComprovacao: '2025-01-31',
-                            statusAnterior: ['pendente', 'inadimplente'],
-                            statusNovo: ['aguardando_comprovacao', 'inadimplente']
+                            statusAnterior: ['pendente', 'em_andamento'],
+                            statusNovo: ['aguardando_comprovacao', 'em_andamento']
                         }
                     ]
                 },
@@ -557,7 +557,7 @@
                     descricao: 'Modernizar infraestrutura de TI',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['encerrada', 'adimplente'],
+                    status: ['encerrada', 'finalizada'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'infraestrutura'],
                     rascunhos: [],
@@ -1021,25 +1021,25 @@
             // Chart shows 5 valoração types
             const data = {
                 nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                adimplente: filteredProposicoes.filter(p => hasValoracao(p, 'adimplente')).length,
+                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
                 parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                inadimplente: filteredProposicoes.filter(p => hasValoracao(p, 'inadimplente')).length,
+                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
                 prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
             };
 
             const colors = {
                 nova: '#9e9e9e',           // Cinza - nova (sem avaliação ainda)
-                adimplente: '#28a745',      // Verde - cumprida
+                finalizada: '#28a745',      // Verde - cumprida
                 parcial: '#ff9800',         // Laranja - parcialmente cumprida
-                inadimplente: '#dc3545',    // Vermelho - não cumprida
+                emAndamento: '#dc3545',    // Vermelho - não cumprida
                 prejudicada: '#6c757d'      // Cinza escuro - prejudicada
             };
 
             const labels = {
                 nova: 'Nova',
-                adimplente: 'Adimplente',
+                finalizada: 'Finalizada',
                 parcial: 'Parcial',
-                inadimplente: 'Inadimplente',
+                emAndamento: 'Em Andamento',
                 prejudicada: 'Prejudicada'
             };
 
@@ -1176,9 +1176,9 @@
             // Calcular distribuição por valoração
             const valoracao = {
                 nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                adimplente: filteredProposicoes.filter(p => hasValoracao(p, 'adimplente')).length,
+                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
                 parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                inadimplente: filteredProposicoes.filter(p => hasValoracao(p, 'inadimplente')).length,
+                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
                 prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
             };
 
@@ -1254,9 +1254,9 @@
             // Calcular distribuição por valoração
             const valoracao = {
                 nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                adimplente: filteredProposicoes.filter(p => hasValoracao(p, 'adimplente')).length,
+                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
                 parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                inadimplente: filteredProposicoes.filter(p => hasValoracao(p, 'inadimplente')).length,
+                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
                 prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
             };
 
@@ -1457,16 +1457,16 @@
                                 <td>${valoracao.nova}</td>
                             </tr>
                             <tr>
-                                <td>Adimplente</td>
-                                <td>${valoracao.adimplente}</td>
+                                <td>Finalizada</td>
+                                <td>${valoracao.finalizada}</td>
                             </tr>
                             <tr>
                                 <td>Parcial</td>
                                 <td>${valoracao.parcial}</td>
                             </tr>
                             <tr>
-                                <td>Inadimplente</td>
-                                <td>${valoracao.inadimplente}</td>
+                                <td>Em Andamento</td>
+                                <td>${valoracao.emAndamento}</td>
                             </tr>
                             <tr>
                                 <td>Prejudicada</td>
@@ -1875,9 +1875,9 @@
                         const encerradas = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'encerrada')).length;
                         const prazoVencido = proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length;
 
-                        const adimplente = proposicoesCorreicao.filter(p => hasValoracao(p, 'adimplente')).length;
+                        const finalizada = proposicoesCorreicao.filter(p => hasValoracao(p, 'finalizada')).length;
                         const parcial = proposicoesCorreicao.filter(p => hasValoracao(p, 'parcial')).length;
-                        const inadimplente = proposicoesCorreicao.filter(p => hasValoracao(p, 'inadimplente')).length;
+                        const emAndamento = proposicoesCorreicao.filter(p => hasValoracao(p, 'em_andamento')).length;
 
                         const ufDisplay = Array.isArray(c.uf) ? c.uf.join(', ') : c.uf;
 
@@ -1940,16 +1940,16 @@
                                 <h3 style="color: #003366; font-size: 14px; margin: 15px 0 10px 0;">Valoração</h3>
                                 <div class="stats-grid">
                                     <div class="stat-box">
-                                        <div class="label">Adimplente</div>
-                                        <div class="value" style="color: #28a745;">${adimplente}</div>
+                                        <div class="label">Finalizada</div>
+                                        <div class="value" style="color: #28a745;">${finalizada}</div>
                                     </div>
                                     <div class="stat-box">
                                         <div class="label">Parcial</div>
                                         <div class="value" style="color: #ffc107;">${parcial}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Inadimplente</div>
-                                        <div class="value" style="color: #dc3545;">${inadimplente}</div>
+                                        <div class="label">Em Andamento</div>
+                                        <div class="value" style="color: #dc3545;">${emAndamento}</div>
                                     </div>
                                 </div>
                             </div>
@@ -2557,9 +2557,9 @@
 
             // Valoração
             const novas = proposicoesCorreicao.filter(p => hasValoracao(p, 'nova')).length;
-            const adimplentes = proposicoesCorreicao.filter(p => hasValoracao(p, 'adimplente')).length;
+            const finalizadas = proposicoesCorreicao.filter(p => hasValoracao(p, 'finalizada')).length;
             const parciais = proposicoesCorreicao.filter(p => hasValoracao(p, 'parcial')).length;
-            const inadimplentes = proposicoesCorreicao.filter(p => hasValoracao(p, 'inadimplente')).length;
+            const emAndamentos = proposicoesCorreicao.filter(p => hasValoracao(p, 'em_andamento')).length;
             const prejudicadas = proposicoesCorreicao.filter(p => hasValoracao(p, 'prejudicada')).length;
 
             // Format UF array
@@ -2568,7 +2568,7 @@
             // Status badge
             const statusBadge = correicao.status === 'ativo'
                 ? '<span class="badge badge-pendente">Ativo</span>'
-                : '<span class="badge badge-adimplente">Inativo</span>';
+                : '<span class="badge badge-finalizada">Inativo</span>';
 
             const modalBody = document.getElementById('modalBody');
             modalBody.innerHTML = `
@@ -2648,16 +2648,16 @@
                         <span class="detail-value" style="color: #9e9e9e; font-weight: 600;">${novas}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Adimplente:</span>
-                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">${adimplentes}</span>
+                        <span class="detail-label">Finalizada:</span>
+                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">${finalizadas}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Parcial:</span>
                         <span class="detail-value" style="color: #ff9800; font-weight: 600;">${parciais}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Inadimplente:</span>
-                        <span class="detail-value" style="color: var(--danger-color); font-weight: 600;">${inadimplentes}</span>
+                        <span class="detail-label">Em Andamento:</span>
+                        <span class="detail-value" style="color: var(--danger-color); font-weight: 600;">${emAndamentos}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Prejudicada:</span>
@@ -2918,7 +2918,7 @@
                 // Status badge
                 const statusBadge = c.status === 'ativo'
                     ? '<span class="badge badge-pendente">Ativo</span>'
-                    : '<span class="badge badge-adimplente">Inativo</span>';
+                    : '<span class="badge badge-finalizada">Inativo</span>';
 
                 // Estilo para células de contagem com destaque visual
                 const pendenteStyle = pendentes > 0 ? 'style="color: #ffc107; font-weight: 600;"' : '';
@@ -3030,7 +3030,7 @@
 
                 const temRascunho = p.rascunhos && p.rascunhos.length > 0;
                 const statusRascunho = temRascunho ?
-                    '<span class="badge badge-adimplente">✓ Pronto</span>' :
+                    '<span class="badge badge-finalizada">✓ Pronto</span>' :
                     '<span class="badge badge-pendente">Pendente</span>';
 
                 const acaoBtn = temRascunho ?
@@ -3625,9 +3625,9 @@
                 'encerrada': 'Encerrada',
                 // Conjunto 2: Valoração
                 'nova': 'Nova',
-                'adimplente': 'Adimplente',
+                'finalizada': 'Finalizada',
                 'parcial': 'Parcial',
-                'inadimplente': 'Inadimplente',
+                'em_andamento': 'Em Andamento',
                 'prejudicada': 'Prejudicada'
             };
             return labels[status] || status;
@@ -3769,10 +3769,10 @@
             proposicao.historico.push(novaAvaliacao);
 
             // Atualizar status (bidimensional)
-            // Se avaliação resulta em parcial/inadimplente, proposição volta para 'pendente' com valoração
-            if (novoStatus === 'parcial' || novoStatus === 'inadimplente') {
+            // Se avaliação resulta em parcial/em_andamento, proposição volta para 'pendente' com valoração
+            if (novoStatus === 'parcial' || novoStatus === 'em_andamento') {
                 proposicao.status = ['pendente', novoStatus];
-            } else if (novoStatus === 'adimplente' || novoStatus === 'prejudicada') {
+            } else if (novoStatus === 'finalizada' || novoStatus === 'prejudicada') {
                 // Encerrada com valoração
                 proposicao.status = ['encerrada', novoStatus];
             } else {

@@ -63,7 +63,7 @@ O sistema armazena dados no **localStorage do navegador**. Se:
 Após resetar, o sistema terá:
 - **5 Correições** (MPBA, MPRJ, MPMG, MPSP, MPU)
 - **13 Proposições** em diversos status:
-  - 2 adimplentes
+  - 2 finalizadas
   - 5 pendentes
   - 4 aguardando comprovação
   - 1 em análise

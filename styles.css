@@ -418,7 +418,7 @@ tbody tr.row-selected:hover {
     color: #856404;
 }
 
-.badge-adimplente {
+.badge-finalizada {
     background-color: #d4edda;
     color: #155724;
 }
@@ -428,7 +428,7 @@ tbody tr.row-selected:hover {
     color: #0c5460;
 }
 
-.badge-inadimplente {
+.badge-em-andamento {
     background-color: #f8d7da;
     color: #721c24;
 }
