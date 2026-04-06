@@ -30,8 +30,8 @@ Correição
     ├── id, numero, correicaoId, tipo, unidade, membro
     ├── descricao, prioridade, prazoComprovacao, dataPublicacao
     ├── status: [statusProcessual, valoracao] (bidimensional)
-    │   ├── statusProcessual: pendente | aguardando_comprovacao | em_analise | encerrada
-    │   └── valoracao: nova | finalizada | parcial | em_andamento | prejudicada
+    │   ├── statusProcessual: pendente_publicacao | aguardando_comprovacao | pendente_avaliacao | encerrada
+    │   └── valoracao: sem_avaliacao | necessita_informacoes | satisfeita | prejudicada
     ├── tags[] (11 categories: administrativo, recursos-humanos, etc.)
     ├── rascunhosComprovacao[] (draft comprovacoes - user side)
     ├── rascunhosAvaliacao[] (draft avaliacoes - admin side)
@@ -47,6 +47,18 @@ Correição
 - Proposições linked via `correicaoId`
 - All interactions recorded in `historico[]`
 - Status bidimensional: workflow state + compliance evaluation
+
+**Status Processual (4 types):**
+- `pendente_publicacao` - Awaiting publication or republication
+- `aguardando_comprovacao` - Published, waiting for proof submission
+- `pendente_avaliacao` - Proof submitted, awaiting evaluation
+- `encerrada` - Process completed (final state)
+
+**Valoração Status (4 types):**
+- `sem_avaliacao` - Initial value, no evaluation yet
+- `necessita_informacoes` - Requires additional information/action (returns to pendente_publicacao for republication)
+- `satisfeita` - Fully compliant, requirements met (final state)
+- `prejudicada` - Superseded or no longer applicable (final state)
 
 ### Key Patterns
 
@@ -64,6 +76,11 @@ Correição
 2. Historico entry added (if applicable)
 3. Save to localStorage
 4. Call render functions
+
+**Correição Status:**
+- Auto-calculated based on linked propositions
+- `ativo` - has any proposition not satisfeita/prejudicada
+- `inativo` - all propositions are satisfeita/prejudicada
 
 **Draft System:**
 Two independent draft types, each with ONE draft per proposition:
@@ -83,10 +100,10 @@ Two independent draft types, each with ONE draft per proposition:
 ### Dashboard (index.html)
 - Correição filter dropdown (all/specific)
 - 5 cards: Correições Realizadas, Ativas, Total Proposições, Ativas, Prazo Vencido
-- Dual charts: Fluxo de Trabalho (4 bars), Valoração (5 bars)
+- Dual charts: Fluxo de Trabalho (4 bars), Valoração (4 bars)
 
 ### Correições Table
-- 13 columns, 5 sortable (Número, Total, Pendente, Em Análise, Prazo Vencido)
+- 13 columns, 5 sortable (Número, Total, Pendente Publicação, Pendente Avaliação, Prazo Vencido)
 - Status filter: all/ativo/inativo
 - Details modal: 3 sections (info, status processual, valoração)
 
@@ -102,7 +119,7 @@ Two independent draft types, each with ONE draft per proposition:
 
 ### Avaliação Page (avaliacao.html) - Admin Only
 - Shows: Proposição info, historico, current comprovacao
-- Decision: finalizada/parcial/em_andamento/prejudicada
+- Decision: necessita_informacoes | satisfeita | prejudicada
 - Two actions: save draft or submit (see Draft System)
 
 ### Comprovação Page (comprovacao.html)
@@ -124,38 +141,38 @@ Two independent draft types, each with ONE draft per proposition:
 
 ### Status Lifecycle
 ```
-pendente → [PUBLICAÇÃO] → aguardando_comprovacao → [COMPROVAÇÃO] → em_analise
-                                                                        ↓
-                                                                   [AVALIAÇÃO]
-                                                                        ↓
-                                                    finalizada/prejudicada (FIM)
-                                                    parcial/em_andamento (volta: pendente)
+pendente_publicacao → [PUBLICAÇÃO] → aguardando_comprovacao → [COMPROVAÇÃO] → pendente_avaliacao
+                                                                                      ↓
+                                                                                 [AVALIAÇÃO]
+                                                                                      ↓
+                                                                  satisfeita/prejudicada (FIM)
+                                                          necessita_informacoes (volta: pendente_publicacao)
 ```
 
 ### Workflow Steps
 
 **1. Publication (publicacao.html):**
-- Admin selects pendente propositions (never-published + failed evaluations)
+- Admin selects pendente_publicacao propositions (never-published + failed evaluations)
 - Defines `prazoComprovacao`, creates `publicacao` historico entry
-- Status: pendente → aguardando_comprovacao
+- Status: pendente_publicacao → aguardando_comprovacao
 
 **2. Comprovação (comprovacao.html):**
 - User saves draft or submits
 - On submit: creates `comprovacao` historico entry, clears draft
-- Status: aguardando_comprovacao → em_analise
+- Status: aguardando_comprovacao → pendente_avaliacao
 
 **3. Avaliação (avaliacao.html):**
 - Admin saves draft or submits decision
 - On submit: creates `avaliacao` historico entry, clears draft
-- Decision: finalizada/prejudicada (ends) OR parcial/em_andamento (→ pendente)
+- Decision: satisfeita/prejudicada (ends) OR necessita_informacoes (→ pendente_publicacao)
 
 **4. Republicação:**
-- Failed evaluations return to pendente
+- Evaluations with necessita_informacoes return to pendente_publicacao
 - New publication with new prazoComprovacao
-- Cycle repeats until finalizada/prejudicada
+- Cycle repeats until satisfeita/prejudicada
 
 ### Key Functions
-- `carregarProposicoesParaPublicar()` - filters pendente
+- `carregarProposicoesParaPublicar()` - filters pendente_publicacao
 - `publicarProposicoesSelecionadas()` - publishes, records historico
 - `salvarRascunhoComprovacao()` - saves to `rascunhosComprovacao[]`
 - `submitComprovacao()` - submits, clears draft, updates status
@@ -249,14 +266,14 @@ python3 -m http.server 8000
 
 **Publication/Workflow:**
 11. Batch publication with prazo → verify status change
-12. Submit comprovação → verify em_analise
-13. Evaluate as parcial → verify returns to pendente
+12. Submit comprovação → verify pendente_avaliacao
+13. Evaluate as necessita_informacoes → verify returns to pendente_publicacao
 14. Republish → verify new historico entry
 
 **Complete Cycle:**
-15. pendente → publish → aguardando_comprovacao
-16. Save draft → edit → submit → em_analise
-17. Save avaliação draft → edit → submit parcial → pendente
+15. pendente_publicacao → publish → aguardando_comprovacao
+16. Save draft → edit → submit → pendente_avaliacao
+17. Save avaliação draft → edit → submit necessita_informacoes → pendente_publicacao
 18. Republish → full timeline with multiple cycles
 
 **UI/Export:**
@@ -272,12 +289,12 @@ python3 -m http.server 8000
 ## Sample Data
 **5 Correições:** COR-2024-01 to COR-2024-05 (various tipos, MP levels)
 **13 Proposições:** Mix of statuses, tags, priorities
-- PROP-2024-0009 (em_analise) - ideal for testing evaluation
-- PROP-2024-0004 (pendente) - has historico with parcial evaluation
+- PROP-2024-0009 (pendente_avaliacao) - ideal for testing evaluation
+- PROP-2024-0004 (pendente_publicacao) - has historico with necessita_informacoes evaluation
 
 **Testing Tip:**
-1. Evaluate PROP-2024-0009 as parcial → returns to pendente
+1. Evaluate PROP-2024-0009 as necessita_informacoes → returns to pendente_publicacao
 2. Republish with new prazo → aguardando_comprovacao
-3. Save comprovação draft → edit → submit → em_analise
-4. Save avaliação draft → edit → evaluate as finalizada → complete
+3. Save comprovação draft → edit → submit → pendente_avaliacao
+4. Save avaliação draft → edit → evaluate as satisfeita → complete
 5. View historico → see full timeline with drafts and submissions
