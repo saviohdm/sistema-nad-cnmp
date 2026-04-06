@@ -14,7 +14,7 @@ Guidance for Claude Code when working with this repository.
 - `index.html` - Main SPA (dashboard, correições list, forms)
 - `proposicoes.html` - Standalone propositions management (~840 lines)
 - `publicacao.html` - Batch publishing (admin-only, ~1,100 lines)
-- `avaliacao.html` - Evaluation page (913 lines)
+- `avaliacao.html` - Evaluation page (admin-only, 913 lines)
 - `comprovacao.html` - Proof submission page (1,181 lines)
 - `styles.css` - Shared styles (~1,200 lines)
 - `app.js` - Main logic (~2,700+ lines)
@@ -33,7 +33,8 @@ Correição
     │   ├── statusProcessual: pendente | aguardando_comprovacao | em_analise | encerrada
     │   └── valoracao: nova | finalizada | parcial | em_andamento | prejudicada
     ├── tags[] (11 categories: administrativo, recursos-humanos, etc.)
-    ├── rascunhos[] (draft comprovacoes)
+    ├── rascunhosComprovacao[] (draft comprovacoes - user side)
+    ├── rascunhosAvaliacao[] (draft avaliacoes - admin side)
     └── historico[] (audit trail)
         ├── tipo: publicacao | comprovacao | avaliacao
         ├── data, usuario, descricao, observacoes
@@ -45,32 +46,37 @@ Correição
 **Critical Relationships:**
 - Proposições linked via `correicaoId`
 - All interactions recorded in `historico[]`
-- Publications permanently stored with prazoComprovacao
 - Status bidimensional: workflow state + compliance evaluation
 
 ### Key Patterns
 
 **State Management:**
-- Global: `correicoes[]`, `proposicoes[]`
-- Persisted in `localStorage` only
+- Global: `correicoes[]`, `proposicoes[]` persisted in `localStorage`
 - All mutations must update data + UI
-- Global UI state: `dashboardCorreicaoFilter`, `correicoesSortColumn`, `correicoesSortDirection`, `correicoesStatusFilter`
+- UI state: `dashboardCorreicaoFilter`, `correicoesSortColumn`, `correicoesSortDirection`, `correicoesStatusFilter`
 
 **Navigation:**
 - SPA routing: `showPage(pageId)` for internal pages
 - Standalone pages redirect via `window.location.href`
-- Internal: dashboard, correicoes, enviar, avaliar, cadastroCorreicao, cadastro
-- External: proposicoes.html, publicacao.html, avaliacao.html, comprovacao.html
 
 **Data Flow:**
-1. User action → data array update
+1. User action → data update
 2. Historico entry added (if applicable)
 3. Save to localStorage
-4. Call render functions: `updateDashboard()`, `renderCorreicoesTable()`, `renderAvaliacaoTable()`, etc.
+4. Call render functions
 
-**Correição Status:**
-- `calcularStatusCorreicao(correicaoId)` - 'ativo' if any proposition not finalizada/prejudicada
-- `atualizarStatusCorreicoes()` - recalculates all on init
+**Draft System:**
+Two independent draft types, each with ONE draft per proposition:
+
+| Type | Array | Created By | Auto-loads In | Use Case |
+|------|-------|------------|---------------|----------|
+| **Comprovação** | `rascunhosComprovacao[]` | Correicionado | comprovacao.html | User prepares proof before submission |
+| **Avaliação** | `rascunhosAvaliacao[]` | Admin/Assessor | avaliacao.html | Assessor drafts, corregedor reviews/submits |
+
+**Draft Behavior:**
+- Save: No status change, stored in array (replaces existing)
+- Submit: Draft cleared, content moves to `historico[]`, status updated
+- **Critical:** Drafts NEVER change proposition status
 
 ## Main Pages
 
@@ -78,56 +84,39 @@ Correição
 - Correição filter dropdown (all/specific)
 - 5 cards: Correições Realizadas, Ativas, Total Proposições, Ativas, Prazo Vencido
 - Dual charts: Fluxo de Trabalho (4 bars), Valoração (5 bars)
-- Responsive: 2-column desktop, 1-column mobile
 
 ### Correições Table
-- 13 columns including Pendente, Em Análise, Prazo Vencido
-- 5 sortable columns (Número, Total, Pendente, Em Análise, Prazo Vencido)
+- 13 columns, 5 sortable (Número, Total, Pendente, Em Análise, Prazo Vencido)
 - Status filter: all/ativo/inativo
 - Details modal: 3 sections (info, status processual, valoração)
 
 ### Proposições Page (proposicoes.html)
-**Mandatory correição selection → progressive disclosure**
-- 7-column table: Número, Tipo, Unidade, Descrição, Tags, Status, Ações
-- Filters: search, tipo, status, tags, prioridade
+- Mandatory correição selection → progressive disclosure
+- 7-column table with filters: search, tipo, status, tags, prioridade
 - Actions: Visualizar (modal), Avaliar (redirect), Editar (modal)
-- Edit saves to localStorage immediately
 
 ### Publicação Page (publicacao.html) - Admin Only
-**Batch publication workflow:**
-- Select correição → view pendente propositions only
-- 8-column table with checkboxes
-- Batch selection: individual, master checkbox, select/deselect all
-- Publication form: single `prazoComprovacao` for all, optional observações
-- On publish: status → aguardando_comprovacao, adds historico entry
+- Batch publication workflow with checkboxes
+- Single `prazoComprovacao` for all selected
+- On publish: status → aguardando_comprovacao, adds historico
 
-### Avaliação Page (avaliacao.html)
-- Receives `id` via URL query
+### Avaliação Page (avaliacao.html) - Admin Only
 - Shows: Proposição info, historico, current comprovacao
 - Decision: finalizada/parcial/em_andamento/prejudicada
-- Parecer field (7,500 chars)
-- Redirects to index.html after submit
+- Two actions: save draft or submit (see Draft System)
 
 ### Comprovação Page (comprovacao.html)
-- Receives `id` via URL query
-- Auto-loads existing rascunho if present
+- Shows ONLY aguardando_comprovacao propositions
 - Drag-drop file upload
-- Two actions: save rascunho OR submit comprovação
-- Redirects to index.html#enviar after save/submit
+- Two actions: save draft or submit (see Draft System)
 
 ### Data Export System
 **5 locations with JSON/PDF exports:**
-1. **Dashboard:** system-wide reporting
-2. **Correições Table:** 3 levels (table, JSON, detailed report)
-3. **Proposições Page:** filtered view + complete timelines
-4. **Modal Details:** individual proposition export
-5. **Publicação Page:** pendentes, selecionadas, ofício legal document
-
-**Pattern:**
-- Shared CSS: `.export-dropdown`, `.export-btn`, `.export-menu`
-- JSON: structured data with metadata
-- PDF: print-optimized HTML via `window.open()`
-- Ofício: Times New Roman, formal Brazilian institutional format
+1. Dashboard - system-wide reporting
+2. Correições Table - 3 levels (table, JSON, detailed)
+3. Proposições Page - filtered view + timelines
+4. Modal Details - individual proposition
+5. Publicação Page - pendentes, selecionadas, ofício legal document
 
 ## NAD Workflow - Publication-Gated Comprovação
 
@@ -145,37 +134,34 @@ pendente → [PUBLICAÇÃO] → aguardando_comprovacao → [COMPROVAÇÃO] → e
 
 ### Workflow Steps
 
-**Publication (publicacao.html):**
-- Admin selects correição, views pendente propositions
-- Includes: never-published + failed evaluations (parcial/em_andamento)
-- Defines `prazoComprovacao` (applies to all selected)
-- Creates `publicacao` historico entry
+**1. Publication (publicacao.html):**
+- Admin selects pendente propositions (never-published + failed evaluations)
+- Defines `prazoComprovacao`, creates `publicacao` historico entry
 - Status: pendente → aguardando_comprovacao
 
-**Comprovação (comprovacao.html):**
-- Shows ONLY aguardando_comprovacao propositions
-- User submits proof with files
-- Creates `comprovacao` historico entry
+**2. Comprovação (comprovacao.html):**
+- User saves draft or submits
+- On submit: creates `comprovacao` historico entry, clears draft
 - Status: aguardando_comprovacao → em_analise
 
-**Avaliação (avaliacao.html):**
-- Shows em_analise propositions
-- Decision: finalizada/prejudicada (cycle ends) OR parcial/em_andamento (status → pendente)
-- Creates `avaliacao` historico entry
-- **Special logic:** parcial/em_andamento sets status to pendente (requires republicação)
+**3. Avaliação (avaliacao.html):**
+- Admin saves draft or submits decision
+- On submit: creates `avaliacao` historico entry, clears draft
+- Decision: finalizada/prejudicada (ends) OR parcial/em_andamento (→ pendente)
 
-**Republicação:**
-- Failed evaluations appear in publicacao.html as pendente
+**4. Republicação:**
+- Failed evaluations return to pendente
 - New publication with new prazoComprovacao
-- New `publicacao` historico entry (preserves audit trail)
+- Cycle repeats until finalizada/prejudicada
 
 ### Key Functions
 - `carregarProposicoesParaPublicar()` - filters pendente
 - `publicarProposicoesSelecionadas()` - publishes, records historico
-- `populateProposicaoSelect()` - filters aguardando_comprovacao
-- `renderAvaliacaoTable()` - shows em_analise queue
-- `submitAvaliacao()` - records decision, sets pendente if parcial/em_andamento
-- `viewDetails()` - renders timeline (orange/blue/green color-coding)
+- `salvarRascunhoComprovacao()` - saves to `rascunhosComprovacao[]`
+- `submitComprovacao()` - submits, clears draft, updates status
+- `salvarRascunhoAvaliacao()` - saves to `rascunhosAvaliacao[]`
+- `submitAvaliacao()` - submits, clears draft, updates status
+- `viewDetails()` - renders timeline (color-coded)
 
 ## Important Constraints
 
@@ -186,15 +172,11 @@ pendente → [PUBLICAÇÃO] → aguardando_comprovacao → [COMPROVAÇÃO] → e
 5. **Historico:** Never mutate, always append with `.push()`
 6. **Tags:** 11 predefined, optional, stored as ID arrays
 7. **UF Selection:** MPE=single, MPU=multiple states
-
-## Form Validation Pattern
-1. HTML5 required attributes
-2. `e.preventDefault()`
-3. Manual data construction
-4. Array push
-5. Alert confirmation
-6. Multi-function UI refresh
-7. Form reset
+8. **Drafts:**
+   - Two separate arrays (`rascunhosComprovacao[]`, `rascunhosAvaliacao[]`)
+   - Only ONE draft of each type per proposition (replace, not append)
+   - Never cross-store between arrays
+   - Cleared on submit, content moves to historico
 
 ## UI Components
 
@@ -204,19 +186,17 @@ pendente → [PUBLICAÇÃO] → aguardando_comprovacao → [COMPROVAÇÃO] → e
 - Toggle `.hidden`, close with `closeModal()`
 
 **Badges:**
-- Status: `badge badge-${status}` (6 colors)
-- Tags: `tag-badge tag-${tagId}` (11 colors)
-- Bidimensional: stacked vertically (processual + valoração)
+- Status: `badge badge-${status}` - bidimensional display (processual + valoração)
+- Tags: `tag-badge tag-${tagId}` - 11 color schemes
 
 **Tables:**
-- Standard render: `data.filter().map(item => html).join('')`
+- Render: `data.filter().map(item => html).join('')`
 - Sorting: toggle direction, update indicators
-- Selection: `.row-selected` class for highlighting
+- Selection: `.row-selected` class
 
 ## Authentication
 - Two types: admin (Corregedoria), user (Órgão Correicionado)
-- No real auth - accepts any credentials
-- Admin sees all pages, user has cadastro hidden
+- No real auth - prototype only
 - Check `currentUser.type` for access control
 
 ## Running
@@ -230,119 +210,74 @@ python3 -m http.server 8000
 
 ### Adding Status
 1. CSS badge class
-2. Filter dropdown option
-3. Update `getStatusLabel()`
-4. Dashboard counter logic
-5. Chart data + barWidth calculation
+2. Filter dropdown
+3. `getStatusLabel()` function
+4. Dashboard counters
+5. Chart data + barWidth
 
-### Adding Page (Internal)
-1. Nav item: `onclick="showPage('newpage')"`
-2. Page div: `id="newpagePage" class="page hidden"`
-3. Add case in `showPage()` if needed
-4. Hide for users if admin-only
-
-### Adding Page (Standalone)
-1. Create .html with full structure
-2. Nav item: `onclick="window.location.href='page.html'"`
-3. Session management: `loadUserSession()`, `loadDataFromLocalStorage()`
-4. Breadcrumb to index.html
-5. Save changes to localStorage
+### Adding Page
+**Internal:** Nav item + page div + `showPage()` case
+**Standalone:** .html file + nav redirect + session management
 
 ### Modifying Data Model
 1. Update `initializeSampleData()`
-2. Form HTML + submit handler
+2. Form HTML + handler
 3. Table rendering
 4. Detail modal
-5. Filters/search if applicable
+5. Filters/search
 
 ### Adding Tag
-1. Add to `availableTags` array
+1. `availableTags` array
 2. CSS class `.tag-{id}`
-3. Auto-appears in: cadastro checkboxes, filter dropdown, table/modals
+3. Auto-appears everywhere
 
 ## Testing Guidelines
 
 **Core Workflows:**
-1. Login as admin/user - verify menu visibility
-2. Create correição - test all fields, MP/UF selection
-3. Create proposição - verify correição link, tipo, unidade, membro
-4. Test filters - search, status, tags
-5. View details modals
+1. Login (admin/user), verify menu visibility
+2. Create correição with all fields, MP/UF selection
+3. Create proposição with correição link
+4. Test all filters and modals
 
-**Proposições Page:**
-6. Mandatory correição selection workflow
-7. 7-column table, 3 action buttons
-8. Advanced filters, clear filters
-9. Edit modal - character counter, tags, save
+**Draft System:**
+5. Save comprovação draft → verify `rascunhosComprovacao[]` array
+6. Edit draft → verify auto-load on page load
+7. Submit → verify draft cleared, historico created, status changed
+8. Save avaliação draft → verify `rascunhosAvaliacao[]` array
+9. Edit draft → verify auto-load
+10. Submit → verify draft cleared, historico created
 
-**Publicação Page (Admin):**
-10. Access control (non-admin redirect)
-11. Correição selection, pendente filter
-12. Batch selection (individual, master, buttons)
-13. Publication form - prazo, observações, counter
-14. Publish - verify status change, historico entry, table update
-
-**Comprovação/Avaliação:**
-15. Comprovação only shows aguardando_comprovacao
-16. File upload, rascunho save/submit
-17. Avaliação queue shows em_analise
-18. Decision updates status, creates historico
-19. Parcial/em_andamento → pendente (republicação required)
-
-**Dashboard/Charts:**
-20. Correição filter updates all cards/charts
-21. Dual charts: 4 bars (Fluxo) + 5 bars (Valoração)
-22. Responsive layout (2-col → 1-col mobile)
-
-**Correições Table:**
-23. 13 columns, 5 sortable
-24. Status filter: all/ativo/inativo
-25. Details modal: 3 sections with counters
-
-**Export System:**
-26. 5 locations, dropdown menus
-27. JSON: structured data, pretty-print
-28. PDF: print dialog, CNMP branding
-29. Ofício: Times New Roman, formal format
-
-**UI/UX:**
-30. Responsive at 768px breakpoint
-31. Modals scroll with long content
-32. Timeline color-coding
-33. Mobile: horizontal scroll tables, touch sorting
+**Publication/Workflow:**
+11. Batch publication with prazo → verify status change
+12. Submit comprovação → verify em_analise
+13. Evaluate as parcial → verify returns to pendente
+14. Republish → verify new historico entry
 
 **Complete Cycle:**
-34. Publish (pendente → aguardando_comprovacao)
-35. Submit comprovação (aguardando → em_analise)
-36. Evaluate as parcial (em_analise → pendente)
-37. Republish with new prazo
-38. Full timeline with multiple publicacoes
+15. pendente → publish → aguardando_comprovacao
+16. Save draft → edit → submit → em_analise
+17. Save avaliação draft → edit → submit parcial → pendente
+18. Republish → full timeline with multiple cycles
+
+**UI/Export:**
+19. Dashboard filter, dual charts, responsive layout
+20. Correições table sorting, status filter
+21. Export from 5 locations (JSON/PDF)
+22. Mobile: horizontal scroll, touch sorting
 
 ## Browser Compatibility
-- ES6+ JavaScript
-- CSS Grid/Flexbox
-- HTML5 validation
-- Canvas API (charts)
+- ES6+ JavaScript, CSS Grid/Flexbox, HTML5 validation, Canvas API
 - Modern browsers only (no IE11)
 
 ## Sample Data
-**5 Correições:**
-- COR-2024-01 (MPBA, 3 props) - Ordinária, MPE/BA
-- COR-2024-02 (MPRJ, 2 props) - Extraordinária, MPE/RJ
-- COR-2024-03 (MPMG, 2 props) - OCD, MPE/MG
-- COR-2024-04 (MPSP, 2 props) - Inspeção, MPE/SP
-- COR-2024-05 (MPU, 0 props) - Ordinária, MPU/DF,SP,RJ,MG,BA (multi-UF demo)
-
-**13 Proposições:**
-- Mix of Determinação/Recomendação
-- All statuses represented
-- Various tags, priorities
+**5 Correições:** COR-2024-01 to COR-2024-05 (various tipos, MP levels)
+**13 Proposições:** Mix of statuses, tags, priorities
 - PROP-2024-0009 (em_analise) - ideal for testing evaluation
 - PROP-2024-0004 (pendente) - has historico with parcial evaluation
 
 **Testing Tip:**
 1. Evaluate PROP-2024-0009 as parcial → returns to pendente
 2. Republish with new prazo → aguardando_comprovacao
-3. Submit comprovação → em_analise
-4. Evaluate as finalizada → cycle complete
-5. View historico → see complete timeline
+3. Save comprovação draft → edit → submit → em_analise
+4. Save avaliação draft → edit → evaluate as finalizada → complete
+5. View historico → see full timeline with drafts and submissions
