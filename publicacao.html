@@ -82,27 +82,27 @@
                 </div>
             </div>
 
-            <!-- Seletor de Correição (Obrigatório) -->
+            <!-- Seletor de Ramo do MP (Obrigatório) -->
             <div class="form-container" style="margin-bottom: 2rem;">
-                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">1. Selecione a Correição</h3>
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">1. Selecione o Ramo do MP</h3>
                 <div class="form-group">
-                    <label for="correicaoSelect">Correição *</label>
-                    <select id="correicaoSelect" required onchange="onCorreicaoChange()">
-                        <option value="">Selecione uma correição...</option>
+                    <label for="ramoMPSelect">Ramo do Ministério Público *</label>
+                    <select id="ramoMPSelect" required onchange="onRamoMPChange()">
+                        <option value="">Selecione um ramo do MP...</option>
                     </select>
                 </div>
 
-                <!-- Informações da Correição Selecionada -->
-                <div id="correicaoInfo" class="hidden" style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 4px; border-left: 4px solid var(--primary-color);">
-                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">Informações da Correição</h4>
+                <!-- Informações do Ramo do MP Selecionado -->
+                <div id="ramoMPInfo" class="hidden" style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 4px; border-left: 4px solid var(--primary-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">Informações do Ramo do MP</h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         <div>
-                            <strong>Temática:</strong>
-                            <p id="infoTematica" style="margin: 0.25rem 0;"></p>
+                            <strong>Nome Completo:</strong>
+                            <p id="infoRamoMPNome" style="margin: 0.25rem 0;"></p>
                         </div>
                         <div>
-                            <strong>Órgão Correicionado:</strong>
-                            <p id="infoRamoMP" style="margin: 0.25rem 0;"></p>
+                            <strong>Total de Correições:</strong>
+                            <p id="infoTotalCorreicoes" style="margin: 0.25rem 0;"></p>
                         </div>
                         <div>
                             <strong>Proposições Pendentes:</strong>
@@ -212,11 +212,11 @@
                 </div>
             </div>
 
-            <!-- Placeholder quando nenhuma correição selecionada -->
+            <!-- Placeholder quando nenhum ramo do MP selecionado -->
             <div id="placeholderMessage" class="hidden" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📢</div>
-                <h3 style="color: var(--text-dark);">Selecione uma Correição</h3>
-                <p>Para visualizar as proposições pendentes de publicação, primeiro selecione uma correição acima.</p>
+                <h3 style="color: var(--text-dark);">Selecione um Ramo do MP</h3>
+                <p>Para visualizar as proposições pendentes de publicação, primeiro selecione um ramo do Ministério Público acima.</p>
             </div>
         </main>
     </div>
@@ -366,13 +366,32 @@
             return text.substring(0, maxLength) + '...';
         }
 
-        // Populate correição select dropdown
-        function populateCorreicaoSelect() {
-            const select = document.getElementById('correicaoSelect');
+        // Populate ramo do MP select dropdown
+        function populateRamoMPSelect() {
+            const select = document.getElementById('ramoMPSelect');
             if (!select) return;
 
-            select.innerHTML = '<option value="">Selecione uma correição...</option>' +
-                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP} - ${c.ramoMPNome}</option>`).join('');
+            // Admin sempre vê todos os ramos
+            const availableCorreicoes = correicoes;
+
+            // Extrair ramos do MP únicos
+            const uniqueRamosMPs = [...new Set(availableCorreicoes.map(c => c.ramoMP))];
+
+            // Ordenar alfabeticamente
+            uniqueRamosMPs.sort();
+
+            // Limpar opções existentes
+            select.innerHTML = '<option value="">Selecione um ramo do MP...</option>';
+
+            // Adicionar ramos do MP disponíveis
+            uniqueRamosMPs.forEach(ramoMP => {
+                // Encontrar uma correição deste ramo para obter o nome completo
+                const correicao = availableCorreicoes.find(c => c.ramoMP === ramoMP);
+                const option = document.createElement('option');
+                option.value = ramoMP;
+                option.textContent = `${ramoMP} - ${correicao.ramoMPNome}`;
+                select.appendChild(option);
+            });
         }
 
         // Populate tag filter
@@ -384,10 +403,10 @@
                 availableTags.map(tag => `<option value="${tag.id}">${tag.label}</option>`).join('');
         }
 
-        // Handle correição selection change
-        function onCorreicaoChange() {
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicaoInfo = document.getElementById('correicaoInfo');
+        // Handle ramo do MP selection change
+        function onRamoMPChange() {
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const ramoMPInfo = document.getElementById('ramoMPInfo');
             const filtrosContainer = document.getElementById('filtrosContainer');
             const placeholderMessage = document.getElementById('placeholderMessage');
 
@@ -396,29 +415,33 @@
             updateSelectedCount();
             hidePublicacaoForm();
 
-            if (!correicaoId) {
-                // No correição selected - show placeholder
-                correicaoInfo.classList.add('hidden');
+            if (!ramoMP) {
+                // No ramo do MP selected - show placeholder
+                ramoMPInfo.classList.add('hidden');
                 filtrosContainer.classList.add('hidden');
                 placeholderMessage.classList.remove('hidden');
                 return;
             }
 
-            // Correição selected - show info and filters
-            const correicao = correicoes.find(c => c.id == correicaoId);
-            if (!correicao) return;
+            // Ramo do MP selected - show info and filters
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            if (correicoesDoRamo.length === 0) return;
 
-            // Count pending propositions
+            // Get all correição IDs from this ramo
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
+
+            // Count pending propositions across all correições from this ramo
             const pendentes = proposicoes.filter(p =>
-                p.correicaoId == correicaoId && getStatusProcessual(p) === 'pendente'
+                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente'
             ).length;
 
-            // Display correição information
-            document.getElementById('infoTematica').textContent = correicao.tematica || 'N/A';
-            document.getElementById('infoRamoMP').textContent = `${correicao.ramoMP} - ${correicao.ramoMPNome}`;
+            // Display ramo do MP information (aggregated)
+            const primeiraCorreicao = correicoesDoRamo[0];
+            document.getElementById('infoRamoMPNome').textContent = primeiraCorreicao.ramoMPNome || 'N/A';
+            document.getElementById('infoTotalCorreicoes').textContent = `${correicoesDoRamo.length} correição(ões)`;
             document.getElementById('infoPendentes').textContent = `${pendentes} proposição(ões)`;
 
-            correicaoInfo.classList.remove('hidden');
+            ramoMPInfo.classList.remove('hidden');
             filtrosContainer.classList.remove('hidden');
             placeholderMessage.classList.add('hidden');
 
@@ -441,13 +464,17 @@
             const selectAllCheckbox = document.getElementById('selectAllCheckbox');
             if (!tbody) return;
 
-            // Get selected correição (MANDATORY)
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            if (!correicaoId) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Selecione uma correição para visualizar proposições pendentes</td></tr>';
+            // Get selected ramo do MP (MANDATORY)
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            if (!ramoMP) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Selecione um ramo do MP para visualizar proposições pendentes</td></tr>';
                 selectAllCheckbox.checked = false;
                 return;
             }
+
+            // Get correições do ramo selecionado
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
 
             // Get filter values
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -455,10 +482,10 @@
             const tagFilter = document.getElementById('tagFilter').value;
             const prioridadeFilter = document.getElementById('prioridadeFilter').value;
 
-            // Filter propositions - ONLY PENDENTES
+            // Filter propositions - ONLY PENDENTES from selected ramo
             const filtered = proposicoes.filter(p => {
-                // MANDATORY: Only show propositions from selected correição with status PENDENTE
-                if (p.correicaoId != correicaoId) return false;
+                // MANDATORY: Only show propositions from selected ramo do MP with status PENDENTE
+                if (!correicaoIds.includes(p.correicaoId)) return false;
                 if (getStatusProcessual(p) !== 'pendente') return false;
 
                 // Search filter
@@ -548,8 +575,12 @@
 
         // Select all filtered propositions
         function selecionarTodas() {
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            if (!correicaoId) return;
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            if (!ramoMP) return;
+
+            // Get correições do ramo selecionado
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
 
             // Get all filtered propositions
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -558,7 +589,7 @@
             const prioridadeFilter = document.getElementById('prioridadeFilter').value;
 
             const filtered = proposicoes.filter(p => {
-                if (p.correicaoId != correicaoId) return false;
+                if (!correicaoIds.includes(p.correicaoId)) return false;
                 if (getStatusProcessual(p) !== 'pendente') return false;
 
                 const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
@@ -633,13 +664,16 @@
                 return;
             }
 
-            const correicao = correicoes.find(c => c.id == document.getElementById('correicaoSelect').value);
             const dataPublicacao = new Date().toISOString().split('T')[0];
 
             // Update each selected proposition
             selectedProposicoes.forEach(propId => {
                 const proposicao = proposicoes.find(p => p.id === propId);
                 if (!proposicao) return;
+
+                // Get the correição for this specific proposition
+                const correicao = correicoes.find(c => c.id === proposicao.correicaoId);
+                if (!correicao) return;
 
                 // Store previous status
                 const statusAnterior = proposicao.status;
@@ -677,7 +711,7 @@
             document.getElementById('formPublicar').reset();
 
             // Refresh table
-            onCorreicaoChange();
+            onRamoMPChange();
         }
 
         // View details modal
@@ -852,29 +886,32 @@
 
         // Exportar Proposições Pendentes em JSON
         function exportarPendentesJSON() {
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            if (!correicaoId) {
-                alert('Por favor, selecione uma correição primeiro.');
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            if (!ramoMP) {
+                alert('Por favor, selecione um ramo do MP primeiro.');
                 return;
             }
 
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
+            const primeiraCorreicao = correicoesDoRamo[0];
+
             const pendentes = proposicoes.filter(p =>
-                p.correicaoId == correicaoId && hasStatusProcessual(p, 'pendente')
+                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente'
             );
 
             if (pendentes.length === 0) {
-                alert('Nenhuma proposição pendente para exportar nesta correição.');
+                alert('Nenhuma proposição pendente para exportar neste ramo do MP.');
                 return;
             }
 
             const exportData = {
                 titulo: 'Proposições Pendentes - CNMP',
                 dataExportacao: new Date().toISOString(),
-                correicao: {
-                    numero: correicao?.numero || '',
-                    ramoMP: correicao?.ramoMPNome || '',
-                    tematica: correicao?.tematica || ''
+                ramoMP: {
+                    codigo: ramoMP,
+                    nome: primeiraCorreicao?.ramoMPNome || '',
+                    totalCorreicoes: correicoesDoRamo.length
                 },
                 totalPendentes: pendentes.length,
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
@@ -886,7 +923,7 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `pendentes-${correicao?.numero || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `pendentes-${ramoMP}-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -903,17 +940,18 @@
                 return;
             }
 
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const primeiraCorreicao = correicoesDoRamo[0];
             const selecionadas = proposicoes.filter(p => selectedProposicoes.has(p.id));
 
             const exportData = {
                 titulo: 'Proposições Selecionadas para Publicação - CNMP',
                 dataExportacao: new Date().toISOString(),
-                correicao: {
-                    numero: correicao?.numero || '',
-                    ramoMP: correicao?.ramoMPNome || '',
-                    tematica: correicao?.tematica || ''
+                ramoMP: {
+                    codigo: ramoMP,
+                    nome: primeiraCorreicao?.ramoMPNome || '',
+                    totalCorreicoes: correicoesDoRamo.length
                 },
                 totalSelecionadas: selecionadas.length,
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
@@ -925,7 +963,7 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `selecionadas-${correicao?.numero || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `selecionadas-${ramoMP}-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -942,8 +980,9 @@
                 return;
             }
 
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const primeiraCorreicao = correicoesDoRamo[0];
             const selecionadas = proposicoes.filter(p => selectedProposicoes.has(p.id));
 
             // Get prazo if filled
@@ -956,7 +995,7 @@
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>Ofício de Publicação - ${correicao?.numero || ''}</title>
+                    <title>Ofício de Publicação - ${ramoMP}</title>
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
                         body {
@@ -1051,8 +1090,8 @@
 
                     <div class="destinatario">
                         <strong>Ao(À) Excelentíssimo(a) Senhor(a)</strong><br>
-                        <strong>${correicao?.ramoMPNome || '[DESTINATÁRIO]'}</strong><br>
-                        <em>Ref.: Correição ${correicao?.numero || ''}</em>
+                        <strong>${primeiraCorreicao?.ramoMPNome || '[DESTINATÁRIO]'}</strong><br>
+                        <em>Ref.: Correições do ${ramoMP} (${correicoesDoRamo.length} correição(ões))</em>
                     </div>
 
                     <div class="corpo">
@@ -1063,9 +1102,8 @@
                         <p style="text-indent: 2cm;">
                             No uso das atribuições previstas na Lei Complementar nº 75/1993 e no Regimento Interno
                             do Conselho Nacional do Ministério Público, venho, por meio deste, <strong>PUBLICAR</strong>
-                            as proposições listadas abaixo, decorrentes da <strong>${correicao?.numero || 'Correição'}</strong>,
-                            com temática "${correicao?.tematica || ''}", realizada no período de
-                            ${correicao ? `${formatDate(correicao.dataInicio)} a ${formatDate(correicao.dataFim)}` : '[PERÍODO]'}.
+                            as proposições listadas abaixo, decorrentes de <strong>${correicoesDoRamo.length} correição(ões)</strong>
+                            realizadas no âmbito do <strong>${ramoMP}</strong>.
                         </p>
                         <br>
                         <p style="text-indent: 2cm;">
@@ -1078,12 +1116,14 @@
                         <h3 style="font-size: 12pt; margin-bottom: 15px;">PROPOSIÇÕES PUBLICADAS (${selecionadas.length})</h3>
                         ${selecionadas.map((p, index) => {
                             const tipo = p.tipo || 'Determinação';
+                            const correicaoDaProposicao = correicoes.find(c => c.id === p.correicaoId);
                             return `
                             <div class="proposicao-item">
                                 <div class="proposicao-header">
                                     ${index + 1}. ${p.numero} - ${tipo.toUpperCase()}
                                 </div>
                                 <div class="proposicao-details">
+                                    <strong>Correição:</strong> ${correicaoDaProposicao?.numero || '-'}<br>
                                     <strong>Unidade:</strong> ${p.unidade || '-'}<br>
                                     <strong>Descrição:</strong> ${p.descricao || '-'}
                                 </div>
@@ -1147,16 +1187,16 @@
                 return;
             }
 
-            // Populate correição selector
-            populateCorreicaoSelect();
+            // Populate ramo do MP selector
+            populateRamoMPSelect();
 
             // Populate tag filter
             populateTagFilter();
 
-            // Show placeholder initially (no correição selected)
+            // Show placeholder initially (no ramo do MP selected)
             document.getElementById('placeholderMessage').classList.remove('hidden');
             document.getElementById('filtrosContainer').classList.add('hidden');
-            document.getElementById('correicaoInfo').classList.add('hidden');
+            document.getElementById('ramoMPInfo').classList.add('hidden');
 
             // Setup character counter
             setupObsCharCounter();
