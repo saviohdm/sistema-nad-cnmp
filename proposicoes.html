@@ -86,27 +86,27 @@
                 </div>
             </div>
 
-            <!-- Seletor de Correição (Obrigatório) -->
+            <!-- Seletor de Ramo do MP (Obrigatório) -->
             <div class="form-container" style="margin-bottom: 2rem;">
-                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">1. Selecione a Correição</h3>
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">1. Selecione o Ramo do MP</h3>
                 <div class="form-group">
-                    <label for="correicaoSelect">Correição *</label>
-                    <select id="correicaoSelect" required onchange="onCorreicaoChange()">
-                        <option value="">Selecione uma correição...</option>
+                    <label for="ramoMPSelect">Ramo do Ministério Público *</label>
+                    <select id="ramoMPSelect" required onchange="onRamoMPChange()">
+                        <option value="">Selecione um ramo do MP...</option>
                     </select>
                 </div>
 
-                <!-- Informações da Correição Selecionada -->
-                <div id="correicaoInfo" class="hidden" style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 4px; border-left: 4px solid var(--primary-color);">
-                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">Informações da Correição</h4>
+                <!-- Informações do Ramo do MP Selecionado -->
+                <div id="ramoMPInfo" class="hidden" style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 4px; border-left: 4px solid var(--primary-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">Informações do Ramo do MP</h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         <div>
-                            <strong>Temática:</strong>
-                            <p id="infoTematica" style="margin: 0.25rem 0;"></p>
+                            <strong>Nome Completo:</strong>
+                            <p id="infoRamoMPNome" style="margin: 0.25rem 0;"></p>
                         </div>
                         <div>
-                            <strong>Período:</strong>
-                            <p id="infoPeriodo" style="margin: 0.25rem 0;"></p>
+                            <strong>Total de Correições:</strong>
+                            <p id="infoTotalCorreicoes" style="margin: 0.25rem 0;"></p>
                         </div>
                         <div>
                             <strong>Total de Proposições:</strong>
@@ -187,11 +187,11 @@
                 </div>
             </div>
 
-            <!-- Placeholder quando nenhuma correição selecionada -->
+            <!-- Placeholder quando nenhum ramo do MP selecionado -->
             <div id="placeholderMessage" class="hidden" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
-                <h3 style="color: var(--text-dark);">Selecione uma Correição</h3>
-                <p>Para visualizar as proposições, primeiro selecione uma correição acima.</p>
+                <h3 style="color: var(--text-dark);">Selecione um Ramo do MP</h3>
+                <p>Para visualizar as proposições, primeiro selecione um ramo do Ministério Público acima.</p>
             </div>
         </main>
     </div>
@@ -434,13 +434,35 @@
             return `<span class="text-length-badge">${length} caracteres</span>`;
         }
 
-        // Populate correição select dropdown (mandatory selector)
-        function populateCorreicaoSelect() {
-            const select = document.getElementById('correicaoSelect');
+        // Populate ramo do MP select dropdown (mandatory selector)
+        function populateRamoMPSelect() {
+            const select = document.getElementById('ramoMPSelect');
             if (!select) return;
 
-            select.innerHTML = '<option value="">Selecione uma correição...</option>' +
-                correicoes.map(c => `<option value="${c.id}">${c.numero} - ${c.ramoMP} - ${c.ramoMPNome}</option>`).join('');
+            // Filtrar correições disponíveis com base no perfil do usuário
+            let availableCorreicoes = correicoes;
+            if (currentUser && currentUser.type !== 'admin') {
+                availableCorreicoes = correicoes.filter(c => c.ramoMP === currentUser.ramoMP);
+            }
+
+            // Extrair ramos do MP únicos
+            const uniqueRamosMPs = [...new Set(availableCorreicoes.map(c => c.ramoMP))];
+
+            // Ordenar alfabeticamente
+            uniqueRamosMPs.sort();
+
+            // Limpar opções existentes
+            select.innerHTML = '<option value="">Selecione um ramo do MP...</option>';
+
+            // Adicionar ramos do MP disponíveis
+            uniqueRamosMPs.forEach(ramoMP => {
+                // Encontrar uma correição deste ramo para obter o nome completo
+                const correicao = availableCorreicoes.find(c => c.ramoMP === ramoMP);
+                const option = document.createElement('option');
+                option.value = ramoMP;
+                option.textContent = `${ramoMP} - ${correicao.ramoMPNome}`;
+                select.appendChild(option);
+            });
         }
 
         // Populate tag filter
@@ -452,33 +474,36 @@
                 availableTags.map(tag => `<option value="${tag.id}">${tag.label}</option>`).join('');
         }
 
-        // Handle correição selection change
-        function onCorreicaoChange() {
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicaoInfo = document.getElementById('correicaoInfo');
+        // Handle ramo do MP selection change
+        function onRamoMPChange() {
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const ramoMPInfo = document.getElementById('ramoMPInfo');
             const filtrosContainer = document.getElementById('filtrosContainer');
             const placeholderMessage = document.getElementById('placeholderMessage');
 
-            if (!correicaoId) {
-                // No correição selected - show placeholder
-                correicaoInfo.classList.add('hidden');
+            if (!ramoMP) {
+                // No ramo do MP selected - show placeholder
+                ramoMPInfo.classList.add('hidden');
                 filtrosContainer.classList.add('hidden');
                 placeholderMessage.classList.remove('hidden');
                 return;
             }
 
-            // Correição selected - show info and filters
-            const correicao = correicoes.find(c => c.id == correicaoId);
-            if (!correicao) return;
+            // Ramo do MP selected - show info and filters
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            if (correicoesDoRamo.length === 0) return;
 
-            // Display correição information
-            document.getElementById('infoTematica').textContent = correicao.tematica || 'N/A';
-            document.getElementById('infoPeriodo').textContent = `${formatDate(correicao.dataInicio)} - ${formatDate(correicao.dataFim)}`;
+            // Display ramo do MP information (aggregated)
+            const primeiraCorreicao = correicoesDoRamo[0];
+            document.getElementById('infoRamoMPNome').textContent = primeiraCorreicao.ramoMPNome || 'N/A';
+            document.getElementById('infoTotalCorreicoes').textContent = `${correicoesDoRamo.length} correição(ões)`;
 
-            const totalProposicoes = proposicoes.filter(p => p.correicaoId == correicaoId).length;
+            // Contar proposições de todas as correições deste ramo
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
+            const totalProposicoes = proposicoes.filter(p => correicaoIds.includes(p.correicaoId)).length;
             document.getElementById('infoTotalProposicoes').textContent = `${totalProposicoes} proposição(ões)`;
 
-            correicaoInfo.classList.remove('hidden');
+            ramoMPInfo.classList.remove('hidden');
             filtrosContainer.classList.remove('hidden');
             placeholderMessage.classList.add('hidden');
 
@@ -502,13 +527,17 @@
             const resultadosCount = document.getElementById('resultadosCount');
             if (!tbody) return;
 
-            // Get selected correição (MANDATORY)
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            if (!correicaoId) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Selecione uma correição para visualizar proposições</td></tr>';
+            // Get selected ramo do MP (MANDATORY)
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            if (!ramoMP) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Selecione um ramo do MP para visualizar proposições</td></tr>';
                 if (resultadosCount) resultadosCount.textContent = '';
                 return;
             }
+
+            // Get correições do ramo selecionado
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
 
             // Get filter values
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -519,8 +548,8 @@
 
             // Filter propositions
             const filtered = proposicoes.filter(p => {
-                // MANDATORY: Only show propositions from selected correição
-                if (p.correicaoId != correicaoId) return false;
+                // MANDATORY: Only show propositions from selected ramo do MP
+                if (!correicaoIds.includes(p.correicaoId)) return false;
 
                 // Search filter
                 const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
@@ -856,8 +885,12 @@
 
         // Helper: Get filtered propositions
         function getProposicoesFiltradas() {
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            if (!correicaoId) return [];
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            if (!ramoMP) return [];
+
+            // Get correições do ramo selecionado
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const correicaoIds = correicoesDoRamo.map(c => c.id);
 
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const tipoFilter = document.getElementById('tipoFilter').value;
@@ -866,7 +899,7 @@
             const prioridadeFilter = document.getElementById('prioridadeFilter').value;
 
             return proposicoes.filter(p => {
-                if (p.correicaoId != correicaoId) return false;
+                if (!correicaoIds.includes(p.correicaoId)) return false;
 
                 const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
                 const matchesSearch = searchText.includes(searchTerm);
@@ -890,21 +923,21 @@
         function exportarProposicoesJSON() {
             const filtered = getProposicoesFiltradas();
             if (filtered.length === 0) {
-                alert('Nenhuma proposição para exportar. Selecione uma correição primeiro.');
+                alert('Nenhuma proposição para exportar. Selecione um ramo do MP primeiro.');
                 return;
             }
 
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const primeiraCorreicao = correicoesDoRamo[0];
 
             const exportData = {
                 titulo: 'Proposições CNMP - Exportação de Dados',
                 dataExportacao: new Date().toISOString(),
-                correicao: {
-                    numero: correicao?.numero || '',
-                    ramoMP: correicao?.ramoMPNome || '',
-                    tematica: correicao?.tematica || '',
-                    periodo: correicao ? `${formatDate(correicao.dataInicio)} a ${formatDate(correicao.dataFim)}` : ''
+                ramoMP: {
+                    codigo: ramoMP,
+                    nome: primeiraCorreicao?.ramoMPNome || '',
+                    totalCorreicoes: correicoesDoRamo.length
                 },
                 totalProposicoes: filtered.length,
                 filtrosAplicados: {
@@ -923,7 +956,7 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `proposicoes-${correicao?.numero || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `proposicoes-${ramoMP}-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -937,12 +970,13 @@
         function exportarProposicoesPDF() {
             const filtered = getProposicoesFiltradas();
             if (filtered.length === 0) {
-                alert('Nenhuma proposição para exportar. Selecione uma correição primeiro.');
+                alert('Nenhuma proposição para exportar. Selecione um ramo do MP primeiro.');
                 return;
             }
 
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const primeiraCorreicao = correicoesDoRamo[0];
 
             const printWindow = window.open('', '', 'width=900,height=700');
             printWindow.document.write(`
@@ -950,7 +984,7 @@
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>Proposições - ${correicao?.numero || 'Export'}</title>
+                    <title>Proposições - ${ramoMP}</title>
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
                         body {
@@ -1012,14 +1046,14 @@
                 </head>
                 <body>
                     <div class="header">
-                        <h1>📋 Proposições - ${correicao?.numero || ''}</h1>
-                        <div style="color: #666; font-size: 12px;">${correicao?.ramoMPNome || ''}</div>
+                        <h1>📋 Proposições - ${ramoMP}</h1>
+                        <div style="color: #666; font-size: 12px;">${primeiraCorreicao?.ramoMPNome || ''}</div>
                     </div>
 
                     <div class="info">
                         <strong>Data:</strong> ${formatDate(new Date().toISOString().split('T')[0])} &nbsp;|&nbsp;
-                        <strong>Temática:</strong> ${correicao?.tematica || '-'} &nbsp;|&nbsp;
-                        <strong>Total:</strong> ${filtered.length} proposição(ões)
+                        <strong>Correições:</strong> ${correicoesDoRamo.length} &nbsp;|&nbsp;
+                        <strong>Total de Proposições:</strong> ${filtered.length}
                     </div>
 
                     <table>
@@ -1080,12 +1114,13 @@
         function exportarProposicoesRelatorioCompleto() {
             const filtered = getProposicoesFiltradas();
             if (filtered.length === 0) {
-                alert('Nenhuma proposição para exportar. Selecione uma correição primeiro.');
+                alert('Nenhuma proposição para exportar. Selecione um ramo do MP primeiro.');
                 return;
             }
 
-            const correicaoId = document.getElementById('correicaoSelect').value;
-            const correicao = correicoes.find(c => c.id == correicaoId);
+            const ramoMP = document.getElementById('ramoMPSelect').value;
+            const correicoesDoRamo = correicoes.filter(c => c.ramoMP === ramoMP);
+            const primeiraCorreicao = correicoesDoRamo[0];
 
             const printWindow = window.open('', '', 'width=900,height=700');
             printWindow.document.write(`
@@ -1093,7 +1128,7 @@
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>Relatório Completo - ${correicao?.numero || 'Proposições'}</title>
+                    <title>Relatório Completo - ${ramoMP}</title>
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
                         body {
@@ -1194,13 +1229,13 @@
                 <body>
                     <div class="header">
                         <h1>📊 Relatório Completo de Proposições</h1>
-                        <div style="color: #666; font-size: 13px;">${correicao?.numero || ''} - ${correicao?.ramoMPNome || ''}</div>
+                        <div style="color: #666; font-size: 13px;">${ramoMP} - ${primeiraCorreicao?.ramoMPNome || ''}</div>
                     </div>
 
                     <div class="info-section">
                         <strong>Data:</strong> ${formatDate(new Date().toISOString().split('T')[0])} &nbsp;|&nbsp;
-                        <strong>Temática:</strong> ${correicao?.tematica || '-'} &nbsp;|&nbsp;
-                        <strong>Total:</strong> ${filtered.length} proposição(ões)
+                        <strong>Correições:</strong> ${correicoesDoRamo.length} &nbsp;|&nbsp;
+                        <strong>Total de Proposições:</strong> ${filtered.length}
                     </div>
 
                     ${filtered.map(p => {
@@ -1584,16 +1619,16 @@
                 return;
             }
 
-            // Populate correição selector
-            populateCorreicaoSelect();
+            // Populate ramo do MP selector
+            populateRamoMPSelect();
 
             // Populate tag filter
             populateTagFilter();
 
-            // Show placeholder initially (no correição selected)
+            // Show placeholder initially (no ramo do MP selected)
             document.getElementById('placeholderMessage').classList.remove('hidden');
             document.getElementById('filtrosContainer').classList.add('hidden');
-            document.getElementById('correicaoInfo').classList.add('hidden');
+            document.getElementById('ramoMPInfo').classList.add('hidden');
 
             // Setup character counter for edit modal
             setupEditCharCounter();
