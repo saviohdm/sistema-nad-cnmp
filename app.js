@@ -3,7 +3,7 @@
         let proposicoes = [];
         let currentUser = null;
         let selectedFiles = [];
-        let dashboardCorreicaoFilter = null; // Filtro de correição no dashboard
+        let dashboardRamoMPFilter = null; // Filtro de ramo do MP no dashboard
 
         // Correições table sorting and filtering
         let correicoesSortColumn = null; // Coluna atual de ordenação
@@ -708,7 +708,7 @@
             // Atualizar status das correições baseado nas proposições
             atualizarStatusCorreicoes();
 
-            populateDashboardCorreicaoFilter();
+            populateDashboardRamoMPFilter();
             updateDashboard();
             renderProposicoesTable();
             renderCorreicoesTable();
@@ -822,7 +822,7 @@
 
             // Initialize UI
             atualizarStatusCorreicoes();
-            populateDashboardCorreicaoFilter();
+            populateDashboardRamoMPFilter();
             updateDashboard();
             renderDashboardMembrosAuxiliares();
             renderCorreicoesTable();
@@ -864,7 +864,7 @@
 
             // Atualizar filtro do dashboard quando navegar para a página
             if (pageId === 'dashboard') {
-                populateDashboardCorreicaoFilter();
+                populateDashboardRamoMPFilter();
                 updateDashboard();
             }
 
@@ -883,9 +883,9 @@
                 filtered = filtered.filter(c => c.ramoMP === currentUser.ramoMP);
             }
 
-            // Filtro específico do dashboard
-            if (dashboardCorreicaoFilter) {
-                filtered = filtered.filter(c => c.id === parseInt(dashboardCorreicaoFilter));
+            // Filtro específico do dashboard por ramo do MP
+            if (dashboardRamoMPFilter) {
+                filtered = filtered.filter(c => c.ramoMP === dashboardRamoMPFilter);
             }
 
             return filtered;
@@ -902,9 +902,12 @@
                 });
             }
 
-            // Filtro específico do dashboard por correição
-            if (dashboardCorreicaoFilter) {
-                filtered = filtered.filter(p => p.correicaoId === parseInt(dashboardCorreicaoFilter));
+            // Filtro específico do dashboard por ramo do MP
+            if (dashboardRamoMPFilter) {
+                filtered = filtered.filter(p => {
+                    const correicao = correicoes.find(c => c.id === p.correicaoId);
+                    return correicao && correicao.ramoMP === dashboardRamoMPFilter;
+                });
             }
 
             return filtered;
@@ -914,6 +917,7 @@
         function updateDashboard() {
             const filteredCorreicoes = getFilteredCorreicoes();
             const filteredProposicoes = getFilteredProposicoes();
+            const workflowStats = getDashboardWorkflowStats(filteredProposicoes);
 
             // Card 1: Total de Correições
             const totalCorreicoes = filteredCorreicoes.length;
@@ -925,9 +929,7 @@
             const totalProposicoes = filteredProposicoes.length;
 
             // Card 4: Proposições Ativas (status processual diferente de 'encerrada')
-            const proposicoesAtivas = filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente') ||
-                                                                       hasStatusProcessual(p, 'aguardando_comprovacao') ||
-                                                                       hasStatusProcessual(p, 'em_analise')).length;
+            const proposicoesAtivas = totalProposicoes - workflowStats.encerrada;
 
             // Card 5: Prazo Vencido
             const prazoVencido = filteredProposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
@@ -951,26 +953,19 @@
             const ctx = canvas.getContext('2d');
 
             const filteredProposicoes = getFilteredProposicoes();
-
-            // Chart shows only 4 processual status (not valorações)
-            const data = {
-                pendente: filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                aguardando_comprovacao: filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
-                em_analise: filteredProposicoes.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                encerrada: filteredProposicoes.filter(p => hasStatusProcessual(p, 'encerrada')).length
-            };
+            const data = getDashboardWorkflowStats(filteredProposicoes);
 
             const colors = {
-                pendente: '#ffc107',
+                pendente_publicacao: '#ffc107',
                 aguardando_comprovacao: '#e65100',
-                em_analise: '#0066cc',
+                pendente_avaliacao: '#0066cc',
                 encerrada: '#28a745'
             };
 
             const labels = {
-                pendente: 'Pendente',
+                pendente_publicacao: 'Pendente Public.',
                 aguardando_comprovacao: 'Aguard. Comprov.',
-                em_analise: 'Em Análise',
+                pendente_avaliacao: 'Pendente Aval.',
                 encerrada: 'Encerrada'
             };
 
@@ -1017,29 +1012,19 @@
             const ctx = canvas.getContext('2d');
 
             const filteredProposicoes = getFilteredProposicoes();
-
-            // Chart shows 5 valoração types
-            const data = {
-                nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
-                parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
-                prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
-            };
+            const data = getDashboardValoracaoStats(filteredProposicoes);
 
             const colors = {
-                nova: '#9e9e9e',           // Cinza - nova (sem avaliação ainda)
-                finalizada: '#28a745',      // Verde - cumprida
-                parcial: '#ff9800',         // Laranja - parcialmente cumprida
-                emAndamento: '#dc3545',    // Vermelho - não cumprida
-                prejudicada: '#6c757d'      // Cinza escuro - prejudicada
+                sem_avaliacao: '#9e9e9e',
+                necessita_informacoes: '#ff9800',
+                satisfeita: '#28a745',
+                prejudicada: '#6c757d'
             };
 
             const labels = {
-                nova: 'Nova',
-                finalizada: 'Finalizada',
-                parcial: 'Parcial',
-                emAndamento: 'Em Andamento',
+                sem_avaliacao: 'Sem Avaliação',
+                necessita_informacoes: 'Nec. Inform.',
+                satisfeita: 'Satisfeita',
                 prejudicada: 'Prejudicada'
             };
 
@@ -1047,8 +1032,8 @@
             canvas.width = canvas.offsetWidth;
             canvas.height = 300;
 
-            // Calculate bar width and spacing (5 bars)
-            const barWidth = (canvas.width - 100) / 5;
+            // Calculate bar width and spacing (4 bars)
+            const barWidth = (canvas.width - 100) / 4;
             const maxValue = Math.max(...Object.values(data));
             const heightRatio = (canvas.height - 80) / (maxValue || 1);
 
@@ -1079,41 +1064,49 @@
             });
         }
 
-        // Populate Dashboard Correição Filter
-        function populateDashboardCorreicaoFilter() {
-            const select = document.getElementById('dashboardCorreicaoFilter');
+        // Populate Dashboard Ramo do MP Filter
+        function populateDashboardRamoMPFilter() {
+            const select = document.getElementById('dashboardRamoMPFilter');
             if (!select) return;
 
-            // Obter correições filtradas por ramoMP do usuário (sem aplicar o filtro de dashboard)
+            // Obter correições disponíveis com base no perfil do usuário
             let availableCorreicoes = correicoes;
             if (currentUser && currentUser.type !== 'admin') {
                 availableCorreicoes = correicoes.filter(c => c.ramoMP === currentUser.ramoMP);
             }
 
-            // Limpar opções existentes (exceto "Todas")
-            select.innerHTML = '<option value="">Todas as Correições</option>';
+            // Extrair ramos do MP únicos
+            const uniqueRamosMPs = [...new Set(availableCorreicoes.map(c => c.ramoMP))];
 
-            // Adicionar correições disponíveis
-            availableCorreicoes.forEach(c => {
+            // Ordenar alfabeticamente
+            uniqueRamosMPs.sort();
+
+            // Limpar opções existentes (exceto "Todos")
+            select.innerHTML = '<option value="">Todos os Ramos do MP</option>';
+
+            // Adicionar ramos do MP disponíveis
+            uniqueRamosMPs.forEach(ramoMP => {
+                // Encontrar uma correição deste ramo para obter o nome completo
+                const correicao = availableCorreicoes.find(c => c.ramoMP === ramoMP);
                 const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = `${c.numero} - ${c.ramoMPNome}`;
+                option.value = ramoMP;
+                option.textContent = `${ramoMP} - ${correicao.ramoMPNome}`;
                 select.appendChild(option);
             });
 
             // Restaurar seleção atual se existir
-            if (dashboardCorreicaoFilter) {
-                select.value = dashboardCorreicaoFilter;
+            if (dashboardRamoMPFilter) {
+                select.value = dashboardRamoMPFilter;
             }
         }
 
-        // Filtrar Dashboard por Correição
-        function filtrarDashboardPorCorreicao() {
-            const select = document.getElementById('dashboardCorreicaoFilter');
+        // Filtrar Dashboard por Ramo do MP
+        function filtrarDashboardPorRamoMP() {
+            const select = document.getElementById('dashboardRamoMPFilter');
             if (!select) return;
 
             // Atualizar filtro global
-            dashboardCorreicaoFilter = select.value || null;
+            dashboardRamoMPFilter = select.value || null;
 
             // Recalcular dashboard
             updateDashboard();
@@ -1153,45 +1146,26 @@
         function exportarDashboardJSON() {
             const filteredCorreicoes = getFilteredCorreicoes();
             const filteredProposicoes = getFilteredProposicoes();
+            const statusProcessual = getDashboardWorkflowStats(filteredProposicoes);
+            const valoracao = getDashboardValoracaoStats(filteredProposicoes);
 
             // Calcular estatísticas
             const totalCorreicoes = filteredCorreicoes.length;
             const correicoesAtivas = filteredCorreicoes.filter(c => c.status === 'ativo').length;
             const totalProposicoes = filteredProposicoes.length;
-            const proposicoesAtivas = filteredProposicoes.filter(p =>
-                hasStatusProcessual(p, 'pendente') ||
-                hasStatusProcessual(p, 'aguardando_comprovacao') ||
-                hasStatusProcessual(p, 'em_analise')
-            ).length;
+            const proposicoesAtivas = totalProposicoes - statusProcessual.encerrada;
             const prazoVencido = filteredProposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
 
-            // Calcular distribuição por status processual
-            const statusProcessual = {
-                pendente: filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                aguardando_comprovacao: filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
-                em_analise: filteredProposicoes.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                encerrada: filteredProposicoes.filter(p => hasStatusProcessual(p, 'encerrada')).length
-            };
-
-            // Calcular distribuição por valoração
-            const valoracao = {
-                nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
-                parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
-                prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
-            };
-
             // Obter nome do filtro aplicado
-            const filtroCorreicao = dashboardCorreicaoFilter
-                ? correicoes.find(c => c.id === parseInt(dashboardCorreicaoFilter))?.numero || 'Desconhecida'
-                : 'Todas as Correições';
+            const filtroRamoMP = dashboardRamoMPFilter
+                ? correicoes.find(c => c.ramoMP === dashboardRamoMPFilter)?.ramoMPNome || 'Desconhecido'
+                : 'Todos os Ramos do MP';
 
             // Montar objeto de exportação
             const exportData = {
                 titulo: 'Dashboard CNMP - Sistema de Acompanhamento de Proposições',
                 dataExportacao: new Date().toISOString(),
-                filtroAplicado: filtroCorreicao,
+                filtroAplicado: filtroRamoMP,
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Admin',
                 estatisticas: {
                     totalCorreicoes,
@@ -1231,38 +1205,19 @@
         function exportarDashboardPDF() {
             const filteredCorreicoes = getFilteredCorreicoes();
             const filteredProposicoes = getFilteredProposicoes();
+            const statusProcessual = getDashboardWorkflowStats(filteredProposicoes);
+            const valoracao = getDashboardValoracaoStats(filteredProposicoes);
 
             // Calcular estatísticas
             const totalCorreicoes = filteredCorreicoes.length;
             const correicoesAtivas = filteredCorreicoes.filter(c => c.status === 'ativo').length;
             const totalProposicoes = filteredProposicoes.length;
-            const proposicoesAtivas = filteredProposicoes.filter(p =>
-                hasStatusProcessual(p, 'pendente') ||
-                hasStatusProcessual(p, 'aguardando_comprovacao') ||
-                hasStatusProcessual(p, 'em_analise')
-            ).length;
+            const proposicoesAtivas = totalProposicoes - statusProcessual.encerrada;
             const prazoVencido = filteredProposicoes.filter(p => isPrazoComprovacaoVencido(p)).length;
 
-            // Calcular distribuição por status processual
-            const statusProcessual = {
-                pendente: filteredProposicoes.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                aguardando_comprovacao: filteredProposicoes.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
-                em_analise: filteredProposicoes.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                encerrada: filteredProposicoes.filter(p => hasStatusProcessual(p, 'encerrada')).length
-            };
-
-            // Calcular distribuição por valoração
-            const valoracao = {
-                nova: filteredProposicoes.filter(p => hasValoracao(p, 'nova')).length,
-                finalizada: filteredProposicoes.filter(p => hasValoracao(p, 'finalizada')).length,
-                parcial: filteredProposicoes.filter(p => hasValoracao(p, 'parcial')).length,
-                emAndamento: filteredProposicoes.filter(p => hasValoracao(p, 'em_andamento')).length,
-                prejudicada: filteredProposicoes.filter(p => hasValoracao(p, 'prejudicada')).length
-            };
-
-            const filtroCorreicao = dashboardCorreicaoFilter
-                ? correicoes.find(c => c.id === parseInt(dashboardCorreicaoFilter))?.numero || 'Desconhecida'
-                : 'Todas as Correições';
+            const filtroRamoMP = dashboardRamoMPFilter
+                ? correicoes.find(c => c.ramoMP === dashboardRamoMPFilter)?.ramoMPNome || 'Desconhecido'
+                : 'Todos os Ramos do MP';
 
             // Criar janela de impressão com HTML formatado
             const printWindow = window.open('', '', 'width=800,height=600');
@@ -1387,7 +1342,7 @@
 
                     <div class="info-section">
                         <p><strong>Data de Exportação:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</p>
-                        <p><strong>Filtro Aplicado:</strong> ${filtroCorreicao}</p>
+                        <p><strong>Filtro Aplicado:</strong> ${filtroRamoMP}</p>
                         <p><strong>Usuário:</strong> ${currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)'}</p>
                     </div>
 
@@ -1425,16 +1380,16 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Pendente</td>
-                                <td>${statusProcessual.pendente}</td>
+                                <td>Pendente Publicação</td>
+                                <td>${statusProcessual.pendente_publicacao}</td>
                             </tr>
                             <tr>
                                 <td>Aguardando Comprovação</td>
                                 <td>${statusProcessual.aguardando_comprovacao}</td>
                             </tr>
                             <tr>
-                                <td>Em Análise</td>
-                                <td>${statusProcessual.em_analise}</td>
+                                <td>Pendente Avaliação</td>
+                                <td>${statusProcessual.pendente_avaliacao}</td>
                             </tr>
                             <tr>
                                 <td>Encerrada</td>
@@ -1453,20 +1408,16 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Nova</td>
-                                <td>${valoracao.nova}</td>
+                                <td>Sem Avaliação</td>
+                                <td>${valoracao.sem_avaliacao}</td>
                             </tr>
                             <tr>
-                                <td>Finalizada</td>
-                                <td>${valoracao.finalizada}</td>
+                                <td>Necessita Informações</td>
+                                <td>${valoracao.necessita_informacoes}</td>
                             </tr>
                             <tr>
-                                <td>Parcial</td>
-                                <td>${valoracao.parcial}</td>
-                            </tr>
-                            <tr>
-                                <td>Em Andamento</td>
-                                <td>${valoracao.emAndamento}</td>
+                                <td>Satisfeita</td>
+                                <td>${valoracao.satisfeita}</td>
                             </tr>
                             <tr>
                                 <td>Prejudicada</td>
@@ -1523,24 +1474,34 @@
             return filtered;
         }
 
+        function getCorreicaoTableStats(correicaoId) {
+            const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === correicaoId);
+
+            return {
+                totalProposicoes: proposicoesCorreicao.length,
+                pendentePublicacao: proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'pendente_publicacao').length,
+                pendenteAvaliacao: proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'pendente_avaliacao').length,
+                prazoVencido: proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length,
+                proposicoes: proposicoesCorreicao
+            };
+        }
+
         // Exportar Correições em JSON
         function exportarCorreicoesJSON() {
             const correicoesFiltered = getCorreicoesFiltradas();
 
             // Enriquecer com estatísticas
             const correicoesComEstatisticas = correicoesFiltered.map(c => {
-                const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
+                const stats = getCorreicaoTableStats(c.id);
                 return {
                     ...c,
                     estatisticas: {
-                        totalProposicoes: proposicoesCorreicao.length,
-                        pendentes: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                        aguardandoComprovacao: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
-                        emAnalise: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                        encerradas: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'encerrada')).length,
-                        prazoVencido: proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length
+                        totalProposicoes: stats.totalProposicoes,
+                        pendentePublicacao: stats.pendentePublicacao,
+                        pendenteAvaliacao: stats.pendenteAvaliacao,
+                        prazoVencido: stats.prazoVencido
                     },
-                    proposicoes: proposicoesCorreicao
+                    proposicoes: stats.proposicoes
                 };
             });
 
@@ -1579,16 +1540,10 @@
             const correicoesFiltered = getCorreicoesFiltradas();
 
             // Calcular estatísticas
-            const correicoesComStats = correicoesFiltered.map(c => {
-                const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
-                return {
-                    correicao: c,
-                    totalProposicoes: proposicoesCorreicao.length,
-                    pendentes: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                    emAnalise: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                    prazoVencido: proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length
-                };
-            });
+            const correicoesComStats = correicoesFiltered.map(c => ({
+                correicao: c,
+                ...getCorreicaoTableStats(c.id)
+            }));
 
             const printWindow = window.open('', '', 'width=900,height=700');
             printWindow.document.write(`
@@ -1682,8 +1637,8 @@
                                 <th>UF</th>
                                 <th>Ramo do MP</th>
                                 <th>Total Prop.</th>
-                                <th>Pendente</th>
-                                <th>Em Análise</th>
+                                <th>Pendente Publicação</th>
+                                <th>Pendente Avaliação</th>
                                 <th>Prazo Vencido</th>
                                 <th>Status</th>
                             </tr>
@@ -1701,8 +1656,8 @@
                                     <td>${ufDisplay || '-'}</td>
                                     <td>${c.ramoMPNome}</td>
                                     <td style="text-align: center;">${item.totalProposicoes}</td>
-                                    <td style="text-align: center;" class="${item.pendentes > 0 ? 'highlight-yellow' : ''}">${item.pendentes}</td>
-                                    <td style="text-align: center;" class="${item.emAnalise > 0 ? 'highlight-blue' : ''}">${item.emAnalise}</td>
+                                    <td style="text-align: center;" class="${item.pendentePublicacao > 0 ? 'highlight-yellow' : ''}">${item.pendentePublicacao}</td>
+                                    <td style="text-align: center;" class="${item.pendenteAvaliacao > 0 ? 'highlight-blue' : ''}">${item.pendenteAvaliacao}</td>
                                     <td style="text-align: center;" class="${item.prazoVencido > 0 ? 'highlight-red' : ''}">${item.prazoVencido}</td>
                                     <td class="status-${c.status}">${c.status === 'ativo' ? 'Ativo' : 'Inativo'}</td>
                                 </tr>
@@ -1867,17 +1822,19 @@
                     </div>
 
                     ${correicoesFiltered.map(c => {
-                        const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
-                        const totalProposicoes = proposicoesCorreicao.length;
-                        const pendentes = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length;
-                        const aguardando = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length;
-                        const emAnalise = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'em_analise')).length;
-                        const encerradas = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'encerrada')).length;
-                        const prazoVencido = proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length;
+                        const stats = getCorreicaoTableStats(c.id);
+                        const proposicoesCorreicao = stats.proposicoes;
+                        const totalProposicoes = stats.totalProposicoes;
+                        const pendentePublicacao = stats.pendentePublicacao;
+                        const pendenteAvaliacao = stats.pendenteAvaliacao;
+                        const prazoVencido = stats.prazoVencido;
+                        const aguardando = proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'aguardando_comprovacao').length;
+                        const encerradas = proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'encerrada').length;
 
-                        const finalizada = proposicoesCorreicao.filter(p => hasValoracao(p, 'finalizada')).length;
-                        const parcial = proposicoesCorreicao.filter(p => hasValoracao(p, 'parcial')).length;
-                        const emAndamento = proposicoesCorreicao.filter(p => hasValoracao(p, 'em_andamento')).length;
+                        const semAvaliacao = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'sem_avaliacao').length;
+                        const necessitaInformacoes = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'necessita_informacoes').length;
+                        const satisfeita = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'satisfeita').length;
+                        const prejudicada = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'prejudicada').length;
 
                         const ufDisplay = Array.isArray(c.uf) ? c.uf.join(', ') : c.uf;
 
@@ -1916,19 +1873,19 @@
                                         <div class="value">${totalProposicoes}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Pendente</div>
-                                        <div class="value" style="color: #ffc107;">${pendentes}</div>
+                                        <div class="label">Pendente Publicação</div>
+                                        <div class="value" style="color: #ffc107;">${pendentePublicacao}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Aguardando</div>
+                                        <div class="label">Aguardando Comprovação</div>
                                         <div class="value" style="color: #fd7e14;">${aguardando}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Em Análise</div>
-                                        <div class="value" style="color: #0066cc;">${emAnalise}</div>
+                                        <div class="label">Pendente Avaliação</div>
+                                        <div class="value" style="color: #0066cc;">${pendenteAvaliacao}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Encerradas</div>
+                                        <div class="label">Encerrada</div>
                                         <div class="value" style="color: #003366;">${encerradas}</div>
                                     </div>
                                     <div class="stat-box">
@@ -1940,16 +1897,20 @@
                                 <h3 style="color: #003366; font-size: 14px; margin: 15px 0 10px 0;">Valoração</h3>
                                 <div class="stats-grid">
                                     <div class="stat-box">
-                                        <div class="label">Finalizada</div>
-                                        <div class="value" style="color: #28a745;">${finalizada}</div>
+                                        <div class="label">Sem Avaliação</div>
+                                        <div class="value" style="color: #9e9e9e;">${semAvaliacao}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Parcial</div>
-                                        <div class="value" style="color: #ffc107;">${parcial}</div>
+                                        <div class="label">Necessita Informações</div>
+                                        <div class="value" style="color: #ff9800;">${necessitaInformacoes}</div>
                                     </div>
                                     <div class="stat-box">
-                                        <div class="label">Em Andamento</div>
-                                        <div class="value" style="color: #dc3545;">${emAndamento}</div>
+                                        <div class="label">Satisfeita</div>
+                                        <div class="value" style="color: #28a745;">${satisfeita}</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="label">Prejudicada</div>
+                                        <div class="value" style="color: #6c757d;">${prejudicada}</div>
                                     </div>
                                 </div>
                             </div>
@@ -2546,21 +2507,21 @@
             const correicao = correicoes.find(c => c.id === id);
             if (!correicao) return;
 
-            const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === id);
-            const totalProposicoes = proposicoesCorreicao.length;
+            const stats = getCorreicaoTableStats(id);
+            const proposicoesCorreicao = stats.proposicoes;
+            const totalProposicoes = stats.totalProposicoes;
 
             // Status Processual
-            const pendentes = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length;
-            const aguardandoComprovacao = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length;
-            const emAnalise = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'em_analise')).length;
-            const encerradas = proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'encerrada')).length;
+            const pendentePublicacao = stats.pendentePublicacao;
+            const aguardandoComprovacao = proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'aguardando_comprovacao').length;
+            const pendenteAvaliacao = stats.pendenteAvaliacao;
+            const encerradas = proposicoesCorreicao.filter(p => getCanonicalStatusProcessual(p) === 'encerrada').length;
 
             // Valoração
-            const novas = proposicoesCorreicao.filter(p => hasValoracao(p, 'nova')).length;
-            const finalizadas = proposicoesCorreicao.filter(p => hasValoracao(p, 'finalizada')).length;
-            const parciais = proposicoesCorreicao.filter(p => hasValoracao(p, 'parcial')).length;
-            const emAndamentos = proposicoesCorreicao.filter(p => hasValoracao(p, 'em_andamento')).length;
-            const prejudicadas = proposicoesCorreicao.filter(p => hasValoracao(p, 'prejudicada')).length;
+            const novas = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'sem_avaliacao').length;
+            const necessitaInformacoes = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'necessita_informacoes').length;
+            const satisfeitas = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'satisfeita').length;
+            const prejudicadas = proposicoesCorreicao.filter(p => getCanonicalValoracao(p) === 'prejudicada').length;
 
             // Format UF array
             const ufDisplay = correicao.uf && correicao.uf.length > 0 ? correicao.uf.join(', ') : 'Não informado';
@@ -2624,16 +2585,16 @@
                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
                     <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Status Processual</h4>
                     <div class="detail-row">
-                        <span class="detail-label">Pendente:</span>
-                        <span class="detail-value" style="color: #ffc107; font-weight: 600;">${pendentes}</span>
+                        <span class="detail-label">Pendente Publicação:</span>
+                        <span class="detail-value" style="color: #ffc107; font-weight: 600;">${pendentePublicacao}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Aguardando Comprovação:</span>
                         <span class="detail-value" style="color: #e65100; font-weight: 600;">${aguardandoComprovacao}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Em Análise:</span>
-                        <span class="detail-value" style="color: #0066cc; font-weight: 600;">${emAnalise}</span>
+                        <span class="detail-label">Pendente Avaliação:</span>
+                        <span class="detail-value" style="color: #0066cc; font-weight: 600;">${pendenteAvaliacao}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Encerrada:</span>
@@ -2644,20 +2605,16 @@
                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
                     <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Valoração</h4>
                     <div class="detail-row">
-                        <span class="detail-label">Nova:</span>
+                        <span class="detail-label">Sem Avaliação:</span>
                         <span class="detail-value" style="color: #9e9e9e; font-weight: 600;">${novas}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Finalizada:</span>
-                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">${finalizadas}</span>
+                        <span class="detail-label">Necessita Informações:</span>
+                        <span class="detail-value" style="color: #ff9800; font-weight: 600;">${necessitaInformacoes}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">Parcial:</span>
-                        <span class="detail-value" style="color: #ff9800; font-weight: 600;">${parciais}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Em Andamento:</span>
-                        <span class="detail-value" style="color: var(--danger-color); font-weight: 600;">${emAndamentos}</span>
+                        <span class="detail-label">Satisfeita:</span>
+                        <span class="detail-value" style="color: var(--success-color); font-weight: 600;">${satisfeitas}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Prejudicada:</span>
@@ -2751,9 +2708,9 @@
                     membro,
                     totalCorreicoes: correicoesDoMembro.length,
                     totalProposicoes: proposicoesDoMembro.length,
-                    pendentes: proposicoesDoMembro.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                    aguardandoComprovacao: proposicoesDoMembro.filter(p => hasStatusProcessual(p, 'aguardando_comprovacao')).length,
-                    emAnalise: proposicoesDoMembro.filter(p => hasStatusProcessual(p, 'em_analise')).length
+                    pendentePublicacao: proposicoesDoMembro.filter(p => getCanonicalStatusProcessual(p) === 'pendente_publicacao').length,
+                    aguardandoComprovacao: proposicoesDoMembro.filter(p => getCanonicalStatusProcessual(p) === 'aguardando_comprovacao').length,
+                    pendenteAvaliacao: proposicoesDoMembro.filter(p => getCanonicalStatusProcessual(p) === 'pendente_avaliacao').length
                 };
             });
 
@@ -2762,15 +2719,12 @@
 
         // Render dashboard de membros auxiliares
         function renderDashboardMembrosAuxiliares() {
-            const container = document.getElementById('dashboardMembrosAuxiliares');
+            const container = document.getElementById('dashboardMembrosAuxiliaresCards');
             if (!container) return;
 
             const stats = calcularEstatisticasPorMembro();
 
             container.innerHTML = `
-                <h3 style="color: var(--primary-color); margin-bottom: 1.5rem; font-size: 1.3rem;">
-                    Distribuição de Proposições por Membro Auxiliar
-                </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                     ${stats.map(stat => `
                         <div class="card" style="background: linear-gradient(135deg, var(--primary-color) 0%, #004080 100%); color: white;">
@@ -2795,10 +2749,10 @@
                             <div style="display: flex; justify-content: space-between; gap: 0.5rem;">
                                 <div style="flex: 1; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 0.5rem; text-align: center;">
                                     <div style="font-size: 1.5rem; font-weight: 600; color: #ffc107;">
-                                        ${stat.pendentes}
+                                        ${stat.pendentePublicacao}
                                     </div>
                                     <div style="font-size: 0.75rem; opacity: 0.9;">
-                                        Pendente
+                                        Pendente Publicação
                                     </div>
                                 </div>
                                 <div style="flex: 1; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 0.5rem; text-align: center;">
@@ -2806,15 +2760,15 @@
                                         ${stat.aguardandoComprovacao}
                                     </div>
                                     <div style="font-size: 0.75rem; opacity: 0.9;">
-                                        Aguardando
+                                        Aguardando Comprovação
                                     </div>
                                 </div>
                                 <div style="flex: 1; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 0.5rem; text-align: center;">
                                     <div style="font-size: 1.5rem; font-weight: 600; color: #4fc3f7;">
-                                        ${stat.emAnalise}
+                                        ${stat.pendenteAvaliacao}
                                     </div>
                                     <div style="font-size: 0.75rem; opacity: 0.9;">
-                                        Em Análise
+                                        Pendente Avaliação
                                     </div>
                                 </div>
                             </div>
@@ -2849,13 +2803,9 @@
 
             // Pre-calculate statistics for sorting
             const correicoesWithStats = filtered.map(c => {
-                const proposicoesCorreicao = proposicoes.filter(p => p.correicaoId === c.id);
                 return {
                     correicao: c,
-                    totalProposicoes: proposicoesCorreicao.length,
-                    pendentes: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'pendente')).length,
-                    emAnalise: proposicoesCorreicao.filter(p => hasStatusProcessual(p, 'em_analise')).length,
-                    prazoVencido: proposicoesCorreicao.filter(p => isPrazoComprovacaoVencido(p)).length
+                    ...getCorreicaoTableStats(c.id)
                 };
             });
 
@@ -2873,13 +2823,13 @@
                             valueA = a.totalProposicoes;
                             valueB = b.totalProposicoes;
                             break;
-                        case 'pendentes':
-                            valueA = a.pendentes;
-                            valueB = b.pendentes;
+                        case 'pendentePublicacao':
+                            valueA = a.pendentePublicacao;
+                            valueB = b.pendentePublicacao;
                             break;
-                        case 'emAnalise':
-                            valueA = a.emAnalise;
-                            valueB = b.emAnalise;
+                        case 'pendenteAvaliacao':
+                            valueA = a.pendenteAvaliacao;
+                            valueB = b.pendenteAvaliacao;
                             break;
                         case 'prazoVencido':
                             valueA = a.prazoVencido;
@@ -2905,8 +2855,8 @@
             tbody.innerHTML = correicoesWithStats.map(item => {
                 const c = item.correicao;
                 const totalProposicoes = item.totalProposicoes;
-                const pendentes = item.pendentes;
-                const emAnalise = item.emAnalise;
+                const pendentePublicacao = item.pendentePublicacao;
+                const pendenteAvaliacao = item.pendenteAvaliacao;
                 const prazoVencido = item.prazoVencido;
 
                 // Format UF array
@@ -2921,8 +2871,8 @@
                     : '<span class="badge badge-finalizada">Inativo</span>';
 
                 // Estilo para células de contagem com destaque visual
-                const pendenteStyle = pendentes > 0 ? 'style="color: #ffc107; font-weight: 600;"' : '';
-                const emAnaliseStyle = emAnalise > 0 ? 'style="color: #0066cc; font-weight: 600;"' : '';
+                const pendentePublicacaoStyle = pendentePublicacao > 0 ? 'style="color: #ffc107; font-weight: 600;"' : '';
+                const pendenteAvaliacaoStyle = pendenteAvaliacao > 0 ? 'style="color: #0066cc; font-weight: 600;"' : '';
                 const prazoVencidoStyle = prazoVencido > 0 ? 'style="color: var(--danger-color); font-weight: 600;"' : '';
 
                 return `
@@ -2936,8 +2886,8 @@
                         <td>${c.ramoMP}</td>
                         <td>${membroAuxiliar}</td>
                         <td>${totalProposicoes}</td>
-                        <td ${pendenteStyle}>${pendentes}</td>
-                        <td ${emAnaliseStyle}>${emAnalise}</td>
+                        <td ${pendentePublicacaoStyle}>${pendentePublicacao}</td>
+                        <td ${pendenteAvaliacaoStyle}>${pendenteAvaliacao}</td>
                         <td ${prazoVencidoStyle}>${prazoVencido}</td>
                         <td>${statusBadge}</td>
                         <td>
@@ -2951,7 +2901,7 @@
 
         // Update sort indicators in table headers
         function updateCorreicoesSortIndicators() {
-            const sortableColumns = ['numero', 'totalProposicoes', 'pendentes', 'emAnalise', 'prazoVencido'];
+            const sortableColumns = ['numero', 'totalProposicoes', 'pendentePublicacao', 'pendenteAvaliacao', 'prazoVencido'];
             sortableColumns.forEach(col => {
                 const th = document.getElementById(`th-correicao-${col}`);
                 if (!th) return;
@@ -3393,7 +3343,7 @@
 
             correicoes.push(newCorreicao);
             saveToLocalStorage();
-            populateDashboardCorreicaoFilter();
+            populateDashboardRamoMPFilter();
             updateDashboard();
             renderDashboardMembrosAuxiliares();
             renderCorreicoesTable();
@@ -3556,7 +3506,7 @@
             saveToLocalStorage();
 
             // Update all UI components
-            populateDashboardCorreicaoFilter();
+            populateDashboardRamoMPFilter();
             updateDashboard();
             renderDashboardMembrosAuxiliares();
             renderCorreicoesTable();
@@ -3609,6 +3559,60 @@
             checkboxes.forEach(cb => cb.checked = false);
         }
 
+        function normalizeStatusProcessualForDashboard(statusProcessual) {
+            const statusMap = {
+                'pendente': 'pendente_publicacao',
+                'pendente_publicacao': 'pendente_publicacao',
+                'aguardando_comprovacao': 'aguardando_comprovacao',
+                'em_analise': 'pendente_avaliacao',
+                'pendente_avaliacao': 'pendente_avaliacao',
+                'encerrada': 'encerrada'
+            };
+
+            return statusMap[statusProcessual] || 'pendente_publicacao';
+        }
+
+        function normalizeValoracaoForDashboard(valoracao) {
+            const valoracaoMap = {
+                'nova': 'sem_avaliacao',
+                'sem_avaliacao': 'sem_avaliacao',
+                'parcial': 'necessita_informacoes',
+                'em_andamento': 'necessita_informacoes',
+                'necessita_informacoes': 'necessita_informacoes',
+                'finalizada': 'satisfeita',
+                'satisfeita': 'satisfeita',
+                'prejudicada': 'prejudicada'
+            };
+
+            return valoracaoMap[valoracao] || 'sem_avaliacao';
+        }
+
+        function getCanonicalStatusProcessual(proposicao) {
+            return normalizeStatusProcessualForDashboard(getStatusProcessual(proposicao));
+        }
+
+        function getCanonicalValoracao(proposicao) {
+            return normalizeValoracaoForDashboard(getValoracao(proposicao));
+        }
+
+        function getDashboardWorkflowStats(proposicoesFiltradas) {
+            return {
+                pendente_publicacao: proposicoesFiltradas.filter(p => getCanonicalStatusProcessual(p) === 'pendente_publicacao').length,
+                aguardando_comprovacao: proposicoesFiltradas.filter(p => getCanonicalStatusProcessual(p) === 'aguardando_comprovacao').length,
+                pendente_avaliacao: proposicoesFiltradas.filter(p => getCanonicalStatusProcessual(p) === 'pendente_avaliacao').length,
+                encerrada: proposicoesFiltradas.filter(p => getCanonicalStatusProcessual(p) === 'encerrada').length
+            };
+        }
+
+        function getDashboardValoracaoStats(proposicoesFiltradas) {
+            return {
+                sem_avaliacao: proposicoesFiltradas.filter(p => getCanonicalValoracao(p) === 'sem_avaliacao').length,
+                necessita_informacoes: proposicoesFiltradas.filter(p => getCanonicalValoracao(p) === 'necessita_informacoes').length,
+                satisfeita: proposicoesFiltradas.filter(p => getCanonicalValoracao(p) === 'satisfeita').length,
+                prejudicada: proposicoesFiltradas.filter(p => getCanonicalValoracao(p) === 'prejudicada').length
+            };
+        }
+
         // Utility functions
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -3620,14 +3624,19 @@
             const labels = {
                 // Conjunto 1: Status Processual
                 'pendente': 'Pendente',
+                'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
                 'em_analise': 'Em Análise',
+                'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
                 // Conjunto 2: Valoração
                 'nova': 'Nova',
+                'sem_avaliacao': 'Sem Avaliação',
                 'finalizada': 'Finalizada',
                 'parcial': 'Parcial',
                 'em_andamento': 'Em Andamento',
+                'necessita_informacoes': 'Necessita Informações',
+                'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'
             };
             return labels[status] || status;

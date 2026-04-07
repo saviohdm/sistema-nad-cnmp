@@ -147,12 +147,12 @@
                         </div>
                     </div>
 
-                    <!-- Filtro de Correição -->
+                    <!-- Filtro de Ramo do MP -->
                     <div style="background: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <label for="dashboardCorreicaoFilter" style="font-weight: 600; color: var(--primary-color); white-space: nowrap;">Filtrar por Correição:</label>
-                            <select id="dashboardCorreicaoFilter" onchange="filtrarDashboardPorCorreicao()" style="flex: 1; max-width: 500px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
-                                <option value="">Todas as Correições</option>
+                            <label for="dashboardRamoMPFilter" style="font-weight: 600; color: var(--primary-color); white-space: nowrap;">Filtrar por Ramo do MP:</label>
+                            <select id="dashboardRamoMPFilter" onchange="filtrarDashboardPorRamoMP()" style="flex: 1; max-width: 500px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
+                                <option value="">Todos os Ramos do MP</option>
                             </select>
                         </div>
                     </div>
@@ -207,6 +207,9 @@
                     <div class="charts-grid">
                         <div class="chart-container">
                             <h3 class="chart-title">Fluxo de Trabalho</h3>
+                            <p style="margin: -0.5rem 0 1rem 0; color: var(--text-muted); font-size: 0.9rem;">
+                                Distribuição das proposições por status processual do ciclo oficial.
+                            </p>
                             <div class="chart-wrapper">
                                 <canvas id="statusChart"></canvas>
                             </div>
@@ -214,6 +217,9 @@
 
                         <div class="chart-container">
                             <h3 class="chart-title">Valoração</h3>
+                            <p style="margin: -0.5rem 0 1rem 0; color: var(--text-muted); font-size: 0.9rem;">
+                                Resultado qualitativo consolidado da avaliação das proposições.
+                            </p>
                             <div class="chart-wrapper">
                                 <canvas id="valoracaoChart"></canvas>
                             </div>
@@ -303,7 +309,19 @@
 
                     <!-- Dashboard de Membros Auxiliares -->
                     <div id="dashboardMembrosAuxiliares" style="margin-bottom: 2.5rem; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <!-- Populated by JavaScript -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                            <div>
+                                <h3 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.3rem;">
+                                    Distribuição de Proposições por Membro Auxiliar
+                                </h3>
+                                <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                                    Visão consolidada das correições vinculadas a cada membro auxiliar, com destaque para o volume total de proposições e a distribuição por status processual.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="dashboardMembrosAuxiliaresCards">
+                            <!-- Populated by JavaScript -->
+                        </div>
                     </div>
 
                     <div class="table-container">
@@ -334,11 +352,11 @@
                                     <th id="th-correicao-totalProposicoes" class="sortable" onclick="sortCorreicoesBy('totalProposicoes')" style="cursor: pointer;">
                                         Total de Proposições <span class="sort-icon">⇅</span>
                                     </th>
-                                    <th id="th-correicao-pendentes" class="sortable" onclick="sortCorreicoesBy('pendentes')" style="cursor: pointer;">
-                                        Pendente <span class="sort-icon">⇅</span>
+                                    <th id="th-correicao-pendentePublicacao" class="sortable" onclick="sortCorreicoesBy('pendentePublicacao')" style="cursor: pointer;">
+                                        Pendente Publicação <span class="sort-icon">⇅</span>
                                     </th>
-                                    <th id="th-correicao-emAnalise" class="sortable" onclick="sortCorreicoesBy('emAnalise')" style="cursor: pointer;">
-                                        Em Análise <span class="sort-icon">⇅</span>
+                                    <th id="th-correicao-pendenteAvaliacao" class="sortable" onclick="sortCorreicoesBy('pendenteAvaliacao')" style="cursor: pointer;">
+                                        Pendente Avaliação <span class="sort-icon">⇅</span>
                                     </th>
                                     <th id="th-correicao-prazoVencido" class="sortable" onclick="sortCorreicoesBy('prazoVencido')" style="cursor: pointer;">
                                         Prazo Vencido <span class="sort-icon">⇅</span>
