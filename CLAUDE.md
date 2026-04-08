@@ -11,13 +11,53 @@ Guidance for Claude Code when working with this repository.
 ## Architecture
 
 ### Files
+
+**HTML Pages:**
 - `index.html` - Main SPA (dashboard, correições list, forms)
 - `proposicoes.html` - Standalone propositions management (~840 lines)
 - `publicacao.html` - Batch publishing (admin-only, ~1,100 lines)
 - `avaliacao.html` - Evaluation page (admin-only, 913 lines)
 - `comprovacao.html` - Proof submission page (1,181 lines)
+
+**Styles:**
 - `styles.css` - Shared styles (~1,200 lines)
-- `app.js` - Main logic (~2,700+ lines)
+
+**JavaScript Modules (Modular DDD Architecture):**
+- `app.js` - Core foundation (~1,300 lines)
+  - Global variables: correicoes[], proposicoes[], currentUser, etc.
+  - localStorage persistence (save/load)
+  - Utility functions: text processing, date formatting, modals, navigation
+  - Tags & badges rendering
+  - Correições CRUD operations
+  - Base filters: getFilteredCorreicoes(), getFilteredProposicoes()
+  - Modals: viewDetails(), viewCorreicaoDetails()
+  - Sorting & populate functions
+
+- `js/domain-proposicoes.js` - **Core Domain** (~350 lines)
+  - Status management (bidimensional: statusProcessual + valoração)
+  - Normalization functions (backward compatibility)
+  - Workflow transitions: publicação, comprovação, avaliação
+  - Business rules and invariants
+  - Prazo vencido validation
+
+- `js/ui-dashboard-tables.js` - **Read Model** (~300 lines)
+  - Dashboard: cards, Canvas charts (workflow + valoração)
+  - Statistics calculation (getDashboardWorkflowStats, getDashboardValoracaoStats)
+  - Ramo MP filtering
+  - Membro Auxiliar dashboard
+  - Table rendering functions (delegated to app.js for now)
+
+- `js/export.js` - **Generic Services** (~800 lines)
+  - Export menu control
+  - JSON exports: Dashboard, Correições, Proposição Details
+  - PDF exports: 3 levels (formatted reports with print dialogs)
+  - Helper: getCorreicoesFiltradas()
+
+**Script Loading Order (Critical):**
+1. `app.js` - Loads first (defines globals and utils)
+2. `domain-proposicoes.js` - Depends on app.js globals
+3. `ui-dashboard-tables.js` - Depends on domain-proposicoes.js + app.js
+4. `export.js` - Depends on all previous modules
 
 ### Data Model
 ```

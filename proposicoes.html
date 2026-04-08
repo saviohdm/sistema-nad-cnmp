@@ -290,6 +290,10 @@
         </div>
     </div>
 
+    <script src="app.js"></script>
+    <script src="js/domain-proposicoes.js"></script>
+    <script src="js/ui-dashboard-tables.js"></script>
+    <script src="js/export.js"></script>
     <script>
         // Global data
         let correicoes = [];
@@ -358,31 +362,13 @@
 
         // Helper functions for bidimensional status model
         function normalizeStatusProcessual(statusProcessual) {
-            const statusMap = {
-                'pendente': 'pendente_publicacao',
-                'pendente_publicacao': 'pendente_publicacao',
-                'aguardando_comprovacao': 'aguardando_comprovacao',
-                'em_analise': 'pendente_avaliacao',
-                'pendente_avaliacao': 'pendente_avaliacao',
-                'encerrada': 'encerrada'
-            };
-
-            return statusMap[statusProcessual] || 'pendente_publicacao';
+            const allowedStatuses = ['pendente_publicacao', 'aguardando_comprovacao', 'pendente_avaliacao', 'encerrada'];
+            return allowedStatuses.includes(statusProcessual) ? statusProcessual : 'pendente_publicacao';
         }
 
         function normalizeValoracao(valoracao) {
-            const valoracaoMap = {
-                'nova': 'sem_avaliacao',
-                'sem_avaliacao': 'sem_avaliacao',
-                'parcial': 'necessita_informacoes',
-                'em_andamento': 'necessita_informacoes',
-                'necessita_informacoes': 'necessita_informacoes',
-                'finalizada': 'satisfeita',
-                'satisfeita': 'satisfeita',
-                'prejudicada': 'prejudicada'
-            };
-
-            return valoracaoMap[valoracao] || 'sem_avaliacao';
+            const allowedValoracoes = ['sem_avaliacao', 'necessita_informacoes', 'satisfeita', 'prejudicada'];
+            return allowedValoracoes.includes(valoracao) ? valoracao : 'sem_avaliacao';
         }
 
         function getStatusLabel(status) {
@@ -393,18 +379,11 @@
 
             const labels = {
                 // Conjunto 1: Status Processual
-                'pendente': 'Pendente',
                 'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
-                'em_analise': 'Em Análise',
                 'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
-                // Conjunto 2: Valoração
-                'nova': 'Nova',
                 'sem_avaliacao': 'Sem Avaliação',
-                'finalizada': 'Finalizada',
-                'parcial': 'Parcial',
-                'em_andamento': 'Em Andamento',
                 'necessita_informacoes': 'Necessita Informações',
                 'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'

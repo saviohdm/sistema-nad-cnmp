@@ -241,15 +241,15 @@
                                 <select id="statusFilter">
                                     <option value="">Filtrar por Status/Valoração</option>
                                     <optgroup label="Status Processual">
-                                        <option value="pendente">Pendente</option>
+                                        <option value="pendente_publicacao">Pendente Publicação</option>
                                         <option value="aguardando_comprovacao">Aguardando Comprovação</option>
-                                        <option value="em_analise">Em Análise</option>
+                                        <option value="pendente_avaliacao">Pendente Avaliação</option>
                                         <option value="encerrada">Encerrada</option>
                                     </optgroup>
                                     <optgroup label="Valoração">
-                                        <option value="finalizada">Finalizada</option>
-                                        <option value="parcial">Parcial</option>
-                                        <option value="em_andamento">Em Andamento</option>
+                                        <option value="sem_avaliacao">Sem Avaliação</option>
+                                        <option value="necessita_informacoes">Necessita Informações</option>
+                                        <option value="satisfeita">Satisfeita</option>
                                         <option value="prejudicada">Prejudicada</option>
                                     </optgroup>
                                 </select>
@@ -1014,5 +1014,8 @@
     </div>
 
     <script src="app.js"></script>
+    <script src="js/domain-proposicoes.js"></script>
+    <script src="js/ui-dashboard-tables.js"></script>
+    <script src="js/export.js"></script>
 </body>
 </html>

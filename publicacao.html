@@ -234,99 +234,50 @@
         </div>
     </div>
 
+    <script src="app.js"></script>
+    <script src="js/domain-proposicoes.js"></script>
+    <script src="js/ui-dashboard-tables.js"></script>
+    <script src="js/export.js"></script>
     <script>
-        // Global data
-        let correicoes = [];
-        let proposicoes = [];
-        let currentUser = null;
+        // Use global data from app.js:
+        // - correicoes[], proposicoes[], currentUser, availableTags[]
+        // - loadUserSession(), logout(), loadFromLocalStorage()
+        // - formatDate(), renderStatusBadges(), etc.
+
+        // Local variables for this page
         let selectedProposicoes = new Set(); // Track selected proposition IDs
 
-        // Available tags
-        const availableTags = [
-            { id: 'administrativo', label: 'Administrativo' },
-            { id: 'recursos-humanos', label: 'Recursos Humanos' },
-            { id: 'infraestrutura', label: 'Infraestrutura' },
-            { id: 'tecnologia', label: 'Tecnologia' },
-            { id: 'processual', label: 'Processual' },
-            { id: 'financeiro', label: 'Financeiro' },
-            { id: 'capacitacao', label: 'Capacitação' },
-            { id: 'gestao-documental', label: 'Gestão Documental' },
-            { id: 'compliance', label: 'Compliance' },
-            { id: 'transparencia', label: 'Transparência' },
-            { id: 'outros', label: 'Outros' }
-        ];
+        // Note: correicoes[], proposicoes[], currentUser, loadFromLocalStorage(),
+        // loadUserSession(), logout() are already defined in app.js
 
-        // Load data from localStorage
-        function loadDataFromLocalStorage() {
-            try {
-                const correicoesData = localStorage.getItem('correicoes');
-                const proposicoesData = localStorage.getItem('proposicoes');
+        // Additional validation for this page
+        function validatePageData() {
+            console.log('🔍 validatePageData - checking data...');
+            console.log('🔍 correicoes:', correicoes);
+            console.log('🔍 correicoes.length:', correicoes ? correicoes.length : 'undefined');
+            console.log('🔍 proposicoes:', proposicoes);
+            console.log('🔍 proposicoes.length:', proposicoes ? proposicoes.length : 'undefined');
 
-                if (correicoesData) {
-                    correicoes = JSON.parse(correicoesData);
-                }
-
-                if (proposicoesData) {
-                    proposicoes = JSON.parse(proposicoesData);
-                }
-
-                return true;
-            } catch (error) {
-                console.error('Erro ao carregar dados do localStorage:', error);
-                alert('Erro ao carregar dados. Redirecionando para a página principal.');
+            // Ensure data is loaded from app.js
+            if (!correicoes || correicoes.length === 0 || !proposicoes || proposicoes.length === 0) {
+                console.error('❌ Dados não carregados - redirecionando para index.html');
+                alert('⚠️ Não há dados carregados. Redirecionando para a página principal para inicializar o sistema...');
                 window.location.href = 'index.html';
                 return false;
             }
-        }
-
-        // Load user session
-        function loadUserSession() {
-            try {
-                const userData = localStorage.getItem('currentUser');
-                if (userData) {
-                    currentUser = JSON.parse(userData);
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Erro ao carregar sessão do usuário:', error);
-                return false;
-            }
-        }
-
-        // Logout function
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
+            console.log('✅ validatePageData passou');
+            return true;
         }
 
         // Helper functions for bidimensional status model
         function normalizeStatusProcessual(statusProcessual) {
-            const statusMap = {
-                'pendente': 'pendente_publicacao',
-                'pendente_publicacao': 'pendente_publicacao',
-                'aguardando_comprovacao': 'aguardando_comprovacao',
-                'em_analise': 'pendente_avaliacao',
-                'pendente_avaliacao': 'pendente_avaliacao',
-                'encerrada': 'encerrada'
-            };
-
-            return statusMap[statusProcessual] || 'pendente_publicacao';
+            const allowedStatuses = ['pendente_publicacao', 'aguardando_comprovacao', 'pendente_avaliacao', 'encerrada'];
+            return allowedStatuses.includes(statusProcessual) ? statusProcessual : 'pendente_publicacao';
         }
 
         function normalizeValoracao(valoracao) {
-            const valoracaoMap = {
-                'nova': 'sem_avaliacao',
-                'sem_avaliacao': 'sem_avaliacao',
-                'parcial': 'necessita_informacoes',
-                'em_andamento': 'necessita_informacoes',
-                'necessita_informacoes': 'necessita_informacoes',
-                'finalizada': 'satisfeita',
-                'satisfeita': 'satisfeita',
-                'prejudicada': 'prejudicada'
-            };
-
-            return valoracaoMap[valoracao] || 'sem_avaliacao';
+            const allowedValoracoes = ['sem_avaliacao', 'necessita_informacoes', 'satisfeita', 'prejudicada'];
+            return allowedValoracoes.includes(valoracao) ? valoracao : 'sem_avaliacao';
         }
 
         function getStatusLabel(status) {
@@ -337,18 +288,11 @@
 
             const labels = {
                 // Conjunto 1: Status Processual
-                'pendente': 'Pendente',
                 'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
-                'em_analise': 'Em Análise',
                 'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
-                // Conjunto 2: Valoração
-                'nova': 'Nova',
                 'sem_avaliacao': 'Sem Avaliação',
-                'finalizada': 'Finalizada',
-                'parcial': 'Parcial',
-                'em_andamento': 'Em Andamento',
                 'necessita_informacoes': 'Necessita Informações',
                 'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'
@@ -423,13 +367,27 @@
         // Populate ramo do MP select dropdown
         function populateRamoMPSelect() {
             const select = document.getElementById('ramoMPSelect');
-            if (!select) return;
+            if (!select) {
+                console.error('❌ Elemento ramoMPSelect não encontrado!');
+                return;
+            }
+
+            console.log('📋 populateRamoMPSelect chamada');
+            console.log('📊 Correições disponíveis:', correicoes);
+            console.log('📊 Total de correições:', correicoes ? correicoes.length : 0);
 
             // Admin sempre vê todos os ramos
             const availableCorreicoes = correicoes;
 
+            if (!availableCorreicoes || availableCorreicoes.length === 0) {
+                console.error('❌ Nenhuma correição disponível!');
+                select.innerHTML = '<option value="">Nenhuma correição disponível</option>';
+                return;
+            }
+
             // Extrair ramos do MP únicos
             const uniqueRamosMPs = [...new Set(availableCorreicoes.map(c => c.ramoMP))];
+            console.log('🏛️ Ramos do MP únicos:', uniqueRamosMPs);
 
             // Ordenar alfabeticamente
             uniqueRamosMPs.sort();
@@ -445,7 +403,10 @@
                 option.value = ramoMP;
                 option.textContent = `${ramoMP} - ${correicao.ramoMPNome}`;
                 select.appendChild(option);
+                console.log('✅ Opção adicionada:', option.textContent);
             });
+
+            console.log('✅ populateRamoMPSelect concluída. Total de opções:', select.options.length);
         }
 
         // Populate tag filter
@@ -1219,12 +1180,18 @@
 
         // Initialize page
         function init() {
-            // Load user session
+            console.log('🚀 init() chamada em publicacao.html');
+            console.log('📦 correicoes global:', window.correicoes);
+            console.log('📦 proposicoes global:', window.proposicoes);
+
+            // Load user session (from app.js)
             if (!loadUserSession()) {
                 alert('Sessão expirada. Por favor, faça login novamente.');
                 window.location.href = 'index.html';
                 return;
             }
+
+            console.log('👤 Usuário logado:', currentUser);
 
             // Check if user is admin
             if (currentUser.type !== 'admin') {
@@ -1236,10 +1203,14 @@
             // Display user name
             document.getElementById('userName').textContent = currentUser.username;
 
-            // Load data
-            if (!loadDataFromLocalStorage()) {
+            // Validate data is loaded (from app.js via loadFromLocalStorage)
+            if (!validatePageData()) {
+                console.error('❌ validatePageData falhou');
                 return;
             }
+
+            console.log('✅ Correições carregadas:', correicoes.length);
+            console.log('✅ Proposições carregadas:', proposicoes.length);
 
             // Populate ramo do MP selector
             populateRamoMPSelect();

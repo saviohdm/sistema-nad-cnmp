@@ -371,10 +371,10 @@
                     descricao: 'Implementar sistema digital de protocolo de documentos',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['encerrada', 'finalizada'],
+                    status: ['encerrada', 'satisfeita'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'gestao-documental'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -388,8 +388,8 @@
                             data: '2024-11-20T14:00:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Comprovação aceita. Sistema implementado conforme especificado.',
-                            statusAnterior: ['em_analise', 'nova'],
-                            statusNovo: ['encerrada', 'finalizada']
+                            statusAnterior: ['pendente_avaliacao', 'sem_avaliacao'],
+                            statusNovo: ['encerrada', 'satisfeita']
                         }
                     ]
                 },
@@ -403,10 +403,10 @@
                     descricao: 'Adequar instalações físicas conforme normas de acessibilidade',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'em_andamento'],
+                    status: ['aguardando_comprovacao', 'necessita_informacoes'],
                     prioridade: 'normal',
                     tags: ['infraestrutura', 'compliance'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: [
                         {
                             tipo: 'publicacao',
@@ -414,8 +414,8 @@
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Proposição publicada para comprovação inicial. É necessário adequar todas as instalações físicas da Promotoria de Justiça de Cachoeira conforme normas técnicas de acessibilidade (NBR 9050/2015), incluindo instalação de rampas de acesso, banheiros adaptados, sinalização tátil e elevador acessível.',
                             prazoComprovacao: '2024-08-15',
-                            statusAnterior: ['pendente', 'nova'],
-                            statusNovo: ['aguardando_comprovacao', 'nova']
+                            statusAnterior: ['pendente_publicacao', 'sem_avaliacao'],
+                            statusNovo: ['aguardando_comprovacao', 'sem_avaliacao']
                         },
                         {
                             tipo: 'comprovacao',
@@ -433,18 +433,18 @@
                             tipo: 'avaliacao',
                             data: '2024-08-20T11:15:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'A comprovação apresentada demonstra execução PARCIAL da proposição. Foram constatados avanços significativos com a conclusão da rampa de acesso e adaptação de banheiro, porém permanecem pendentes elementos essenciais:\n\n1. Instalação de elevador acessível (obra estrutural não iniciada)\n2. Adaptação dos demais banheiros do prédio\n3. Sinalização tátil completa em todos os pavimentos\n4. Vagas exclusivas de estacionamento para pessoas com deficiência\n\nDECISÃO: Considerar a proposição como PARCIALMENTE FINALIZADA. A unidade deverá apresentar novo cronograma detalhado com prazos definidos para conclusão integral das adequações, especialmente quanto à instalação do elevador que é item fundamental para acessibilidade vertical do edifício.\n\nDetermino REPUBLICAÇÃO da proposição com novo prazo para apresentação de comprovação da conclusão total das obras.',
-                            statusAnterior: ['em_analise', 'nova'],
-                            statusNovo: ['pendente', 'parcial']
+                            descricao: 'A comprovação apresentada demonstra execução parcial da proposição. Foram constatados avanços significativos com a conclusão da rampa de acesso e adaptação de banheiro, porém permanecem pendentes elementos essenciais:\n\n1. Instalação de elevador acessível (obra estrutural não iniciada)\n2. Adaptação dos demais banheiros do prédio\n3. Sinalização tátil completa em todos os pavimentos\n4. Vagas exclusivas de estacionamento para pessoas com deficiência\n\nDECISÃO: A proposição necessita de informações complementares sobre o cronograma definitivo de conclusão integral das adequações, especialmente quanto à instalação do elevador, item fundamental para a acessibilidade vertical do edifício.\n\nDetermino republicação da proposição com novo prazo para apresentação de comprovação da conclusão total das obras.',
+                            statusAnterior: ['pendente_avaliacao', 'sem_avaliacao'],
+                            statusNovo: ['pendente_publicacao', 'necessita_informacoes']
                         },
                         {
                             tipo: 'publicacao',
                             data: '2024-09-01T10:00:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'REPUBLICAÇÃO: Proposição republicada após avaliação parcial. A unidade deverá comprovar a CONCLUSÃO INTEGRAL das adequações de acessibilidade, com ênfase especial na instalação do elevador acessível e adaptação completa de todos os sanitários. Apresentar cronograma executivo atualizado com marcos de conclusão e relatório fotográfico final.',
+                            descricao: 'REPUBLICAÇÃO: Proposição republicada após avaliação que indicou necessidade de informações complementares. A unidade deverá comprovar a conclusão integral das adequações de acessibilidade, com ênfase especial na instalação do elevador acessível e adaptação completa de todos os sanitários. Apresentar cronograma executivo atualizado com marcos de conclusão e relatório fotográfico final.',
                             prazoComprovacao: '2024-11-30',
-                            statusAnterior: ['pendente', 'parcial'],
-                            statusNovo: ['aguardando_comprovacao', 'parcial']
+                            statusAnterior: ['pendente_publicacao', 'necessita_informacoes'],
+                            statusNovo: ['aguardando_comprovacao', 'necessita_informacoes']
                         },
                         {
                             tipo: 'comprovacao',
@@ -463,18 +463,18 @@
                             tipo: 'avaliacao',
                             data: '2024-12-01T10:00:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'A segunda comprovação apresentada demonstra novamente execução INCOMPLETA da proposição, ainda que com avanços nas adequações de sanitários e sinalização tátil.\n\nEmbora reconheça que a suspensão do processo licitatório configure óbice de natureza administrativa, é responsabilidade da gestão adotar providências alternativas tempestivas para não perpetuar a situação de INADEQUAÇÃO das instalações físicas.\n\nCONSTATAÇÕES:\n✓ Banheiros adaptados: 03 de 05 concluídos (60%)\n✓ Sinalização tátil: 100% concluída\n✓ Vagas estacionamento: 100% concluída\n✗ Elevador acessível: 0% (ITEM CRÍTICO NÃO INICIADO)\n✗ Banheiros pendentes: 02 unidades (40%)\n\nDECISÃO: Considerar EM ANDAMENTO. A ausência de elevador acessível em prédio de múltiplos pavimentos inviabiliza o pleno acesso de pessoas com mobilidade reduzida, configurando descumprimento de norma constitucional e legal.\n\nDETERMINO:\n1. Republicação com novo prazo\n2. Apresentação de plano de ação emergencial\n3. Solução definitiva para a questão do elevador (retomada da licitação ou alternativa técnica)\n4. Conclusão dos 02 banheiros remanescentes',
-                            statusAnterior: ['em_analise', 'parcial'],
-                            statusNovo: ['pendente', 'em_andamento']
+                            descricao: 'A segunda comprovação apresentada demonstra novamente execução incompleta da proposição, ainda que com avanços nas adequações de sanitários e sinalização tátil.\n\nEmbora a suspensão do processo licitatório configure óbice administrativo relevante, permanece a necessidade de comprovar solução concreta e cronograma definitivo para eliminação da inadequação das instalações físicas.\n\nCONSTATAÇÕES:\n✓ Banheiros adaptados: 03 de 05 concluídos (60%)\n✓ Sinalização tátil: 100% concluída\n✓ Vagas estacionamento: 100% concluída\n✗ Elevador acessível: 0% (item crítico não iniciado)\n✗ Banheiros pendentes: 02 unidades (40%)\n\nDECISÃO: A proposição continua necessitando de informações complementares. A ausência de elevador acessível em prédio de múltiplos pavimentos inviabiliza o pleno acesso de pessoas com mobilidade reduzida.\n\nDETERMINO:\n1. Republicação com novo prazo\n2. Apresentação de plano de ação emergencial\n3. Solução definitiva para a questão do elevador\n4. Conclusão dos 02 banheiros remanescentes',
+                            statusAnterior: ['pendente_avaliacao', 'necessita_informacoes'],
+                            statusNovo: ['pendente_publicacao', 'necessita_informacoes']
                         },
                         {
                             tipo: 'publicacao',
                             data: '2024-12-05T09:30:00',
                             usuario: 'Corregedoria Nacional',
-                            descricao: 'SEGUNDA REPUBLICAÇÃO: Proposição republicada após segunda avaliação com resultado EM ANDAMENTO. Exige-se a CONCLUSÃO DEFINITIVA E INTEGRAL de todas as adequações de acessibilidade. ESPECIAL ATENÇÃO para:\n\n1. ELEVADOR ACESSÍVEL - apresentar solução definitiva (retomada licitação ou alternativa técnica aprovada)\n2. Conclusão dos 02 banheiros remanescentes\n3. Plano de ação com cronograma executivo realista\n4. Comprovação fotográfica e documental completa\n\nEsta é a TERCEIRA PUBLICAÇÃO da mesma proposição. O não atendimento integral poderá ensejar outras medidas administrativas cabíveis.',
+                            descricao: 'SEGUNDA REPUBLICAÇÃO: Proposição republicada após segunda avaliação que identificou necessidade de informações complementares. Exige-se a conclusão definitiva e integral de todas as adequações de acessibilidade. Especial atenção para:\n\n1. Elevador acessível, com solução definitiva\n2. Conclusão dos 02 banheiros remanescentes\n3. Plano de ação com cronograma executivo realista\n4. Comprovação fotográfica e documental completa\n\nEsta é a terceira publicação da mesma proposição. O não atendimento integral poderá ensejar outras medidas administrativas cabíveis.',
                             prazoComprovacao: '2025-01-31',
-                            statusAnterior: ['pendente', 'em_andamento'],
-                            statusNovo: ['aguardando_comprovacao', 'em_andamento']
+                            statusAnterior: ['pendente_publicacao', 'necessita_informacoes'],
+                            statusNovo: ['aguardando_comprovacao', 'necessita_informacoes']
                         }
                     ]
                 },
@@ -488,10 +488,10 @@
                     descricao: 'Regularizar processos de gestão de pessoas',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['pendente', 'nova'],
+                    status: ['pendente_publicacao', 'sem_avaliacao'],
                     prioridade: 'urgente',
                     tags: ['recursos-humanos', 'administrativo'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -504,10 +504,10 @@
                     descricao: 'Atualizar inventário patrimonial',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['pendente', 'parcial'],
+                    status: ['pendente_publicacao', 'necessita_informacoes'],
                     prioridade: 'normal',
                     tags: ['financeiro', 'administrativo'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -521,8 +521,8 @@
                             data: '2024-11-12T15:30:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Adimplemento parcial aceito. Necessário completar os 40% restantes.',
-                            statusAnterior: ['em_analise', 'nova'],
-                            statusNovo: ['pendente', 'parcial']
+                            statusAnterior: ['pendente_avaliacao', 'sem_avaliacao'],
+                            statusNovo: ['pendente_publicacao', 'necessita_informacoes']
                         }
                     ]
                 },
@@ -536,10 +536,10 @@
                     descricao: 'Implementar controles internos de correição',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['pendente', 'nova'],
+                    status: ['pendente_publicacao', 'sem_avaliacao'],
                     prioridade: 'alta',
                     tags: ['compliance', 'administrativo'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -552,10 +552,10 @@
                     descricao: 'Criar programa de capacitação continuada',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['pendente', 'nova'],
+                    status: ['pendente_publicacao', 'sem_avaliacao'],
                     prioridade: 'normal',
                     tags: ['capacitacao', 'recursos-humanos'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -568,10 +568,10 @@
                     descricao: 'Modernizar infraestrutura de TI',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['encerrada', 'finalizada'],
+                    status: ['encerrada', 'satisfeita'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'infraestrutura'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -587,14 +587,14 @@
                     status: ['encerrada', 'prejudicada'],
                     prioridade: 'normal',
                     tags: ['administrativo', 'processual'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: [
                         {
                             tipo: 'avaliacao',
                             data: '2024-10-05T11:00:00',
                             usuario: 'Corregedoria Nacional',
                             descricao: 'Proposição prejudicada em razão da Lei nº 14.133/2021 que torna desnecessária a reorganização proposta.',
-                            statusAnterior: ['pendente', 'nova'],
+                            statusAnterior: ['pendente_publicacao', 'sem_avaliacao'],
                             statusNovo: ['encerrada', 'prejudicada']
                         }
                     ]
@@ -609,10 +609,10 @@
                     descricao: 'Implementar política de gestão documental e arquivística',
                     prazoComprovacao: null,
                     dataPublicacao: null,
-                    status: ['em_analise', 'nova'],
+                    status: ['pendente_avaliacao', 'sem_avaliacao'],
                     prioridade: 'alta',
                     tags: ['gestao-documental', 'tecnologia', 'compliance'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: [
                         {
                             tipo: 'comprovacao',
@@ -634,10 +634,10 @@
                     descricao: 'Implementar ouvidoria digital com canal de denúncias online',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'nova'],
+                    status: ['aguardando_comprovacao', 'sem_avaliacao'],
                     prioridade: 'alta',
                     tags: ['tecnologia', 'transparencia', 'compliance'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -650,10 +650,10 @@
                     descricao: 'Criar programa de compliance e integridade institucional',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'nova'],
+                    status: ['aguardando_comprovacao', 'sem_avaliacao'],
                     prioridade: 'alta',
                     tags: ['compliance', 'administrativo', 'capacitacao'],
-                    rascunhos: [],
+                    rascunhosComprovacao: [],
                     historico: []
                 },
                 {
@@ -666,10 +666,10 @@
                     descricao: 'Padronizar fluxos de trabalho e procedimentos administrativos',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'nova'],
+                    status: ['aguardando_comprovacao', 'sem_avaliacao'],
                     prioridade: 'normal',
                     tags: ['administrativo', 'processual', 'gestao-documental'],
-                    rascunhos: [
+                    rascunhosComprovacao: [
                         {
                             descricao: 'Informamos que foi instituído Grupo de Trabalho por meio da Portaria PGJ nº 145/2024 para padronização dos fluxos de trabalho e procedimentos administrativos da Promotoria de Justiça de Feira de Santana.\n\nO Grupo de Trabalho, constituído por 05 (cinco) membros, realizou as seguintes ações:\n\n1. Mapeamento completo dos processos administrativos existentes (concluído em novembro/2024)\n2. Identificação de gargalos e pontos de melhoria nos fluxos atuais\n3. Elaboração de Manual de Procedimentos Administrativos padronizados (versão preliminar anexa)\n4. Realização de 03 (três) oficinas de capacitação com servidores da unidade\n5. Implementação de sistema de controle de prazos digitais\n\nO Manual de Procedimentos contempla:\n- Fluxo de recebimento e distribuição de expedientes\n- Procedimentos de protocolo e arquivo\n- Rotinas de atendimento ao público\n- Controle de diligências e prazos\n- Gestão documental e organização de autos\n\nA implementação integral está prevista para janeiro/2025, com acompanhamento mensal dos indicadores de eficiência operacional.',
                             observacoes: 'Manual ainda em fase de revisão final pelo Grupo de Trabalho. Previsão de aprovação definitiva: 15/01/2025.',
@@ -694,10 +694,10 @@
                     descricao: 'Estabelecer política de segurança da informação e proteção de dados',
                     prazoComprovacao: '2025-01-31',
                     dataPublicacao: '2024-12-01T10:00:00',
-                    status: ['aguardando_comprovacao', 'nova'],
+                    status: ['aguardando_comprovacao', 'sem_avaliacao'],
                     prioridade: 'urgente',
                     tags: ['tecnologia', 'compliance', 'administrativo'],
-                    rascunhos: [
+                    rascunhosComprovacao: [
                         {
                             descricao: 'Informamos a implementação da Política de Segurança da Informação e Proteção de Dados no âmbito da Procuradoria-Geral de Justiça, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).\n\nMEDIDAS IMPLEMENTADAS:\n\n1. NORMATIVAS E GOVERNANÇA:\n- Instituída Política de Segurança da Informação (Portaria PGJ nº 178/2024)\n- Criado Comitê Gestor de Proteção de Dados\n- Nomeado Encarregado de Dados (DPO) - Resolução PGJ nº 89/2024\n- Aprovado Regulamento de Uso de Sistemas e Recursos de TI\n\n2. MEDIDAS TÉCNICAS:\n- Implementação de sistema de autenticação multifator (MFA) em 100% dos acessos\n- Criptografia end-to-end em todas as bases de dados sensíveis\n- Firewall de nova geração com proteção DDoS\n- Sistema de backup automático com redundância geográfica\n- Antivírus corporativo centralizado (Kaspersky Enterprise)\n- Monitoramento 24/7 com sistema SIEM (Security Information and Event Management)\n\n3. CAPACITAÇÃO:\n- Realização de 08 (oito) treinamentos sobre LGPD e segurança da informação\n- Certificação de 100% dos servidores em curso EAD sobre proteção de dados\n- Workshop específico para gestores sobre gestão de incidentes de segurança\n\n4. PROCESSOS:\n- Mapeamento completo de tratamento de dados pessoais (inventário de dados)\n- Implementação de procedimentos de resposta a incidentes\n- Elaboração de Relatório de Impacto à Proteção de Dados (RIPD)\n- Revisão de contratos com fornecedores (cláusulas LGPD)\n\n5. INFRAESTRUTURA:\n- Atualização de todos os servidores para versões com suporte de segurança\n- Implementação de política de senhas fortes (12 caracteres, rotação 90 dias)\n- Segregação de redes (administrativa, judicial, visitantes)\n- Sistema de detecção e prevenção de intrusão (IDS/IPS)\n\nA Política está em pleno funcionamento desde dezembro/2024, com auditorias trimestrais programadas.',
                             observacoes: 'Aguardando relatório final da auditoria externa de segurança (previsão: 20/01/2025) para anexar como evidência adicional.',
@@ -792,61 +792,74 @@
             }
         }
 
-        // Login
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const userType = document.getElementById('userType').value;
-            const ramoMP = document.getElementById('ramoMPLogin').value;
+        // Login (only setup if on index.html)
+        function setupLoginForm() {
+            const loginForm = document.getElementById('loginForm');
+            if (!loginForm) return; // Not on index.html, skip
 
-            // Validate ramoMP for correicionados
-            if (userType === 'user' && !ramoMP) {
-                alert('Por favor, selecione seu Ramo do Ministério Público.');
-                return;
-            }
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const userType = document.getElementById('userType').value;
+                const ramoMP = document.getElementById('ramoMPLogin').value;
 
-            currentUser = {
-                username: username,
-                type: userType,
-                ramoMP: userType === 'user' ? ramoMP : null
-            };
+                // Validate ramoMP for correicionados
+                if (userType === 'user' && !ramoMP) {
+                    alert('Por favor, selecione seu Ramo do Ministério Público.');
+                    return;
+                }
 
-            document.getElementById('userName').textContent = username;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+                currentUser = {
+                    username: username,
+                    type: userType,
+                    ramoMP: userType === 'user' ? ramoMP : null,
+                    ramoMPNome: userType === 'user' ? ramosMPBrasil.find(r => r.sigla === ramoMP)?.nome : null
+                };
 
-            // Hide/Show menu items based on user type
-            if (userType === 'user') {
-                // Hide admin-only pages
-                document.getElementById('navPublicar').style.display = 'none';
-                document.getElementById('navAvaliar').style.display = 'none';
-                document.getElementById('navCadastroCorreicao').style.display = 'none';
-                document.getElementById('navCadastroProposicao').style.display = 'none';
-            } else {
-                // Hide correicionado-only pages
-                document.getElementById('navMinhasComprovacoes').style.display = 'none';
-            }
+                document.getElementById('userName').textContent = username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
 
-            // Try to load from localStorage first, otherwise initialize with sample data
-            if (!loadFromLocalStorage()) {
-                initializeSampleData();
-            }
-            saveToLocalStorage();
+                // Hide/Show menu items based on user type
+                if (userType === 'user') {
+                    // Hide admin-only pages
+                    document.getElementById('navPublicar').style.display = 'none';
+                    document.getElementById('navAvaliar').style.display = 'none';
+                    document.getElementById('navCadastroCorreicao').style.display = 'none';
+                    document.getElementById('navCadastroProposicao').style.display = 'none';
+                } else {
+                    // Hide correicionado-only pages
+                    document.getElementById('navMinhasComprovacoes').style.display = 'none';
+                }
 
-            // Initialize UI
-            atualizarStatusCorreicoes();
-            populateDashboardRamoMPFilter();
-            updateDashboard();
-            renderDashboardMembrosAuxiliares();
-            renderCorreicoesTable();
-            renderProposicoesTable();
-            populateCorreicaoFilter();
-            populateCorreicaoIdSelect();
-            populateProposicaoSelect();
-            renderAvaliacaoTable();
-            renderProposicoesComprovacaoTable();
-            carregarProposicoesParaPublicar();
-        });
+                // Try to load from localStorage first, otherwise initialize with sample data
+                if (!loadFromLocalStorage()) {
+                    initializeSampleData();
+                }
+                saveToLocalStorage();
+
+                // Initialize UI
+                atualizarStatusCorreicoes();
+                populateDashboardRamoMPFilter();
+                updateDashboard();
+                renderDashboardMembrosAuxiliares();
+                renderCorreicoesTable();
+                renderProposicoesTable();
+                populateCorreicaoFilter();
+                populateCorreicaoIdSelect();
+                populateProposicaoSelect();
+                renderAvaliacaoTable();
+                renderProposicoesComprovacaoTable();
+                carregarProposicoesParaPublicar();
+            });
+        }
+
+        // Call setupLoginForm when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupLoginForm);
+        } else {
+            setupLoginForm();
+        }
 
         // Logout
         function logout() {
@@ -2541,8 +2554,8 @@
 
             // Status badge
             const statusBadge = correicao.status === 'ativo'
-                ? '<span class="badge badge-pendente">Ativo</span>'
-                : '<span class="badge badge-finalizada">Inativo</span>';
+                ? '<span class="badge badge-ativo">Ativo</span>'
+                : '<span class="badge badge-inativo">Inativo</span>';
 
             const modalBody = document.getElementById('modalBody');
             modalBody.innerHTML = `
@@ -2880,8 +2893,8 @@
 
                 // Status badge
                 const statusBadge = c.status === 'ativo'
-                    ? '<span class="badge badge-pendente">Ativo</span>'
-                    : '<span class="badge badge-finalizada">Inativo</span>';
+                    ? '<span class="badge badge-ativo">Ativo</span>'
+                    : '<span class="badge badge-inativo">Inativo</span>';
 
                 // Estilo para células de contagem com destaque visual
                 const pendentePublicacaoStyle = pendentePublicacao > 0 ? 'style="color: #ffc107; font-weight: 600;"' : '';
@@ -2993,8 +3006,8 @@
 
                 const temRascunho = p.rascunhosComprovacao && p.rascunhosComprovacao.length > 0;
                 const statusRascunho = temRascunho ?
-                    '<span class="badge badge-finalizada">✓ Pronto</span>' :
-                    '<span class="badge badge-pendente">Pendente</span>';
+                    '<span class="badge badge-ativo">✓ Pronto</span>' :
+                    '<span class="badge badge-inativo">Pendente</span>';
 
                 const acaoBtn = temRascunho ?
                     `<button class="btn btn-primary btn-action" onclick="editarRascunhoComprovacao(${p.id})">Editar</button>
@@ -3573,31 +3586,25 @@
         }
 
         function normalizeStatusProcessualForDashboard(statusProcessual) {
-            const statusMap = {
-                'pendente': 'pendente_publicacao',
-                'pendente_publicacao': 'pendente_publicacao',
-                'aguardando_comprovacao': 'aguardando_comprovacao',
-                'em_analise': 'pendente_avaliacao',
-                'pendente_avaliacao': 'pendente_avaliacao',
-                'encerrada': 'encerrada'
-            };
+            const allowedStatuses = [
+                'pendente_publicacao',
+                'aguardando_comprovacao',
+                'pendente_avaliacao',
+                'encerrada'
+            ];
 
-            return statusMap[statusProcessual] || 'pendente_publicacao';
+            return allowedStatuses.includes(statusProcessual) ? statusProcessual : 'pendente_publicacao';
         }
 
         function normalizeValoracaoForDashboard(valoracao) {
-            const valoracaoMap = {
-                'nova': 'sem_avaliacao',
-                'sem_avaliacao': 'sem_avaliacao',
-                'parcial': 'necessita_informacoes',
-                'em_andamento': 'necessita_informacoes',
-                'necessita_informacoes': 'necessita_informacoes',
-                'finalizada': 'satisfeita',
-                'satisfeita': 'satisfeita',
-                'prejudicada': 'prejudicada'
-            };
+            const allowedValoracoes = [
+                'sem_avaliacao',
+                'necessita_informacoes',
+                'satisfeita',
+                'prejudicada'
+            ];
 
-            return valoracaoMap[valoracao] || 'sem_avaliacao';
+            return allowedValoracoes.includes(valoracao) ? valoracao : 'sem_avaliacao';
         }
 
         function normalizeStatusValue(statusValue) {
@@ -3623,8 +3630,9 @@
             const proposicaoNormalizada = { ...proposicao };
 
             proposicaoNormalizada.status = normalizeStatusValue(proposicaoNormalizada.status);
-            proposicaoNormalizada.rascunhosComprovacao = proposicaoNormalizada.rascunhosComprovacao || proposicaoNormalizada.rascunhos || [];
-            delete proposicaoNormalizada.rascunhos;
+            proposicaoNormalizada.rascunhosComprovacao = Array.isArray(proposicaoNormalizada.rascunhosComprovacao)
+                ? proposicaoNormalizada.rascunhosComprovacao
+                : [];
 
             if (!Array.isArray(proposicaoNormalizada.rascunhosAvaliacao)) {
                 proposicaoNormalizada.rascunhosAvaliacao = [];
@@ -3684,19 +3692,11 @@
             }
 
             const labels = {
-                // Conjunto 1: Status Processual
-                'pendente': 'Pendente',
                 'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
-                'em_analise': 'Em Análise',
                 'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
-                // Conjunto 2: Valoração
-                'nova': 'Nova',
                 'sem_avaliacao': 'Sem Avaliação',
-                'finalizada': 'Finalizada',
-                'parcial': 'Parcial',
-                'em_andamento': 'Em Andamento',
                 'necessita_informacoes': 'Necessita Informações',
                 'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'
