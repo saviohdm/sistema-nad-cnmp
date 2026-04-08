@@ -10,6 +10,7 @@
         let correicoesSortDirection = 'asc'; // 'asc' ou 'desc'
         let correicoesStatusFilter = ''; // '', 'ativo', 'inativo'
         let currentDetailProposicaoId = null; // ID da proposição atualmente exibida no modal de detalhes
+        const STORAGE_SCHEMA_VERSION = '2026-04-07-status-v2';
 
         // Membros Auxiliares da Corregedoria Nacional
         const membrosAuxiliares = [
@@ -23,6 +24,7 @@
         // ===== LOCALSTORAGE PERSISTENCE =====
         function saveToLocalStorage() {
             try {
+                localStorage.setItem('storageSchemaVersion', STORAGE_SCHEMA_VERSION);
                 localStorage.setItem('correicoes', JSON.stringify(correicoes));
                 localStorage.setItem('proposicoes', JSON.stringify(proposicoes));
                 if (currentUser) {
@@ -35,14 +37,23 @@
 
         function loadFromLocalStorage() {
             try {
+                const storageSchemaVersion = localStorage.getItem('storageSchemaVersion');
                 const correicoesData = localStorage.getItem('correicoes');
                 const proposicoesData = localStorage.getItem('proposicoes');
 
-                if (correicoesData && proposicoesData) {
+                if (correicoesData && proposicoesData && storageSchemaVersion === STORAGE_SCHEMA_VERSION) {
                     correicoes = JSON.parse(correicoesData);
-                    proposicoes = JSON.parse(proposicoesData);
+                    proposicoes = JSON.parse(proposicoesData).map(normalizeProposicaoRecord);
+                    atualizarStatusCorreicoes();
                     return true;
                 }
+
+                if (correicoesData || proposicoesData || storageSchemaVersion) {
+                    localStorage.removeItem('correicoes');
+                    localStorage.removeItem('proposicoes');
+                    localStorage.removeItem('storageSchemaVersion');
+                }
+
                 return false;
             } catch (error) {
                 console.error('Erro ao carregar dados do localStorage:', error);
@@ -705,6 +716,8 @@
                     historico: []
                 }
             ];
+
+            proposicoes = proposicoes.map(normalizeProposicaoRecord);
             // Atualizar status das correições baseado nas proposições
             atualizarStatusCorreicoes();
 
@@ -2978,7 +2991,7 @@
                 const prazoClass = prazoVencido ? 'style="color: var(--danger-color); font-weight: 600;"' : '';
                 const rowClass = prazoVencido ? 'prazo-vencido' : '';
 
-                const temRascunho = p.rascunhos && p.rascunhos.length > 0;
+                const temRascunho = p.rascunhosComprovacao && p.rascunhosComprovacao.length > 0;
                 const statusRascunho = temRascunho ?
                     '<span class="badge badge-finalizada">✓ Pronto</span>' :
                     '<span class="badge badge-pendente">Pendente</span>';
@@ -3009,7 +3022,7 @@
             }).join('');
 
             // Update total rascunhos counter
-            const totalRascunhos = aguardando.filter(p => p.rascunhos && p.rascunhos.length > 0).length;
+            const totalRascunhos = aguardando.filter(p => p.rascunhosComprovacao && p.rascunhosComprovacao.length > 0).length;
             document.getElementById('totalRascunhos').textContent = totalRascunhos;
 
             if (totalRascunhos > 0) {
@@ -3056,7 +3069,7 @@
             const proposicao = proposicoes.find(p => p.id === proposicaoId);
             if (!proposicao) return;
 
-            proposicao.rascunhos = [];
+            proposicao.rascunhosComprovacao = [];
             renderProposicoesComprovacaoTable();
             alert('Rascunho excluído com sucesso!');
         }
@@ -3122,7 +3135,7 @@
                 };
 
                 // Always replace the rascunho (only one per proposição)
-                proposicao.rascunhos = [rascunho];
+                proposicao.rascunhosComprovacao = [rascunho];
 
                 renderProposicoesComprovacaoTable();
                 closeComprovacaoModal();
@@ -3134,7 +3147,7 @@
         function abrirRevisaoComprovacoes() {
             const aguardando = proposicoes.filter(p =>
                 hasStatusProcessual(p, 'aguardando_comprovacao') &&
-                p.rascunhos && p.rascunhos.length > 0
+                p.rascunhosComprovacao && p.rascunhosComprovacao.length > 0
             );
 
             if (aguardando.length === 0) {
@@ -3158,7 +3171,7 @@
             html += '<div style="max-height: 55vh; overflow-y: auto;">';
 
             aguardando.forEach((p, index) => {
-                const rascunho = p.rascunhos[0];
+                const rascunho = p.rascunhosComprovacao[0];
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
                 const ramoMP = correicao ? correicao.ramoMP : 'N/A';
                 const cardId = `revisao_card_${index}`;
@@ -3231,13 +3244,13 @@
 
             const aguardando = proposicoes.filter(p =>
                 hasStatusProcessual(p, 'aguardando_comprovacao') &&
-                p.rascunhos && p.rascunhos.length > 0
+                p.rascunhosComprovacao && p.rascunhosComprovacao.length > 0
             );
 
             let enviadas = 0;
 
             aguardando.forEach(p => {
-                const rascunho = p.rascunhos[0];
+                const rascunho = p.rascunhosComprovacao[0];
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
                 const ramoMP = correicao ? correicao.ramoMP : 'Correicionado';
 
@@ -3256,12 +3269,12 @@
                 }
                 p.historico.push(novaComprovacao);
 
-                // Change status to em_analise - preserve valoração
+                // Change status to pendente_avaliacao - preserve valoração
                 const valoracaoAtual = getValoracao(p);
-                p.status = ['em_analise', valoracaoAtual];
+                p.status = ['pendente_avaliacao', valoracaoAtual];
 
                 // Clear rascunhos
-                p.rascunhos = [];
+                p.rascunhosComprovacao = [];
 
                 enviadas++;
             });
@@ -3368,12 +3381,11 @@
                 return 'ativo'; // No proposições yet, keep active
             }
 
-            // Check if ALL proposições have status processual === 'encerrada'
-            const todasEncerradas = proposicoesCorreicao.every(p =>
-                hasStatusProcessual(p, 'encerrada')
+            const todasFinalizadas = proposicoesCorreicao.every(p =>
+                hasValoracao(p, 'satisfeita') || hasValoracao(p, 'prejudicada')
             );
 
-            return todasEncerradas ? 'inativo' : 'ativo';
+            return todasFinalizadas ? 'inativo' : 'ativo';
         }
 
         // Update correição status for all correições
@@ -3534,9 +3546,10 @@
                 prazoComprovacao: null,
                 dataPublicacao: null,
                 prioridade: document.getElementById('prioridade').value,
-                status: 'pendente',
+                status: ['pendente_publicacao', 'sem_avaliacao'],
                 tags: selectedTags,
-                rascunhos: [],
+                rascunhosComprovacao: [],
+                rascunhosAvaliacao: [],
                 historico: []
             };
 
@@ -3587,6 +3600,49 @@
             return valoracaoMap[valoracao] || 'sem_avaliacao';
         }
 
+        function normalizeStatusValue(statusValue) {
+            if (Array.isArray(statusValue)) {
+                return [
+                    normalizeStatusProcessualForDashboard(statusValue[0]),
+                    normalizeValoracaoForDashboard(statusValue[1])
+                ];
+            }
+
+            return [
+                normalizeStatusProcessualForDashboard(statusValue),
+                'sem_avaliacao'
+            ];
+        }
+
+        function normalizeHistoricoStatusValue(statusValue) {
+            if (!statusValue) return statusValue;
+            return normalizeStatusValue(statusValue);
+        }
+
+        function normalizeProposicaoRecord(proposicao) {
+            const proposicaoNormalizada = { ...proposicao };
+
+            proposicaoNormalizada.status = normalizeStatusValue(proposicaoNormalizada.status);
+            proposicaoNormalizada.rascunhosComprovacao = proposicaoNormalizada.rascunhosComprovacao || proposicaoNormalizada.rascunhos || [];
+            delete proposicaoNormalizada.rascunhos;
+
+            if (!Array.isArray(proposicaoNormalizada.rascunhosAvaliacao)) {
+                proposicaoNormalizada.rascunhosAvaliacao = [];
+            }
+
+            if (!Array.isArray(proposicaoNormalizada.historico)) {
+                proposicaoNormalizada.historico = [];
+            }
+
+            proposicaoNormalizada.historico = proposicaoNormalizada.historico.map(entrada => ({
+                ...entrada,
+                statusAnterior: normalizeHistoricoStatusValue(entrada.statusAnterior),
+                statusNovo: normalizeHistoricoStatusValue(entrada.statusNovo)
+            }));
+
+            return proposicaoNormalizada;
+        }
+
         function getCanonicalStatusProcessual(proposicao) {
             return normalizeStatusProcessualForDashboard(getStatusProcessual(proposicao));
         }
@@ -3615,12 +3671,18 @@
 
         // Utility functions
         function formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('pt-BR');
         }
 
         // Helper functions for bidimensional status model
         function getStatusLabel(status) {
+            if (Array.isArray(status)) {
+                const [statusProcessual, valoracao] = normalizeStatusValue(status);
+                return `${getStatusLabel(statusProcessual)} | ${getStatusLabel(valoracao)}`;
+            }
+
             const labels = {
                 // Conjunto 1: Status Processual
                 'pendente': 'Pendente',
@@ -3644,10 +3706,7 @@
 
         // Render status badges (stacked vertically)
         function renderStatusBadges(statusArray) {
-            if (!Array.isArray(statusArray) || statusArray.length !== 2) {
-                return '<span class="badge badge-pendente">Erro</span>';
-            }
-            const [statusProcessual, valoracao] = statusArray;
+            const [statusProcessual, valoracao] = normalizeStatusValue(statusArray);
             return `
                 <div class="status-badges-container">
                     <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
@@ -3658,22 +3717,22 @@
 
         // Get status processual (index 0)
         function getStatusProcessual(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[0] : proposicao.status;
+            return normalizeStatusValue(proposicao.status)[0];
         }
 
         // Get valoração (index 1)
         function getValoracao(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[1] : 'nova';
+            return normalizeStatusValue(proposicao.status)[1];
         }
 
         // Check if proposicao has specific status processual
         function hasStatusProcessual(proposicao, statusProcessual) {
-            return getStatusProcessual(proposicao) === statusProcessual;
+            return getStatusProcessual(proposicao) === normalizeStatusProcessualForDashboard(statusProcessual);
         }
 
         // Check if proposicao has specific valoração
         function hasValoracao(proposicao, valoracao) {
-            return getValoracao(proposicao) === valoracao;
+            return getValoracao(proposicao) === normalizeValoracaoForDashboard(valoracao);
         }
 
         // Render Avaliação Table
@@ -3681,7 +3740,7 @@
             const tbody = document.getElementById('avaliacaoTableBody');
             if (!tbody) return;
 
-            const emAnalise = proposicoes.filter(p => hasStatusProcessual(p, 'em_analise'));
+            const emAnalise = proposicoes.filter(p => hasStatusProcessual(p, 'pendente_avaliacao'));
 
             tbody.innerHTML = emAnalise.map(p => {
                 const correicao = correicoes.find(c => c.id === p.correicaoId);
@@ -3753,10 +3812,10 @@
             const proposicao = proposicoes.find(p => p.id === proposicaoId);
             if (!proposicao) return;
 
-            const novoStatus = document.getElementById('statusAvaliacao').value;
+            const novaValoracao = normalizeValoracaoForDashboard(document.getElementById('statusAvaliacao').value);
             const parecer = document.getElementById('parecerAvaliacao').value;
 
-            if (!novoStatus || !parecer) {
+            if (!novaValoracao || !parecer) {
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
             }
@@ -3769,7 +3828,9 @@
                 usuario: 'Corregedoria Nacional',
                 descricao: parecer,
                 statusAnterior: statusAnterior,
-                statusNovo: novoStatus
+                statusNovo: novaValoracao === 'necessita_informacoes'
+                    ? ['pendente_publicacao', 'necessita_informacoes']
+                    : ['encerrada', novaValoracao]
             };
 
             if (!proposicao.historico) {
@@ -3777,17 +3838,7 @@
             }
             proposicao.historico.push(novaAvaliacao);
 
-            // Atualizar status (bidimensional)
-            // Se avaliação resulta em parcial/em_andamento, proposição volta para 'pendente' com valoração
-            if (novoStatus === 'parcial' || novoStatus === 'em_andamento') {
-                proposicao.status = ['pendente', novoStatus];
-            } else if (novoStatus === 'finalizada' || novoStatus === 'prejudicada') {
-                // Encerrada com valoração
-                proposicao.status = ['encerrada', novoStatus];
-            } else {
-                // Outros casos (não deveria acontecer)
-                proposicao.status = [novoStatus, 'nova'];
-            }
+            proposicao.status = novaAvaliacao.statusNovo;
 
             // Atualizar todas as views
             updateDashboard();
@@ -3837,13 +3888,13 @@
                 return;
             }
 
-            // Filter proposições with status 'pendente' from selected correição
+            // Filter proposições with status 'pendente_publicacao' from selected correição
             const proposicoesPendentes = proposicoes.filter(p =>
-                p.correicaoId === correicaoId && hasStatusProcessual(p, 'pendente')
+                p.correicaoId === correicaoId && hasStatusProcessual(p, 'pendente_publicacao')
             );
 
             if (proposicoesPendentes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição pendente disponível para publicação nesta correição</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição pendente de publicação disponível para esta correição</td></tr>';
                 container.classList.remove('hidden');
                 return;
             }
@@ -3853,7 +3904,7 @@
                     <td><input type="checkbox" class="checkbox-publicar" value="${p.id}"></td>
                     <td>${p.numero}</td>
                     <td>${p.descricao.substring(0, 60)}...</td>
-                    <td>${formatDate(p.prazo)}</td>
+                    <td>${p.prazoComprovacao ? formatDate(p.prazoComprovacao) : '-'}</td>
                     <td>${renderStatusBadges(p.status)}</td>
                     <td>${p.prioridade.toUpperCase()}</td>
                 </tr>
@@ -3908,7 +3959,7 @@
                         descricao: `Proposição publicada para comprovação. Prazo definido: ${formatDate(prazoComprovacao)}`,
                         prazoComprovacao: prazoComprovacao,
                         statusAnterior: statusAnterior,
-                        statusNovo: 'aguardando_comprovacao'
+                        statusNovo: ['aguardando_comprovacao', getValoracao(proposicao)]
                     };
 
                     // Adicionar ao histórico

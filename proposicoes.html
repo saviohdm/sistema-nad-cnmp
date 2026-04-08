@@ -131,15 +131,15 @@
                             <select id="statusFilter">
                                 <option value="">Todos os status</option>
                                 <optgroup label="Status Processual">
-                                    <option value="pendente">Pendente</option>
+                                    <option value="pendente_publicacao">Pendente Publicação</option>
                                     <option value="aguardando_comprovacao">Aguardando Comprovação</option>
-                                    <option value="em_analise">Em Análise</option>
+                                    <option value="pendente_avaliacao">Pendente Avaliação</option>
                                     <option value="encerrada">Encerrada</option>
                                 </optgroup>
                                 <optgroup label="Valoração">
-                                    <option value="finalizada">Finalizada</option>
-                                    <option value="parcial">Parcial</option>
-                                    <option value="em_andamento">Em Andamento</option>
+                                    <option value="sem_avaliacao">Sem Avaliação</option>
+                                    <option value="necessita_informacoes">Necessita Informações</option>
+                                    <option value="satisfeita">Satisfeita</option>
                                     <option value="prejudicada">Prejudicada</option>
                                 </optgroup>
                             </select>
@@ -357,18 +357,56 @@
         }
 
         // Helper functions for bidimensional status model
+        function normalizeStatusProcessual(statusProcessual) {
+            const statusMap = {
+                'pendente': 'pendente_publicacao',
+                'pendente_publicacao': 'pendente_publicacao',
+                'aguardando_comprovacao': 'aguardando_comprovacao',
+                'em_analise': 'pendente_avaliacao',
+                'pendente_avaliacao': 'pendente_avaliacao',
+                'encerrada': 'encerrada'
+            };
+
+            return statusMap[statusProcessual] || 'pendente_publicacao';
+        }
+
+        function normalizeValoracao(valoracao) {
+            const valoracaoMap = {
+                'nova': 'sem_avaliacao',
+                'sem_avaliacao': 'sem_avaliacao',
+                'parcial': 'necessita_informacoes',
+                'em_andamento': 'necessita_informacoes',
+                'necessita_informacoes': 'necessita_informacoes',
+                'finalizada': 'satisfeita',
+                'satisfeita': 'satisfeita',
+                'prejudicada': 'prejudicada'
+            };
+
+            return valoracaoMap[valoracao] || 'sem_avaliacao';
+        }
+
         function getStatusLabel(status) {
+            if (Array.isArray(status)) {
+                const [statusProcessual, valoracao] = status;
+                return `${getStatusLabel(statusProcessual)} | ${getStatusLabel(valoracao)}`;
+            }
+
             const labels = {
                 // Conjunto 1: Status Processual
                 'pendente': 'Pendente',
+                'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
                 'em_analise': 'Em Análise',
+                'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
                 // Conjunto 2: Valoração
                 'nova': 'Nova',
+                'sem_avaliacao': 'Sem Avaliação',
                 'finalizada': 'Finalizada',
                 'parcial': 'Parcial',
                 'em_andamento': 'Em Andamento',
+                'necessita_informacoes': 'Necessita Informações',
+                'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'
             };
             return labels[status] || status;
@@ -376,10 +414,13 @@
 
         // Render status badges (stacked vertically)
         function renderStatusBadges(statusArray) {
-            if (!Array.isArray(statusArray) || statusArray.length !== 2) {
-                return '<span class="badge badge-pendente">Erro</span>';
-            }
-            const [statusProcessual, valoracao] = statusArray;
+            const statusProcessual = Array.isArray(statusArray)
+                ? normalizeStatusProcessual(statusArray[0])
+                : normalizeStatusProcessual(statusArray);
+            const valoracao = Array.isArray(statusArray)
+                ? normalizeValoracao(statusArray[1])
+                : 'sem_avaliacao';
+
             return `
                 <div class="status-badges-container">
                     <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
@@ -390,12 +431,33 @@
 
         // Get status processual (index 0)
         function getStatusProcessual(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[0] : proposicao.status;
+            return Array.isArray(proposicao.status)
+                ? normalizeStatusProcessual(proposicao.status[0])
+                : normalizeStatusProcessual(proposicao.status);
         }
 
         // Get valoração (index 1)
         function getValoracao(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[1] : 'nova';
+            return Array.isArray(proposicao.status)
+                ? normalizeValoracao(proposicao.status[1])
+                : 'sem_avaliacao';
+        }
+
+        function podeAvaliarProposicao(proposicao) {
+            return currentUser?.type === 'admin' && getStatusProcessual(proposicao) === 'pendente_avaliacao';
+        }
+
+        function getStatusCanonico(proposicao) {
+            return [getStatusProcessual(proposicao), getValoracao(proposicao)];
+        }
+
+        function serializeProposicaoForExport(proposicao) {
+            return {
+                ...proposicao,
+                status: getStatusCanonico(proposicao),
+                statusProcessual: getStatusProcessual(proposicao),
+                valoracao: getValoracao(proposicao)
+            };
         }
 
         // Render tag badges
@@ -583,6 +645,13 @@
             // Render table rows
             tbody.innerHTML = filtered.map(p => {
                 const descPreview = smartTruncate(p.descricao, 100);
+                const botaoAvaliar = podeAvaliarProposicao(p)
+                    ? `<button class="btn btn-secondary btn-action" onclick="abrirAvaliacao(${p.id})" title="Avaliar comprovação pendente">
+                            ⚖️ Avaliar
+                       </button>`
+                    : `<button class="btn btn-secondary btn-action" disabled title="Avaliação disponível apenas para proposições em pendente_avaliacao">
+                            ⚖️ Avaliar
+                       </button>`;
 
                 return `
                     <tr>
@@ -601,9 +670,7 @@
                                 <button class="btn btn-primary btn-action" onclick="viewDetails(${p.id})" title="Ver todos os detalhes">
                                     👁️ Visualizar
                                 </button>
-                                <button class="btn btn-secondary btn-action" onclick="abrirAvaliacao(${p.id})" title="Adicionar nova avaliação">
-                                    ⚖️ Avaliar
-                                </button>
+                                ${botaoAvaliar}
                                 <button class="btn btn-secondary btn-action" onclick="abrirModalEdicao(${p.id})" title="Editar informações">
                                     ✏️ Editar
                                 </button>
@@ -943,12 +1010,12 @@
                 filtrosAplicados: {
                     busca: document.getElementById('searchInput').value || 'Nenhum',
                     tipo: document.getElementById('tipoFilter').value || 'Todos',
-                    status: document.getElementById('statusFilter').value || 'Todos',
+                    status: document.getElementById('statusFilter').value ? getStatusLabel(document.getElementById('statusFilter').value) : 'Todos',
                     tag: document.getElementById('tagFilter').value || 'Todas',
                     prioridade: document.getElementById('prioridadeFilter').value || 'Todas'
                 },
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Admin',
-                proposicoes: filtered
+                proposicoes: filtered.map(serializeProposicaoForExport)
             };
 
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -1341,7 +1408,7 @@
                 titulo: 'Proposição CNMP - Dados Completos',
                 dataExportacao: new Date().toISOString(),
                 proposicao: {
-                    ...proposicao,
+                    ...serializeProposicaoForExport(proposicao),
                     correicao: {
                         numero: correicao?.numero || '',
                         ramoMP: correicao?.ramoMPNome || '',

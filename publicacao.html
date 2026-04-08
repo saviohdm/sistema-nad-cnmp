@@ -70,7 +70,7 @@
                     </button>
                     <div id="publicacaoExportMenu" class="export-menu hidden">
                         <button onclick="exportarPendentesJSON()" class="export-menu-item">
-                            💾 Exportar Pendentes (JSON)
+                            💾 Exportar Pendentes de Publicação (JSON)
                         </button>
                         <button onclick="exportarSelecionadasJSON()" class="export-menu-item">
                             📋 Exportar Selecionadas (JSON)
@@ -105,7 +105,7 @@
                             <p id="infoTotalCorreicoes" style="margin: 0.25rem 0;"></p>
                         </div>
                         <div>
-                            <strong>Proposições Pendentes:</strong>
+                            <strong>Proposições Pendentes de Publicação:</strong>
                             <p id="infoPendentes" style="margin: 0.25rem 0; color: var(--warning-color); font-weight: bold;"></p>
                         </div>
                     </div>
@@ -216,7 +216,7 @@
             <div id="placeholderMessage" class="hidden" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📢</div>
                 <h3 style="color: var(--text-dark);">Selecione um Ramo do MP</h3>
-                <p>Para visualizar as proposições pendentes de publicação, primeiro selecione um ramo do Ministério Público acima.</p>
+                <p>Para visualizar as proposições em pendente_publicacao, primeiro selecione um ramo do Ministério Público acima.</p>
             </div>
         </main>
     </div>
@@ -301,18 +301,56 @@
         }
 
         // Helper functions for bidimensional status model
+        function normalizeStatusProcessual(statusProcessual) {
+            const statusMap = {
+                'pendente': 'pendente_publicacao',
+                'pendente_publicacao': 'pendente_publicacao',
+                'aguardando_comprovacao': 'aguardando_comprovacao',
+                'em_analise': 'pendente_avaliacao',
+                'pendente_avaliacao': 'pendente_avaliacao',
+                'encerrada': 'encerrada'
+            };
+
+            return statusMap[statusProcessual] || 'pendente_publicacao';
+        }
+
+        function normalizeValoracao(valoracao) {
+            const valoracaoMap = {
+                'nova': 'sem_avaliacao',
+                'sem_avaliacao': 'sem_avaliacao',
+                'parcial': 'necessita_informacoes',
+                'em_andamento': 'necessita_informacoes',
+                'necessita_informacoes': 'necessita_informacoes',
+                'finalizada': 'satisfeita',
+                'satisfeita': 'satisfeita',
+                'prejudicada': 'prejudicada'
+            };
+
+            return valoracaoMap[valoracao] || 'sem_avaliacao';
+        }
+
         function getStatusLabel(status) {
+            if (Array.isArray(status)) {
+                const [statusProcessual, valoracao] = status;
+                return `${getStatusLabel(statusProcessual)} | ${getStatusLabel(valoracao)}`;
+            }
+
             const labels = {
                 // Conjunto 1: Status Processual
                 'pendente': 'Pendente',
+                'pendente_publicacao': 'Pendente Publicação',
                 'aguardando_comprovacao': 'Aguardando Comprovação',
                 'em_analise': 'Em Análise',
+                'pendente_avaliacao': 'Pendente Avaliação',
                 'encerrada': 'Encerrada',
                 // Conjunto 2: Valoração
                 'nova': 'Nova',
+                'sem_avaliacao': 'Sem Avaliação',
                 'finalizada': 'Finalizada',
                 'parcial': 'Parcial',
                 'em_andamento': 'Em Andamento',
+                'necessita_informacoes': 'Necessita Informações',
+                'satisfeita': 'Satisfeita',
                 'prejudicada': 'Prejudicada'
             };
             return labels[status] || status;
@@ -320,10 +358,13 @@
 
         // Render status badges (stacked vertically)
         function renderStatusBadges(statusArray) {
-            if (!Array.isArray(statusArray) || statusArray.length !== 2) {
-                return '<span class="badge badge-pendente">Erro</span>';
-            }
-            const [statusProcessual, valoracao] = statusArray;
+            const statusProcessual = Array.isArray(statusArray)
+                ? normalizeStatusProcessual(statusArray[0])
+                : normalizeStatusProcessual(statusArray);
+            const valoracao = Array.isArray(statusArray)
+                ? normalizeValoracao(statusArray[1])
+                : 'sem_avaliacao';
+
             return `
                 <div class="status-badges-container">
                     <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
@@ -334,12 +375,25 @@
 
         // Get status processual (index 0)
         function getStatusProcessual(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[0] : proposicao.status;
+            return Array.isArray(proposicao.status)
+                ? normalizeStatusProcessual(proposicao.status[0])
+                : normalizeStatusProcessual(proposicao.status);
         }
 
         // Get valoração (index 1)
         function getValoracao(proposicao) {
-            return Array.isArray(proposicao.status) ? proposicao.status[1] : 'nova';
+            return Array.isArray(proposicao.status)
+                ? normalizeValoracao(proposicao.status[1])
+                : 'sem_avaliacao';
+        }
+
+        function serializeProposicaoForExport(proposicao) {
+            return {
+                ...proposicao,
+                status: [getStatusProcessual(proposicao), getValoracao(proposicao)],
+                statusProcessual: getStatusProcessual(proposicao),
+                valoracao: getValoracao(proposicao)
+            };
         }
 
         // Render tag badges
@@ -430,9 +484,9 @@
             // Get all correição IDs from this ramo
             const correicaoIds = correicoesDoRamo.map(c => c.id);
 
-            // Count pending propositions across all correições from this ramo
+            // Count propositions pending publication across all correições from this ramo
             const pendentes = proposicoes.filter(p =>
-                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente'
+                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente_publicacao'
             ).length;
 
             // Display ramo do MP information (aggregated)
@@ -482,11 +536,11 @@
             const tagFilter = document.getElementById('tagFilter').value;
             const prioridadeFilter = document.getElementById('prioridadeFilter').value;
 
-            // Filter propositions - ONLY PENDENTES from selected ramo
+            // Filter propositions - ONLY pendente_publicacao from selected ramo
             const filtered = proposicoes.filter(p => {
-                // MANDATORY: Only show propositions from selected ramo do MP with status PENDENTE
+                // MANDATORY: Only show propositions from selected ramo do MP with status pendente_publicacao
                 if (!correicaoIds.includes(p.correicaoId)) return false;
-                if (getStatusProcessual(p) !== 'pendente') return false;
+                if (getStatusProcessual(p) !== 'pendente_publicacao') return false;
 
                 // Search filter
                 const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
@@ -540,7 +594,7 @@
             }).join('');
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Nenhuma proposição pendente encontrada com os filtros aplicados</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Nenhuma proposição pendente de publicação encontrada com os filtros aplicados</td></tr>';
                 selectAllCheckbox.checked = false;
             }
         }
@@ -590,7 +644,7 @@
 
             const filtered = proposicoes.filter(p => {
                 if (!correicaoIds.includes(p.correicaoId)) return false;
-                if (getStatusProcessual(p) !== 'pendente') return false;
+                if (getStatusProcessual(p) !== 'pendente_publicacao') return false;
 
                 const searchText = `${p.numero} ${p.tipo} ${p.unidade} ${p.membro} ${p.descricao}`.toLowerCase();
                 const matchesSearch = searchText.includes(searchTerm);
@@ -696,7 +750,7 @@
                     observacoes: observacoes || null,
                     prazoComprovacao: prazoComprovacao,
                     statusAnterior: statusAnterior,
-                    statusNovo: proposicao.status
+                    statusNovo: ['aguardando_comprovacao', getValoracao(proposicao)]
                 });
             });
 
@@ -884,7 +938,7 @@
             }
         });
 
-        // Exportar Proposições Pendentes em JSON
+        // Exportar Proposições Pendentes de Publicação em JSON
         function exportarPendentesJSON() {
             const ramoMP = document.getElementById('ramoMPSelect').value;
             if (!ramoMP) {
@@ -897,25 +951,25 @@
             const primeiraCorreicao = correicoesDoRamo[0];
 
             const pendentes = proposicoes.filter(p =>
-                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente'
+                correicaoIds.includes(p.correicaoId) && getStatusProcessual(p) === 'pendente_publicacao'
             );
 
             if (pendentes.length === 0) {
-                alert('Nenhuma proposição pendente para exportar neste ramo do MP.');
+                alert('Nenhuma proposição pendente de publicação para exportar neste ramo do MP.');
                 return;
             }
 
             const exportData = {
-                titulo: 'Proposições Pendentes - CNMP',
+                titulo: 'Proposições Pendentes de Publicação - CNMP',
                 dataExportacao: new Date().toISOString(),
                 ramoMP: {
                     codigo: ramoMP,
                     nome: primeiraCorreicao?.ramoMPNome || '',
                     totalCorreicoes: correicoesDoRamo.length
                 },
-                totalPendentes: pendentes.length,
+                totalPendentesPublicacao: pendentes.length,
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
-                proposicoes: pendentes
+                proposicoes: pendentes.map(serializeProposicaoForExport)
             };
 
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -923,14 +977,14 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `pendentes-${ramoMP}-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `pendentes-publicacao-${ramoMP}-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
             document.getElementById('publicacaoExportMenu').classList.add('hidden');
-            alert(`${pendentes.length} proposição(ões) pendente(s) exportada(s) com sucesso!`);
+            alert(`${pendentes.length} proposição(ões) pendente(s) de publicação exportada(s) com sucesso!`);
         }
 
         // Exportar Proposições Selecionadas em JSON
@@ -955,7 +1009,7 @@
                 },
                 totalSelecionadas: selecionadas.length,
                 usuario: currentUser ? `${currentUser.ramoMP} - ${currentUser.ramoMPNome}` : 'Corregedoria Nacional (Admin)',
-                proposicoes: selecionadas
+                proposicoes: selecionadas.map(serializeProposicaoForExport)
             };
 
             const dataStr = JSON.stringify(exportData, null, 2);
