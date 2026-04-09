@@ -1733,6 +1733,54 @@
             alert('Rascunho excluído com sucesso!');
         }
 
+        // Render Avaliação Table
+        function renderAvaliacaoTable() {
+            const tbody = document.getElementById('avaliacaoTableBody');
+            if (!tbody) return;
+
+            const emAnalise = proposicoes.filter(p => hasStatusProcessual(p, 'pendente_avaliacao'));
+
+            tbody.innerHTML = emAnalise.map(p => {
+                const correicao = correicoes.find(c => c.id === p.correicaoId);
+                const correicaoInfo = correicao ? `${correicao.numero}` : 'N/A';
+                const ramoMP = correicao ? correicao.ramoMP : 'N/A';
+                const numComprovacoes = p.historico ? p.historico.filter(h => h.tipo === 'comprovacao').length : 0;
+
+                // Check if has draft evaluation
+                const hasDraft = p.rascunhosAvaliacao && p.rascunhosAvaliacao.length > 0;
+                const rowClass = hasDraft ? 'row-with-draft' : '';
+                const draftBadge = hasDraft ? '<span class="badge-rascunho" title="Rascunho de avaliação preparado por assessor">📝 Rascunho</span>' : '';
+
+                // Smart truncate description
+                const descPreview = smartTruncate(p.descricao, 120);
+                const lengthBadge = getTextLengthBadge(p.descricao);
+
+                return `
+                    <tr class="${rowClass}">
+                        <td>${p.numero}${draftBadge}</td>
+                        <td>${correicaoInfo}</td>
+                        <td>${ramoMP}</td>
+                        <td>
+                            <div class="text-preview">
+                                <span class="text-preview-content">${descPreview}</span>
+                                ${lengthBadge}
+                            </div>
+                        </td>
+                        <td>${numComprovacoes}</td>
+                        <td>
+                            <a href="avaliacao.html?id=${p.id}" class="btn btn-primary btn-action" style="text-decoration: none; display: inline-block;">
+                                ${hasDraft ? '📋 Revisar' : 'Avaliar'}
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (emAnalise.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhuma proposição aguardando avaliação</td></tr>';
+            }
+        }
+
         // === FUNÇÕES OBSOLETAS DO MODAL DE COMPROVAÇÃO ===
         // As funções abaixo são mantidas para compatibilidade mas não são mais usadas
         // A comprovação agora ocorre na página dedicada comprovacao.html
