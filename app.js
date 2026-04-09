@@ -2279,6 +2279,51 @@
             checkboxes.forEach(cb => cb.checked = false);
         }
 
+        // ========== UTILITY FUNCTIONS - FORMATTING ==========
+
+        // Format date to Brazilian format
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Format date and time to Brazilian format
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('pt-BR');
+        }
+
+        // Get human-readable status label
+        function getStatusLabel(status) {
+            if (Array.isArray(status)) {
+                const [statusProcessual, valoracao] = normalizeStatusValue(status);
+                return `${getStatusLabel(statusProcessual)} | ${getStatusLabel(valoracao)}`;
+            }
+
+            const labels = {
+                'pendente_publicacao': 'Pendente Publicação',
+                'aguardando_comprovacao': 'Aguardando Comprovação',
+                'pendente_avaliacao': 'Pendente Avaliação',
+                'encerrada': 'Encerrada',
+                'sem_avaliacao': 'Sem Avaliação',
+                'necessita_informacoes': 'Necessita Informações',
+                'satisfeita': 'Satisfeita',
+                'prejudicada': 'Prejudicada'
+            };
+            return labels[status] || status;
+        }
+
+        // Render status badges (bidimensional display)
+        function renderStatusBadges(statusArray) {
+            const [statusProcessual, valoracao] = normalizeStatusValue(statusArray);
+            return `
+                <div class="status-badges-container">
+                    <span class="badge badge-${statusProcessual}">${getStatusLabel(statusProcessual)}</span>
+                    <span class="badge badge-${valoracao}">${getStatusLabel(valoracao)}</span>
+                </div>
+            `;
+        }
 
         // ========== DOMAIN LOGIC FUNCTIONS ==========
         // Domain logic and workflow functions moved to js/domain-proposicoes.js
