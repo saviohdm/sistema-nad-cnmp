@@ -1046,38 +1046,56 @@
             // Auto-login if user session exists
             if (loadUserSession() && loadFromLocalStorage()) {
                 // Restore user session
-                document.getElementById('userName').textContent = currentUser.username;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-
-                // Hide/Show menu items based on user type
-                if (currentUser.type === 'user') {
-                    // Hide admin-only pages
-                    document.getElementById('navPublicar').style.display = 'none';
-                    document.getElementById('navAvaliar').style.display = 'none';
-                    document.getElementById('navCadastroCorreicao').style.display = 'none';
-                    document.getElementById('navCadastroProposicao').style.display = 'none';
-                } else {
-                    // Hide correicionado-only pages
-                    document.getElementById('navMinhasComprovacoes').style.display = 'none';
+                const userNameElement = document.getElementById('userName');
+                if (userNameElement) {
+                    userNameElement.textContent = currentUser.username;
                 }
 
-                // Initialize UI
-                atualizarStatusCorreicoes();
-                updateDashboard();
-                renderCorreicoesTable();
-                renderProposicoesTable();
-                populateCorreicaoFilter();
-                populateCorreicaoIdSelect();
-                populateProposicaoSelect();
-                renderAvaliacaoTable();
-                renderProposicoesComprovacaoTable();
-                carregarProposicoesParaPublicar();
+                // Only manipulate loginScreen/mainApp if on index.html
+                const loginScreen = document.getElementById('loginScreen');
+                const mainApp = document.getElementById('mainApp');
+                if (loginScreen && mainApp) {
+                    loginScreen.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                }
 
-                // Check for hash navigation (e.g., #enviar from comprovacao.html)
-                if (window.location.hash) {
-                    const page = window.location.hash.substring(1);
-                    showPage(page);
+                // Hide/Show menu items based on user type
+                const navPublicar = document.getElementById('navPublicar');
+                const navAvaliar = document.getElementById('navAvaliar');
+                const navCadastroCorreicao = document.getElementById('navCadastroCorreicao');
+                const navCadastroProposicao = document.getElementById('navCadastroProposicao');
+                const navMinhasComprovacoes = document.getElementById('navMinhasComprovacoes');
+
+                if (currentUser.type === 'user') {
+                    // Hide admin-only pages
+                    if (navPublicar) navPublicar.style.display = 'none';
+                    if (navAvaliar) navAvaliar.style.display = 'none';
+                    if (navCadastroCorreicao) navCadastroCorreicao.style.display = 'none';
+                    if (navCadastroProposicao) navCadastroProposicao.style.display = 'none';
+                } else {
+                    // Hide correicionado-only pages
+                    if (navMinhasComprovacoes) navMinhasComprovacoes.style.display = 'none';
+                }
+
+                // Initialize UI (only on index.html - check for dashboard element)
+                const dashboardPage = document.getElementById('dashboard');
+                if (dashboardPage) {
+                    atualizarStatusCorreicoes();
+                    updateDashboard();
+                    renderCorreicoesTable();
+                    renderProposicoesTable();
+                    populateCorreicaoFilter();
+                    populateCorreicaoIdSelect();
+                    populateProposicaoSelect();
+                    renderAvaliacaoTable();
+                    renderProposicoesComprovacaoTable();
+                    carregarProposicoesParaPublicar();
+
+                    // Check for hash navigation (e.g., #enviar from comprovacao.html)
+                    if (window.location.hash) {
+                        const page = window.location.hash.substring(1);
+                        showPage(page);
+                    }
                 }
             }
 
