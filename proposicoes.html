@@ -296,25 +296,9 @@
     <script src="js/export.js"></script>
     <script>
         // Global data from app.js:
-        // - correicoes[], proposicoes[], currentUser (defined in app.js)
-
-        // Page-specific variables
-        let currentDetailProposicaoId = null; // ID da proposição sendo visualizada no modal
-
-        // Available tags
-        const availableTags = [
-            { id: 'administrativo', label: 'Administrativo' },
-            { id: 'recursos-humanos', label: 'Recursos Humanos' },
-            { id: 'infraestrutura', label: 'Infraestrutura' },
-            { id: 'tecnologia', label: 'Tecnologia' },
-            { id: 'processual', label: 'Processual' },
-            { id: 'financeiro', label: 'Financeiro' },
-            { id: 'capacitacao', label: 'Capacitação' },
-            { id: 'gestao-documental', label: 'Gestão Documental' },
-            { id: 'compliance', label: 'Compliance' },
-            { id: 'transparencia', label: 'Transparência' },
-            { id: 'outros', label: 'Outros' }
-        ];
+        // - correicoes[], proposicoes[], currentUser
+        // - currentDetailProposicaoId (used for export functions)
+        // - availableTags[] (tag definitions)
 
         // Load data from localStorage
         function loadDataFromLocalStorage() {
